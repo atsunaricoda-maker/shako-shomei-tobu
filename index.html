@@ -658,6 +658,15 @@ textarea{resize:vertical;min-height:64px;}
       </div>
 
       <div class="card">
+        <h2>📤 事務所へ送信（データ）</h2>
+        <p class="lead">入力した案件データを、設定した事務所のメールへ送ります（<b>リンク方式・サーバー不要</b>）。受け取った側は<b>リンクを開くだけ</b>でこのアプリに入力済みで開けます（PCの印刷でPDF化）。</p>
+        <div id="sendStatus"></div>
+        <button class="fig-btn" style="border-color:var(--accent);background:#fff4e8;color:#a85a14" onclick="sendByMail()">📤 メールで送信</button>
+        <button class="inline-btn" style="width:100%;margin-top:10px" onclick="copyCaseLink()">🔗 リンクをコピー（LINE等で送る）</button>
+        <div class="hint" style="margin-top:8px">送信元（お店名）・送信先（事務所メール）は右上の<b>⚙</b>で設定。リンクには個人情報が含まれます（身内の連絡手段で送ってください）。航空写真トレース画像はリンクに含めません。</div>
+      </div>
+
+      <div class="card">
         <h2>公式様式（原本）の入手</h2>
         <p class="lead">提出は静岡県警の<b>公式様式（原本）</b>に記入します。原本を開いて印刷・保存し、上で作った下書きを見本に転記してください。</p>
         <div class="linklist">
@@ -1321,7 +1330,16 @@ function gmapModal(){
     : (has?'<div class="note warn" style="margin-top:12px">キーは保存済みですが未接続（オフライン/無効の可能性）。</div>'
          :'<div class="note info" style="margin-top:12px">未設定：現在は手動（スクショ）方式で動作中。</div>');
   return `<button class="close" onclick="closeModal()">×</button>
-  <h3>地図連携（Google Maps APIキー）</h3>
+  <h3>設定</h3>
+  <h3 style="font-size:14.5px;margin:6px 0 4px">📤 データ送信設定</h3>
+  <p style="font-size:12.5px;color:#5a6b7b;line-height:1.65">「事務所へ送信」で使う情報。<b>この端末内だけ</b>に保存され、外部やリポジトリには出ません。</p>
+  <div class="field"><label class="lbl">送信元（お店・事業者名）<span class="opt">任意</span></label>
+    <input type="text" id="sendFromInput" placeholder="例）〇〇モータース" value="${esc(SEND.from)}" autocomplete="off"></div>
+  <div class="field"><label class="lbl">送信先メール（事務所）</label>
+    <input type="email" id="sendToInput" placeholder="office@example.com" value="${esc(SEND.to)}" autocomplete="off" inputmode="email"></div>
+  <button class="inline-btn" style="width:100%" onclick="saveSend()">送信設定を保存</button>
+  <hr class="hr">
+  <h3 style="font-size:14.5px">🗺 地図連携（Google Maps APIキー）</h3>
   <p style="font-size:12.5px;color:#5a6b7b;line-height:1.65">APIキーを入れると、住所からの<b>直線距離の自動計算</b>・<b>航空写真の取り込み</b>・<b>所在図の自動作成</b>がアプリ内で完結します。キーは<b>この端末内だけに保存</b>され、外部やリポジトリには出ません。</p>
   <div class="field"><label class="lbl">Google Maps APIキー</label>
     <input type="text" id="gmapKeyInput" placeholder="AIza..." value="${esc(GMAPS.key)}" autocomplete="off"></div>
@@ -1385,7 +1403,7 @@ function gotoStep(i){
   if(step===TOTAL-1){ next.textContent="📄 書類を作成"; next.className="btn make"; next.onclick=makeDocs; }
   else { next.textContent="次へ"; next.className="btn next"; next.onclick=()=>go(1); }
   // 確認ステップ更新
-  if(step===TOTAL-1){ renderSummary(); renderValid(); renderDocPick(); }
+  if(step===TOTAL-1){ renderSummary(); renderValid(); renderDocPick(); renderSendStatus(); }
   if(step===6) drawHaichi();
   if(step===7) maybeAutoShozai();
   // ステップナビを該当位置へスクロール
@@ -1729,9 +1747,10 @@ function showPreviewBar(){
     bar=document.createElement("div");
     bar.id="previewBar"; bar.className="footnav";
     bar.innerHTML=`<div class="wrapf">
-      <button class="btn prev" onclick="hidePreview()">編集に戻る</button>
-      <button class="btn prev" style="flex:0 0 auto" onclick="saveHistoryNow()">📋 履歴</button>
-      <button class="btn make" onclick="window.print()">🖨 印刷 / PDF保存</button></div>`;
+      <button class="btn prev" style="flex:0 0 auto" onclick="hidePreview()">戻る</button>
+      <button class="btn prev" style="flex:0 0 auto" onclick="saveHistoryNow()">📋</button>
+      <button class="btn prev" style="flex:0 0 auto;border-color:var(--accent);color:var(--accent)" onclick="sendByMail()">📤 送信</button>
+      <button class="btn make" onclick="window.print()">🖨 印刷</button></div>`;
     document.body.appendChild(bar);
   }
   bar.style.display="flex";
@@ -1917,8 +1936,66 @@ function applyAll(){
 }
 function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1800); }
 
+/* =====================================================================
+   データ送信（バックエンド不要・リンク受け渡し方式）
+   入力データをURLの#以降に埋め込み、mailto/コピーで事務所へ送る。
+   受け取り側はそのリンクを開くと「入力済み」で開く。サーバー・保存先は持たない。
+   ===================================================================== */
+const SEND_KEY="shako_tobu_send";
+let SEND={from:"",to:""};
+function loadSend(){ try{ const j=localStorage.getItem(SEND_KEY); if(j) SEND=Object.assign(SEND,JSON.parse(j)); }catch(e){} }
+function saveSend(){
+  const f=document.getElementById("sendFromInput"), t=document.getElementById("sendToInput");
+  if(f) SEND.from=(f.value||"").trim();
+  if(t) SEND.to=(t.value||"").trim();
+  localStorage.setItem(SEND_KEY, JSON.stringify(SEND));
+  toast("送信設定を保存しました"); renderSendStatus();
+}
+function buildCaseLink(){
+  const payload=JSON.stringify({v:1,s:state});
+  const b64=btoa(unescape(encodeURIComponent(payload)));
+  return location.origin+location.pathname+"#d="+encodeURIComponent(b64);
+}
+function readIncoming(){
+  try{
+    const m=(location.hash||"").match(/[#&]d=([^&]+)/);
+    if(!m) return null;
+    const json=decodeURIComponent(escape(atob(decodeURIComponent(m[1]))));
+    const obj=JSON.parse(json);
+    return (obj&&obj.s)?obj.s:null;
+  }catch(e){ return null; }
+}
+function sendByMail(){
+  if(!SEND.to){ toast("先に⚙で送信先メールを設定してください"); openModal("gmap"); return; }
+  const link=buildCaseLink();
+  const user=state.shinseisha.isCorp?(state.shinseisha.corpName||""):(state.shinseisha.name||"");
+  const subject=`【車庫証明データ】${SEND.from?SEND.from+"／":""}${user}`;
+  const body=`お世話になります。${SEND.from?SEND.from+"です。":""}\n車庫証明の案件データをお送りします。\n下記リンクを開くと、アプリに入力済みの状態で開きます（PCの「印刷→PDFに保存」で書類化できます）。\n\n${link}\n\n― 案件概要 ―\n使用者：${user}\n車名/型式：${(state.vehicle.maker||"")} ${(state.vehicle.katashiki||"")}\n保管場所：${(state.hokan.addr||"")}\n提出先：${stn().name}\n`;
+  location.href="mailto:"+SEND.to+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+}
+function copyCaseLink(){
+  const link=buildCaseLink();
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(()=>toast("リンクをコピーしました")).catch(()=>fallbackCopy(link));
+  } else fallbackCopy(link);
+}
+function fallbackCopy(text){
+  const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand("copy"); toast("リンクをコピーしました"); }catch(e){ prompt("このリンクをコピーしてください", text); }
+  document.body.removeChild(ta);
+}
+function renderSendStatus(){
+  const el=document.getElementById("sendStatus"); if(!el) return;
+  if(SEND.to) el.innerHTML=`<div class="note ok" style="margin:0 0 10px">送信先：<b>${esc(SEND.to)}</b>${SEND.from?`　／　送信元：<b>${esc(SEND.from)}</b>`:""}</div>`;
+  else el.innerHTML=`<div class="note warn" style="margin:0 0 10px">送信先メールが未設定です。右上の<b>⚙</b>→「データ送信設定」で入力してください。</div>`;
+}
+
 function boot(){
   loadAuto();
+  loadSend();
+  const incoming=readIncoming();
+  if(incoming){ state=Object.assign(DEFAULT(), incoming); }
   if(!state.appDate){ state.appDate=new Date().toISOString().slice(0,10); }
   buildStepNav();
   buildStationOptions();
@@ -1934,7 +2011,8 @@ function boot(){
     }; r.readAsDataURL(f);
   });
   if(GMAPS.key && navigator.onLine){ gmapsLoad().catch(function(){}); }
-  gotoStep(0);
+  if(incoming){ try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} scheduleSave(); gotoStep(TOTAL-1); toast("受信した案件データを読み込みました"); }
+  else gotoStep(0);
 }
 /* このスクリプトはbody末尾にあるためDOMは解析済み。GASのHtmlServiceではDOMContentLoadedが
    発火しないことがあるので、待たずに直接初期化する（localhost/GitHub Pagesでも同様に動作）。 */
