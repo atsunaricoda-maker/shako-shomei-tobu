@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#15406b">
+<title>車庫証明かんたん作成｜静岡県東部（沼津・三島・富士ほか）対応</title>
+<!-- PWA（ホーム画面に追加してアプリのように使う） -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="車庫証明">
+<style>
+/* ============================================================
+   車庫証明書類 作成ツール  ―  静岡県東部（沼津・三島・富士ほか）仕様
+   すべて端末内で動作（個人情報の外部送信なし）
+   ============================================================ */
+:root{
+  --navy:#15406b; --navy-d:#0e2c4a; --teal:#1f8a8a; --accent:#e8821a;
+  --bg:#eef2f6; --card:#ffffff; --line:#cdd6e0; --ink:#1c2733;
+  --muted:#5a6b7b; --ok:#1f8a4d; --warn:#c0392b; --warnbg:#fdecea;
+  --okbg:#e8f6ee; --shadow:0 2px 10px rgba(20,40,70,.10);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",system-ui,sans-serif;
+  background:var(--bg); color:var(--ink); line-height:1.6;
+  font-size:16px; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:680px;margin:0 auto;padding:0 0 120px;}
+
+/* ---------- ヘッダー ---------- */
+header.app{
+  position:sticky;top:0;z-index:30;
+  background:linear-gradient(180deg,var(--navy),var(--navy-d));
+  color:#fff;padding:10px 14px;box-shadow:var(--shadow);
+}
+header.app h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.02em;}
+header.app .sub{font-size:11px;opacity:.85;margin-top:1px;}
+header.app .htop{display:flex;align-items:center;gap:8px;}
+header.app .htop .grow{flex:1;min-width:0;}
+.hbtn{
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);
+  color:#fff;border-radius:8px;padding:7px 9px;font-size:12px;cursor:pointer;
+  white-space:nowrap;
+}
+.hbtn:active{background:rgba(255,255,255,.28);}
+
+/* ---------- ステップナビ ---------- */
+.steps{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;background:var(--card);
+  border-bottom:1px solid var(--line);position:sticky;top:54px;z-index:20;
+  scrollbar-width:none;}
+.steps::-webkit-scrollbar{display:none;}
+.step-chip{flex:0 0 auto;display:flex;align-items:center;gap:6px;border:1px solid var(--line);
+  background:#fff;color:var(--muted);border-radius:999px;padding:6px 12px;font-size:12.5px;
+  cursor:pointer;white-space:nowrap;font-weight:600;}
+.step-chip .n{display:inline-flex;width:18px;height:18px;border-radius:50%;background:var(--line);
+  color:#fff;align-items:center;justify-content:center;font-size:11px;}
+.step-chip.active{border-color:var(--navy);color:var(--navy);background:#eaf1fa;}
+.step-chip.active .n{background:var(--navy);}
+.step-chip.done .n{background:var(--ok);}
+.step-chip.done::after{content:"✓";color:var(--ok);font-weight:800;}
+
+/* ---------- セクション ---------- */
+main{padding:14px;}
+section.step{display:none;animation:fade .2s ease;}
+section.step.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px;margin-bottom:14px;box-shadow:var(--shadow);}
+.card h2{font-size:16px;margin:0 0 4px;color:var(--navy);display:flex;align-items:center;gap:8px;}
+.card h2 .badge{font-size:11px;background:var(--teal);color:#fff;border-radius:6px;padding:2px 7px;font-weight:600;}
+.lead{font-size:13px;color:var(--muted);margin:0 0 14px;}
+.hr{height:1px;background:var(--line);border:0;margin:16px 0;}
+
+/* ---------- フォーム ---------- */
+.field{margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+label.lbl{display:block;font-size:13.5px;font-weight:700;margin-bottom:5px;color:var(--ink);}
+label.lbl .req{color:var(--warn);font-size:11px;margin-left:5px;font-weight:700;}
+label.lbl .opt{color:var(--muted);font-size:11px;margin-left:5px;font-weight:500;}
+.hint{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5;}
+.hint.tip{background:#f0f7ff;border-left:3px solid var(--teal);padding:7px 9px;border-radius:0 8px 8px 0;}
+input[type=text],input[type=tel],input[type=number],input[type=date],textarea,select{
+  width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;
+  font-family:inherit;background:#fff;color:var(--ink);}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(21,64,107,.12);}
+textarea{resize:vertical;min-height:64px;}
+.row{display:flex;gap:10px;}
+.row>.field{flex:1;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.suffix{display:flex;align-items:center;gap:6px;}
+.suffix input{flex:1;}
+.suffix .u{font-size:13px;color:var(--muted);white-space:nowrap;}
+.inline-btn{border:1.5px solid var(--navy);background:#eaf1fa;color:var(--navy);border-radius:9px;
+  padding:9px 11px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.inline-btn:active{background:#d8e6f7;}
+
+/* ラジオ・チェックのカード化 */
+.choices{display:flex;flex-direction:column;gap:8px;}
+.choice{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:11px;
+  padding:12px;cursor:pointer;background:#fff;}
+.choice input{margin-top:3px;width:18px;height:18px;flex:0 0 auto;accent-color:var(--navy);}
+.choice .ct{font-weight:700;font-size:14px;}
+.choice .cd{font-size:12px;color:var(--muted);margin-top:2px;}
+.choice.sel{border-color:var(--navy);background:#eaf1fa;}
+.chk{display:flex;gap:10px;align-items:flex-start;}
+.chk input{margin-top:3px;width:18px;height:18px;accent-color:var(--navy);}
+
+/* 警告/情報ボックス */
+.note{border-radius:10px;padding:11px 12px;font-size:12.5px;margin:12px 0;line-height:1.55;}
+.note.warn{background:var(--warnbg);border:1px solid #f0bcb5;color:#8c2317;}
+.note.info{background:#eef6ff;border:1px solid #c4dcf5;color:#1d4a78;}
+.note.ok{background:var(--okbg);border:1px solid #b9e3c9;color:#166235;}
+.note b{font-weight:800;}
+
+/* 距離メーター */
+.dist-meter{margin-top:8px;}
+.dist-bar{height:10px;border-radius:6px;background:#e3e9ef;overflow:hidden;}
+.dist-bar>i{display:block;height:100%;background:var(--ok);transition:width .25s;}
+.dist-bar.over>i{background:var(--warn);}
+.dist-label{font-size:12px;margin-top:5px;font-weight:700;}
+
+/* 配置図プレビュー */
+.svg-prev{border:1px dashed var(--line);border-radius:12px;background:#fff;padding:8px;margin-top:10px;}
+.svg-prev svg{width:100%;height:auto;display:block;}
+
+/* 画像添付 */
+.imgdrop{border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--muted);
+  font-size:13px;background:#fafcfe;}
+.imgdrop .thumb{max-width:100%;border-radius:8px;margin-top:10px;border:1px solid var(--line);}
+/* 画像編集モーダル（配置図トレース／所在図マーカー） */
+.ed-pick{border:2px dashed var(--line);border-radius:12px;padding:24px 16px;text-align:center;color:var(--muted);font-size:14px;cursor:pointer;background:#fafcfe;line-height:1.7;}
+.ed-canvas-wrap{margin:6px 0 4px;}
+#edCanvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;touch-action:none;background:#e9eef2;}
+.ed-ctrl{display:flex;align-items:center;gap:10px;margin:9px 0;font-size:13px;}
+.ed-ctrl label{flex:0 0 84px;font-weight:700;color:var(--ink);}
+.ed-ctrl input[type=range]{flex:1;accent-color:var(--navy);height:26px;}
+.ed-tip{font-size:12px;color:var(--muted);background:#f0f7ff;border-left:3px solid var(--teal);padding:8px 10px;border-radius:0 8px 8px 0;margin:8px 0;line-height:1.55;}
+.ed-actions{display:flex;gap:10px;margin-top:14px;}
+.ed-actions button{flex:1;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;}
+.ed-use{background:var(--accent);color:#fff;}
+.ed-cancel{background:#e7edf3;color:var(--navy);flex:0 0 100px;}
+.fig-btn{width:100%;padding:13px;border:1.5px solid var(--teal);background:#eafafa;color:#0f6b6b;border-radius:11px;font-size:14px;font-weight:800;cursor:pointer;}
+.fig-btn:active{background:#d6f2f2;}
+.fig-status{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:10px;background:#f5fbff;}
+.fig-status img{width:56px;height:42px;object-fit:cover;border-radius:6px;border:1px solid var(--line);}
+.fig-status .fs-t{flex:1;font-size:12.5px;font-weight:700;color:var(--ok);}
+.fig-status button{border:none;background:var(--warnbg);color:var(--warn);border-radius:8px;padding:8px 11px;font-size:12px;font-weight:700;cursor:pointer;}
+
+/* ---------- 確認ステップ ---------- */
+.summary-grid{font-size:13px;}
+.summary-grid .srow{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);}
+.summary-grid .sk{flex:0 0 38%;color:var(--muted);font-weight:700;}
+.summary-grid .sv{flex:1;word-break:break-word;}
+.summary-grid .sv.empty{color:var(--warn);}
+.docpick{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.doc-card{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;}
+.doc-card .di{width:34px;height:34px;border-radius:8px;background:#eaf1fa;color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;}
+.doc-card .dt{flex:1;font-size:13.5px;font-weight:700;}
+.doc-card .dn{font-size:11px;color:var(--muted);font-weight:500;}
+
+/* ---------- フッターナビ ---------- */
+.footnav{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:1px solid var(--line);
+  padding:10px 12px;display:flex;gap:10px;box-shadow:0 -2px 12px rgba(0,0,0,.06);}
+.footnav .wrapf{max-width:680px;margin:0 auto;display:flex;gap:10px;width:100%;}
+.btn{flex:1;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;}
+.btn.prev{background:#e7edf3;color:var(--navy);flex:0 0 96px;}
+.btn.next{background:var(--navy);color:#fff;}
+.btn.make{background:var(--accent);color:#fff;}
+.btn:active{filter:brightness(.94);}
+.btn[disabled]{opacity:.5;}
+
+/* ---------- モーダル ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(10,20,35,.55);z-index:60;display:none;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;width:100%;max-width:680px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px;}
+.modal h3{margin:0 0 10px;color:var(--navy);font-size:17px;}
+.modal .close{position:sticky;top:0;float:right;background:#eef2f6;border:none;border-radius:8px;width:34px;height:34px;font-size:18px;cursor:pointer;}
+.modal table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0;}
+.modal th,.modal td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top;}
+.modal th{background:#f0f4f8;width:38%;}
+.modal a{color:var(--navy);word-break:break-all;}
+.modal ul{padding-left:18px;margin:8px 0;}
+.modal li{margin-bottom:5px;font-size:13px;}
+.linklist a{display:block;padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:12.5px;background:#fafcfe;}
+
+.draft-item{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;}
+.draft-item .dni{flex:1;}
+.draft-item .dnm{font-weight:700;font-size:14px;}
+.draft-item .dts{font-size:11px;color:var(--muted);}
+.draft-item button{border:none;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;}
+.draft-item .ld{background:var(--navy);color:#fff;}
+.draft-item .dl{background:var(--warnbg);color:var(--warn);}
+
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy-d);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:700;
+  opacity:0;transition:.25s;z-index:70;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.foot-meta{text-align:center;font-size:11px;color:var(--muted);padding:8px 16px 0;}
+
+/* =========================================================
+   印刷用 書類（A4）
+   ========================================================= */
+#print-area{display:none;}
+.sheet{
+  font-family:"Yu Mincho","Hiragino Mincho ProN","MS Mincho",serif;
+  color:#000;background:#fff;
+}
+.sheet h2.dt{text-align:center;font-size:19px;letter-spacing:.5em;margin:0 0 4px;font-weight:700;}
+.sheet .dt-sub{text-align:center;font-size:11px;letter-spacing:.1em;color:#333;margin-bottom:14px;}
+.ftable{width:100%;border-collapse:collapse;}
+.ftable th,.ftable td{border:1px solid #000;padding:7px 8px;font-size:13px;vertical-align:middle;}
+.ftable th{background:#f2f2f2;font-weight:600;width:30%;text-align:center;}
+.ftable td.val{font-size:14px;}
+.ftable .big{font-size:15px;letter-spacing:.05em;}
+/* 公式様式（自動車保管場所証明申請書）の忠実再現用 */
+.off{width:100%;border-collapse:collapse;table-layout:fixed;}
+.off td{border:1px solid #000;padding:5px 7px;font-size:12px;vertical-align:middle;word-break:break-all;}
+.off .ttl{text-align:center;font-size:16px;letter-spacing:.4em;padding:7px 0;}
+.off .hd{text-align:center;letter-spacing:.15em;}
+.off .ctr{text-align:center;}
+.off .v{font-size:13px;}
+.offlbl{font-size:10.5px;margin-bottom:4px;}
+.offbody{font-size:12px;line-height:1.7;}
+.applibox{border:1px solid #000;padding:6px 10px;font-size:12px;line-height:1.95;}
+.offsmall{font-size:9px;line-height:1.5;}
+/* 下書き表示（提出は公式様式へ） */
+.draft-banner{border:2px solid #c0392b;color:#c0392b;font-weight:700;text-align:center;padding:5px;margin-bottom:6px;font-size:12.5px;border-radius:3px;}
+.sheet.draft{position:relative;}
+.sheet.draft::after{content:"下　書　き";position:absolute;top:44%;left:0;right:0;text-align:center;transform:rotate(-22deg);font-size:92px;font-weight:800;color:rgba(192,57,43,.10);letter-spacing:.12em;white-space:nowrap;pointer-events:none;z-index:0;}
+.sheet.draft>*{position:relative;z-index:1;}
+/* スタンプ式 配置図エディタ */
+#stCanvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:#fff;touch-action:none;}
+.stamp-palette{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px;}
+.stamp-palette button{flex:1 1 30%;border:1.5px solid var(--teal);background:#eafafa;color:#0f6b6b;border-radius:9px;padding:9px 4px;font-size:12.5px;font-weight:700;cursor:pointer;}
+.stamp-palette button:active{background:#d6f2f2;}
+.stamp-ctrl{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0;}
+.stamp-ctrl button{flex:1 1 18%;border:1px solid var(--line);background:#f3f6f9;border-radius:9px;padding:9px 4px;font-size:12px;font-weight:700;cursor:pointer;}
+.sheet .right{text-align:right;}
+.sheet .center{text-align:center;}
+.sheet .small{font-size:11px;color:#333;}
+.sheet .sign-line{border-bottom:1px solid #000;display:inline-block;min-width:60%;}
+.sheet .addr-block{margin-top:18px;font-size:14px;line-height:2;}
+.sheet .bodytext{font-size:14px;line-height:2;margin:14px 0;}
+.sheet .ol{font-size:13px;line-height:1.9;}
+.haichi-svg{border:1px solid #000;}
+.zu-wrap{display:flex;gap:0;flex-direction:column;border:1px solid #000;}
+.zu-cell{padding:10px;}
+.zu-cell+.zu-cell{border-top:1px solid #000;}
+.zu-cell .zt{font-size:13px;font-weight:700;margin-bottom:6px;border-left:4px solid #000;padding-left:8px;}
+.cl-list{font-size:13px;line-height:1.5;}
+.cl-list .cli{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #999;}
+.cl-list .cb{flex:0 0 auto;width:16px;height:16px;border:1.5px solid #000;border-radius:3px;}
+
+@media print{
+  body{background:#fff;}
+  .wrap>*:not(#print-area){display:none !important;}
+  header.app,.steps,.footnav,.toast,.modal-bg{display:none !important;}
+  #print-area{display:block;}
+  .wrap{max-width:none;padding:0;}
+  .sheet{
+    width:210mm;min-height:292mm;padding:16mm 15mm;margin:0 auto;
+    page-break-after:always;box-sizing:border-box;
+  }
+  .sheet:last-child{page-break-after:auto;}
+  /* プレビュー用の装飾を印刷時にリセット（PDFに灰色背景や影が出ないように） */
+  #print-area.preview{background:#fff !important;padding:0 !important;margin:0 !important;}
+  #print-area.preview .sheet{box-shadow:none !important;border-radius:0 !important;
+    width:210mm;margin:0 auto;padding:16mm 15mm;}
+  @page{size:A4;margin:0;}
+}
+/* 画面上のプレビュー表示 */
+#print-area.preview{display:block;background:#5a6b7b;padding:16px 0;margin:0 -14px;}
+#print-area.preview .sheet{
+  width:100%;max-width:210mm;background:#fff;margin:0 auto 16px;padding:14mm;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);border-radius:2px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ========== ヘッダー ========== -->
+  <header class="app">
+    <div class="htop">
+      <div class="grow">
+        <h1>車庫証明かんたん作成</h1>
+        <div class="sub">静岡県東部（沼津・三島・富士ほか）対応 ・ 普通自動車</div>
+      </div>
+      <button class="hbtn" onclick="openModal('cust')">顧客</button>
+      <button class="hbtn" onclick="openModal('draft')">案件</button>
+      <button class="hbtn" onclick="openModal('info')">提出先</button>
+      <button class="hbtn" onclick="openModal('gmap')" title="地図連携設定">⚙</button>
+    </div>
+  </header>
+
+  <!-- ========== ステップナビ ========== -->
+  <nav class="steps" id="stepNav"></nav>
+
+  <!-- ========== 本体 ========== -->
+  <main>
+
+    <!-- STEP 1 申請区分 -->
+    <section class="step" data-step="0">
+      <div class="card">
+        <h2>① 申請の区分</h2>
+        <p class="lead">まず申請のパターンを選びます。選んだ内容に合わせて、必要な書類・提出先・手数料が自動で切り替わります。</p>
+
+        <div class="field">
+          <label class="lbl">申請の種別<span class="req">必須</span></label>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="shinseiType" value="futsu" data-bind="kubun.shinseiType">
+              <span><span class="ct">普通自動車（証明申請）</span><span class="cd">車庫証明書の交付を受ける。手数料2,400円</span></span></label>
+            <label class="choice"><input type="radio" name="shinseiType" value="kei" data-bind="kubun.shinseiType">
+              <span><span class="ct">軽自動車（保管場所届出）</span><span class="cd">ナンバー取得後に届出。手数料無料・証明書なし</span></span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl">提出先（管轄警察署）<span class="req">必須</span></label>
+          <select data-bind="kubun.station" id="stationSel"></select>
+          <div class="hint" id="stationHint"></div>
+        </div>
+
+        <div id="keiBanner"></div>
+
+        <div class="field">
+          <label class="lbl">保管場所（車庫）の権原<span class="req">必須</span></label>
+          <div class="choices" id="kengenChoices">
+            <label class="choice"><input type="radio" name="kengen" value="jinin" data-bind="kubun.kengen">
+              <span><span class="ct">自分の土地・建物に駐車</span><span class="cd">自宅敷地・自己所有の車庫など →「自認書」を作成</span></span></label>
+            <label class="choice"><input type="radio" name="kengen" value="shoudaku" data-bind="kubun.kengen">
+              <span><span class="ct">他人の土地・月極駐車場を借りる</span><span class="cd">賃貸駐車場・親族の土地など →「使用承諾証明書」を作成</span></span></label>
+            <label class="choice"><input type="radio" name="kengen" value="kyoyu" data-bind="kubun.kengen">
+              <span><span class="ct">共有の土地に駐車</span><span class="cd">申請者を含む共有 → 共有者全員の「使用承諾証明書」が必要</span></span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="chk"><input type="checkbox" data-bind="kubun.daiko">
+            <span><b>行政書士による代理申請</b><span class="hint">代理申請では委任状等を求められる場合があります。提出先の警察署窓口でご確認ください（公式ページに明記なし）。</span></span></label>
+        </div>
+
+        <div class="note info" style="font-size:11.5px">
+          静岡県内は手数料・様式が共通のため、上の提出先を選ぶだけで東部の他市にも対応できます（証明手数料2,400円・収入証紙・標章2025年廃止は県内共通）。
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2 申請者 -->
+    <section class="step" data-step="1">
+      <div class="card">
+        <h2>② 申請者（使用者）</h2>
+        <p class="lead">自動車を実際に使う人（使用者）の情報。住民票・印鑑証明のとおりに入力してください。窓口に行く人ではありません。</p>
+
+        <div class="field">
+          <label class="chk"><input type="checkbox" data-bind="shinseisha.isCorp" id="isCorp">
+            <span><b>法人名義で申請する</b></span></label>
+        </div>
+
+        <div class="field corp-only" style="display:none">
+          <label class="lbl">法人名称</label>
+          <input type="text" data-bind="shinseisha.corpName" placeholder="例）株式会社○○商事">
+        </div>
+        <div class="field corp-only" style="display:none">
+          <label class="lbl">代表者氏名</label>
+          <input type="text" data-bind="shinseisha.daihyo" placeholder="例）代表取締役 山田太郎">
+        </div>
+
+        <div class="field">
+          <label class="lbl">氏名（個人）／担当者<span class="req">必須</span></label>
+          <input type="text" data-bind="shinseisha.name" placeholder="例）山田 太郎">
+        </div>
+        <div class="field">
+          <label class="lbl">フリガナ<span class="opt">任意</span></label>
+          <input type="text" data-bind="shinseisha.kana" placeholder="例）ヤマダ タロウ">
+        </div>
+        <div class="row">
+          <div class="field" style="flex:0 0 38%">
+            <label class="lbl">郵便番号<span class="opt">任意</span></label>
+            <input type="tel" data-bind="shinseisha.zip" placeholder="410-0000" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label class="lbl">電話番号<span class="req">必須</span></label>
+            <input type="tel" data-bind="shinseisha.tel" placeholder="090-0000-0000" inputmode="tel">
+          </div>
+        </div>
+        <div class="field">
+          <label class="lbl">住所（使用者の住所）<span class="req">必須</span></label>
+          <input type="text" data-bind="shinseisha.addr" placeholder="例）沼津市○○町1丁目2番3号">
+          <div class="hint">個人は住民票、法人は登記簿上の所在地と一致させます。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3 自動車 -->
+    <section class="step" data-step="2">
+      <div class="card">
+        <h2>③ 自動車（車検証から転記）</h2>
+        <p class="lead">車名・型式・車台番号・大きさは、必ず<b>車検証（自動車検査証）</b>のとおりに入力してください。新車で未確定の欄は空欄で構いません。</p>
+
+        <div class="field">
+          <label class="lbl">車名（メーカー名）<span class="req">必須</span></label>
+          <input type="text" data-bind="vehicle.maker" placeholder="例）トヨタ ／ ホンダ">
+          <div class="hint">「プリウス」等の車種名ではなく「トヨタ」等のメーカー名。</div>
+        </div>
+        <div class="field">
+          <label class="lbl">型式<span class="req">必須</span></label>
+          <input type="text" data-bind="vehicle.katashiki" placeholder="例）DAA-ZVW30">
+          <div class="hint tip">0（オー）とO、1（イチ）とl（エル）、2とZ など紛らわしい英数字に注意。車検証のとおり正確に。</div>
+        </div>
+        <div class="field">
+          <label class="lbl">車台番号<span class="req">必須</span></label>
+          <input type="text" data-bind="vehicle.daiban" placeholder="例）ZVW30-1234567">
+        </div>
+        <div class="field">
+          <label class="lbl">自動車の大きさ（cm）<span class="req">必須</span></label>
+          <div class="row3">
+            <div class="suffix"><input type="number" data-bind="vehicle.len" placeholder="長さ" inputmode="decimal"><span class="u">cm</span></div>
+            <div class="suffix"><input type="number" data-bind="vehicle.wid" placeholder="幅" inputmode="decimal"><span class="u">cm</span></div>
+            <div class="suffix"><input type="number" data-bind="vehicle.hei" placeholder="高さ" inputmode="decimal"><span class="u">cm</span></div>
+          </div>
+          <div class="hint">車検証の寸法（cm）。配置図の駐車スペース寸法と矛盾しないように。</div>
+        </div>
+        <div class="field">
+          <label class="lbl">保管場所標章番号<span class="opt">旧制度・任意</span></label>
+          <input type="text" data-bind="vehicle.hyoshoNo" placeholder="買替えで旧番号がある場合のみ">
+          <div class="hint">標章は2025年4月1日に廃止。買替えで従前車の番号がある場合のみ記入すると所在図を省略できることがあります。新規は空欄。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 4 使用の本拠 -->
+    <section class="step" data-step="3">
+      <div class="card">
+        <h2>④ 使用の本拠の位置</h2>
+        <p class="lead">自動車を実際に使う拠点（個人は自宅、法人は事業所）の所在地です。</p>
+        <div class="field">
+          <label class="chk"><input type="checkbox" data-bind="honkyo.same" id="honkyoSame">
+            <span><b>申請者の住所と同じ</b><span class="hint">個人で自宅を本拠にする場合はこちら。</span></span></label>
+        </div>
+        <div class="field" id="honkyoAddrField">
+          <label class="lbl">使用の本拠の住所<span class="req">必須</span></label>
+          <input type="text" data-bind="honkyo.addr" placeholder="例）沼津市○○町1丁目2番3号">
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 5 保管場所 -->
+    <section class="step" data-step="4">
+      <div class="card">
+        <h2>⑤ 保管場所（車庫）の位置</h2>
+        <p class="lead">車庫・駐車場の所在地。使用の本拠から<b>直線2km以内</b>であることが必要です。</p>
+        <div class="field">
+          <label class="lbl">保管場所の住所<span class="req">必須</span></label>
+          <input type="text" data-bind="hokan.addr" placeholder="例）沼津市○○町4番5">
+        </div>
+        <div class="row">
+          <div class="field">
+            <label class="lbl">駐車場の名称<span class="opt">任意</span></label>
+            <input type="text" data-bind="hokan.name" placeholder="例）○○パーキング">
+          </div>
+          <div class="field" style="flex:0 0 40%">
+            <label class="lbl">区画番号<span class="opt">任意</span></label>
+            <input type="text" data-bind="hokan.kukaku" placeholder="例）12番">
+          </div>
+        </div>
+
+        <hr class="hr">
+        <div class="field">
+          <label class="lbl">本拠からの直線距離（m）</label>
+          <div class="suffix"><input type="number" data-bind="hokan.distance" placeholder="例）350" inputmode="numeric" id="distInput"><span class="u">m</span></div>
+          <div class="dist-meter">
+            <div class="dist-bar" id="distBar"><i style="width:0%"></i></div>
+            <div class="dist-label" id="distLabel" style="color:var(--muted)">距離を入力すると2km判定を表示します</div>
+          </div>
+        </div>
+        <div class="field">
+          <button class="inline-btn" style="width:100%;padding:12px;border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="autoDistance()">📍 住所から直線距離を自動計算（地図連携）</button>
+          <div class="hint">⚙でAPIキーを設定すると、本拠・保管場所の住所から直線距離を自動入力します。</div>
+        </div>
+        <div class="field">
+          <button class="inline-btn" style="width:100%;padding:12px" onclick="openMapMeasure()">📍 Googleマップで直線距離を測る（手動）</button>
+          <div class="hint tip">スマホのGoogleマップで起点を<b>長押し</b>→赤ピン→メニューの「距離を測定」→終点に合わせると下部に直線距離が出ます。その数値を上に入力してください。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 6 権原詳細 -->
+    <section class="step" data-step="5">
+      <!-- 自認書 -->
+      <div class="card kengen-jinin">
+        <h2>⑥ 自認書の内容 <span class="badge">自己所有</span></h2>
+        <p class="lead">保管場所が自分の所有である内容を記載します。</p>
+        <div class="field">
+          <label class="lbl">所有しているもの<span class="req">必須</span></label>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="jinin_obj" value="土地" data-bind="jinin.obj"><span class="ct">土地</span></label>
+            <label class="choice"><input type="radio" name="jinin_obj" value="建物" data-bind="jinin.obj"><span class="ct">建物</span></label>
+            <label class="choice"><input type="radio" name="jinin_obj" value="土地・建物" data-bind="jinin.obj"><span class="ct">土地・建物の両方</span></label>
+          </div>
+        </div>
+        <div class="note info">土地と建物で所有者が異なる場合や<b>共有</b>の場合は、他の所有者の「使用承諾証明書」が別途必要です（①の区分を見直してください）。</div>
+      </div>
+
+      <!-- 使用承諾証明書 -->
+      <div class="card kengen-shoudaku">
+        <h2>⑥ 使用承諾証明書の内容 <span class="badge">他人所有・月極</span></h2>
+        <p class="lead">駐車場の所有者・管理会社に記入してもらう書面です。把握している範囲で入力し、最終的な記名は所有者・管理者にしてもらってください。</p>
+        <div class="note warn">この書面は<b>所有者・管理者本人</b>が作成・記名するものです。申請者が無断で作成すると私文書偽造になります。証明日から<b>3か月以内</b>のものが必要です。</div>
+
+        <div class="field">
+          <label class="chk"><input type="checkbox" data-bind="shoudaku.forOwner" id="shoudakuForOwner">
+            <span><b>権利者（所有者）記入用で出力する（推奨）</b><span class="hint">所有者欄・承諾日を空欄にして印刷し、所有者・管理者ご本人に手書き・署名してもらう原本用です。チェックを外すと内容を印字（控え用）。</span></span></label>
+        </div>
+
+        <div class="field">
+          <label class="lbl">使用者と契約者の関係<span class="req">必須</span></label>
+          <select data-bind="shoudaku.kankei">
+            <option value="">選択してください</option>
+            <option value="本人">本人（使用者＝契約者）</option>
+            <option value="家族">家族（親・子など）</option>
+            <option value="法人とその役員・従業員">法人とその役員・従業員</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+        <div class="row">
+          <div class="field"><label class="lbl">使用期間（開始）<span class="req">必須</span></label><input type="date" data-bind="shoudaku.useFrom"></div>
+          <div class="field"><label class="lbl">使用期間（終了）<span class="req">必須</span></label><input type="date" data-bind="shoudaku.useTo"></div>
+        </div>
+        <div class="hint" id="periodHint"></div>
+
+        <div class="owner-fields">
+        <hr class="hr">
+        <p class="lead" style="margin-bottom:8px"><b>土地・建物の所有者または管理委託者</b>（承諾する人）<span class="opt">「記入済み」出力のときのみ使用</span></p>
+        <div class="field"><label class="lbl">氏名・名称</label><input type="text" data-bind="shoudaku.ownerName" placeholder="例）○○不動産株式会社"></div>
+        <div class="field"><label class="lbl">住所</label><input type="text" data-bind="shoudaku.ownerAddr" placeholder="所有者・管理会社の住所"></div>
+        <div class="field"><label class="lbl">電話番号</label><input type="tel" data-bind="shoudaku.ownerTel" placeholder="055-000-0000" inputmode="tel"></div>
+        </div>
+
+        <hr class="hr">
+        <p class="lead" style="margin-bottom:8px"><b>契約者</b>（駐車場の賃貸借契約者）</p>
+        <div class="field">
+          <label class="chk"><input type="checkbox" data-bind="shoudaku.keiyakuSame" id="keiyakuSame"><span>使用者と同じ（「上記に同じ」と記載）</span></label>
+        </div>
+        <div class="keiyaku-fields">
+          <div class="field"><label class="lbl">契約者 氏名</label><input type="text" data-bind="shoudaku.keiyakuName"></div>
+          <div class="field"><label class="lbl">契約者 住所</label><input type="text" data-bind="shoudaku.keiyakuAddr"></div>
+          <div class="field"><label class="lbl">契約者 電話番号</label><input type="tel" data-bind="shoudaku.keiyakuTel" inputmode="tel"></div>
+        </div>
+        <div class="note info" id="kyoyuNote" style="display:none"><b>共有</b>の場合は、共有者全員からこの承諾書をもらってください（人数分作成）。</div>
+      </div>
+    </section>
+
+    <!-- STEP 7 配置図 -->
+    <section class="step" data-step="6">
+      <div class="card">
+        <h2>⑦ 配置図（自動作図）</h2>
+        <p class="lead">寸法を入力すると、提出できる配置図を自動で描きます。<b>配置図は省略できません。</b>現地でメジャー計測した数値を入れてください。</p>
+
+        <div class="field">
+          <label class="lbl">駐車場のタイプ</label>
+          <select data-bind="haichi.type">
+            <option value="平面">平面（青空・1台）</option>
+            <option value="屋内">屋内・カーポート</option>
+            <option value="機械式">機械式・立体</option>
+          </select>
+        </div>
+        <div class="row">
+          <div class="field"><label class="lbl">スペース 幅（m）<span class="req">必須</span></label>
+            <div class="suffix"><input type="number" step="0.1" data-bind="haichi.w" placeholder="2.5" inputmode="decimal"><span class="u">m</span></div></div>
+          <div class="field"><label class="lbl">スペース 奥行（m）<span class="req">必須</span></label>
+            <div class="suffix"><input type="number" step="0.1" data-bind="haichi.d" placeholder="5.0" inputmode="decimal"><span class="u">m</span></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label class="lbl">出入口の幅（m）</label>
+            <div class="suffix"><input type="number" step="0.1" data-bind="haichi.gate" placeholder="2.5" inputmode="decimal"><span class="u">m</span></div></div>
+          <div class="field"><label class="lbl">前面道路の幅員（m）<span class="req">必須</span></label>
+            <div class="suffix"><input type="number" step="0.1" data-bind="haichi.road" placeholder="4.0" inputmode="decimal"><span class="u">m</span></div></div>
+        </div>
+        <div class="field">
+          <label class="lbl">出入口の向き（前面道路の位置）</label>
+          <select data-bind="haichi.roadSide">
+            <option value="south">下（手前）</option>
+            <option value="north">上（奥）</option>
+            <option value="west">左</option>
+            <option value="east">右</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="chk"><input type="checkbox" data-bind="haichi.shutter"><span>シャッター・ゲートあり</span></label>
+        </div>
+        <div class="field">
+          <label class="lbl">隣接の状況・備考<span class="opt">任意</span></label>
+          <input type="text" data-bind="haichi.rinsetsu" placeholder="例）西側に自宅、東側にA氏宅。更地。">
+        </div>
+
+        <div class="svg-prev" id="haichiPrev"></div>
+        <div class="hint" id="haichiCheck"></div>
+
+        <hr class="hr">
+        <button class="fig-btn" onclick="openEditor('haichi')">📷 航空写真でなぞって配置図を作る（任意）</button>
+        <div class="ed-tip">Googleマップの航空写真をスクショ → 取り込み → 駐車枠を実際の位置にドラッグして、サイズ・向きを合わせます。上で入れた寸法が枠に表示されます。</div>
+        <div id="haichiFigStatus"></div>
+
+        <hr class="hr">
+        <button class="fig-btn" onclick="openStampEditor()">✏️ スタンプで配置図を作る（部品を置いて作図）</button>
+        <div class="ed-tip">「保管場所」「自宅」「道路」などの部品を置いて、ドラッグで移動・大きさ変更。航空写真なしでも直感的に作図できます。</div>
+      </div>
+    </section>
+
+    <!-- STEP 8 所在図 -->
+    <section class="step" data-step="7">
+      <div class="card">
+        <h2>⑧ 所在図</h2>
+        <p class="lead">本拠と保管場所の位置関係を示す図。<b>⑤までに入れた住所から自動で作成</b>します（このステップを開くと自動作成、住所変更時は再作成を押してください）。</p>
+
+        <button class="fig-btn" style="border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="autoShozai()">🗺 住所から所在図を自動作成 / 再作成</button>
+        <div class="ed-tip">本拠・保管場所の住所をもとに、Googleマップで所在図（本拠・車庫の印＋直線＋距離）を自動生成します。※Google Maps APIキー（⚙）が必要です。</div>
+        <div id="shozaiFigStatus"></div>
+
+        <hr class="hr">
+        <div class="hint" style="font-weight:700;margin-bottom:6px">他の方法（キー未設定・微調整したいとき）</div>
+        <button class="fig-btn" onclick="openEditor('shozai')">📷 地図を取り込んで手動で記入</button>
+        <button class="inline-btn" style="width:100%;margin-top:10px" onclick="openMapForAddr()">🗺 保管場所をGoogleマップで開く（確認用）</button>
+        <label class="chk" style="margin-top:12px"><input type="checkbox" id="shozaiBeppu" onchange="setBeppu(this.checked)"><span>自動作成せず「別紙のとおり」と印字（地図は別途印刷して添付）</span></label>
+      </div>
+    </section>
+
+    <!-- STEP 9 確認・作成 -->
+    <section class="step" data-step="8">
+      <div class="card">
+        <h2>⑨ 確認して書類を作成</h2>
+        <div class="field">
+          <label class="lbl">申請年月日</label>
+          <input type="date" data-bind="appDate" id="appDate">
+        </div>
+
+        <div id="validBox"></div>
+
+        <hr class="hr">
+        <h3 style="font-size:14px;color:var(--navy);margin:0 0 8px">入力内容の確認</h3>
+        <div class="summary-grid" id="summaryGrid"></div>
+
+        <hr class="hr">
+        <h3 style="font-size:14px;color:var(--navy);margin:0 0 6px">作成される書類</h3>
+        <div class="docpick" id="docPick"></div>
+
+        <div class="note info" style="margin-top:14px">
+          作成されるのは<b>下書き（見本）</b>です。下の「公式様式（原本）」を印刷し、下書きを見ながら<b>原本へ転記</b>して提出してください。出力はスマホの<b>共有→プリント</b>／「PDFに保存」。
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>公式様式（原本）の入手</h2>
+        <p class="lead">提出は静岡県警の<b>公式様式（原本）</b>に記入します。原本を開いて印刷・保存し、上で作った下書きを見本に転記してください。</p>
+        <div class="linklist">
+          <a href="https://www.pref.shizuoka.jp/police/_res/projects/project_police/_page_/002/000/577/2-1syoumeisinsei0803.pdf" target="_blank" rel="noopener">▶ 自動車保管場所証明申請書（原本PDF）</a>
+          <a href="https://www.pref.shizuoka.jp/police/_res/projects/project_police/_page_/002/000/577/2-3hokanbasyozu0803.pdf" target="_blank" rel="noopener">▶ 保管場所の所在図・配置図（原本PDF）</a>
+          <a href="https://www.pref.shizuoka.jp/police/_res/projects/project_police/_page_/002/000/577/2-5someisyomen0803.pdf" target="_blank" rel="noopener">▶ 自認書（原本PDF）</a>
+          <a href="https://www.pref.shizuoka.jp/police/_res/projects/project_police/_page_/002/000/577/2-7syoudakusyoumei0803.pdf" target="_blank" rel="noopener">▶ 保管場所使用承諾証明書（原本PDF）</a>
+          <a href="https://www.pref.shizuoka.jp/police/shinse/kotsu/kiseka/jikayo.html" target="_blank" rel="noopener">▶ 最新版・様式一覧（静岡県警 自家用車 手続ページ）</a>
+          <a href="https://www.pref.shizuoka.jp/police/shinse/kotsu/kiseka/kejidosha.html" target="_blank" rel="noopener">▶ 軽自動車の届出様式はこちら</a>
+        </div>
+        <div class="hint" style="margin-top:8px">※ リンク先は静岡県警の公式PDF。様式は改定されることがあるので最新版もご確認ください。自認書・承諾書・所在図配置図は様式自由のためアプリ出力のまま提出も可能です。</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== フッターナビ ========== -->
+  <div class="footnav">
+    <div class="wrapf">
+      <button class="btn prev" id="btnPrev" onclick="go(-1)">戻る</button>
+      <button class="btn next" id="btnNext" onclick="go(1)">次へ</button>
+    </div>
+  </div>
+
+  <div class="foot-meta">
+    本ツールは入力内容をすべて端末内で処理し、外部に送信しません。<br>
+    様式・手数料は2026年6月時点の情報です。最新は管轄警察署・静岡県警でご確認ください。
+  </div>
+
+  <!-- ========== 印刷エリア ========== -->
+  <div id="print-area"></div>
+
+</div>
+
+<!-- ========== モーダル ========== -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   状態管理
+   ===================================================================== */
+const DEFAULT = ()=>({
+  kubun:{ shinseiType:"futsu", station:"numazu", kengen:"jinin", daiko:false },
+  shinseisha:{ isCorp:false, corpName:"", daihyo:"", name:"", kana:"", zip:"", tel:"", addr:"" },
+  vehicle:{ maker:"", katashiki:"", daiban:"", len:"", wid:"", hei:"", hyoshoNo:"" },
+  honkyo:{ same:true, addr:"" },
+  hokan:{ addr:"", name:"", kukaku:"", distance:"" },
+  jinin:{ obj:"土地" },
+  shoudaku:{ kankei:"", useFrom:"", useTo:"", ownerName:"", ownerAddr:"", ownerTel:"", forOwner:true,
+             keiyakuSame:true, keiyakuName:"", keiyakuAddr:"", keiyakuTel:"" },
+  haichi:{ type:"平面", w:"", d:"", gate:"", road:"", roadSide:"south", shutter:false, rinsetsu:"" },
+  shozai:{ mode:"image" },
+  appDate:""
+});
+let state = DEFAULT();
+let mapImage = null;        // 地図画像（メモリのみ）
+let step = 0;
+const TOTAL = 9;
+const AUTOSAVE = "shako_tobu_auto";
+const DRAFTS  = "shako_tobu_drafts";
+
+const STEP_LABELS = ["区分","申請者","自動車","本拠","保管場所","権原","配置図","所在図","作成"];
+
+/* 提出先警察署（静岡県東部・静岡県警公式で確認）。県内は手数料2,400円・収入証紙・標章廃止が共通。
+   提出先が変わると宛先・所在地だけが変わる。kei: 軽自動車の保管場所届出義務 'none'=不要地域 / 'req'=義務地域。
+   keiArea=義務の対象市 / keiEx=同一管轄内でも届出不要となる町・旧町村部の注記（公式の必要地域一覧で確認） */
+const STATIONS = [
+  {key:"numazu",     name:"沼津警察署",     zip:"〒410-8508", addr:"沼津市平町19-11",      tel:"055-952-0110", area:"沼津市・清水町",     kei:"req",  keiArea:"沼津市", keiEx:"沼津市の旧戸田村（戸田地区）・駿東郡清水町は届出不要"},
+  {key:"mishima",    name:"三島警察署",     zip:"〒411-0801", addr:"三島市谷田194-1",      tel:"055-981-0110", area:"三島市・函南町",     kei:"req",  keiArea:"三島市", keiEx:"田方郡函南町は届出不要（三島市は全域義務）"},
+  {key:"fuji",       name:"富士警察署",     zip:"〒417-8566", addr:"富士市八代町3-55",     tel:"0545-51-0110", area:"富士市",             kei:"req",  keiArea:"富士市", keiEx:"旧富士川町（富士川地区）は届出不要"},
+  {key:"fujinomiya", name:"富士宮警察署",   zip:"〒418-0062", addr:"富士宮市城北町160",    tel:"0544-23-0110", area:"富士宮市",           kei:"req",  keiArea:"富士宮市", keiEx:"旧芝川町（芝川地区）は届出不要"},
+  {key:"gotemba",    name:"御殿場警察署",   zip:"〒412-0004", addr:"御殿場市北久原439-2",  tel:"0550-84-0110", area:"御殿場市・小山町",   kei:"none"},
+  {key:"susono",     name:"裾野警察署",     zip:"〒410-1197", addr:"裾野市平松620-1",      tel:"055-995-0110", area:"裾野市・長泉町",     kei:"none"},
+  {key:"izuchuo",    name:"伊豆中央警察署", zip:"〒410-2321", addr:"伊豆の国市三福239-4",  tel:"0558-76-0110", area:"伊豆の国市・伊豆市", kei:"none"},
+  {key:"atami",      name:"熱海警察署",     zip:"〒413-0017", addr:"熱海市福道町3-19",     tel:"0557-85-0110", area:"熱海市",             kei:"none"},
+  {key:"ito",        name:"伊東警察署",     zip:"〒414-8543", addr:"伊東市竹の台2-26",     tel:"0557-38-0110", area:"伊東市",             kei:"none"},
+  {key:"shimoda",    name:"下田警察署",     zip:"〒415-0013", addr:"下田市柿崎1106",       tel:"0558-27-0110", area:"下田市・賀茂郡",     kei:"none"},
+];
+function stn(){ return STATIONS.find(s=>s.key===state.kubun.station) || STATIONS[0]; }
+function ate(){ return "静岡県"+stn().name+"長 殿"; }
+function isKei(){ return state.kubun.shinseiType==="kei"; }
+
+/* path helpers */
+const getP=(o,p)=>p.split(".").reduce((a,k)=>a&&a[k]!==undefined?a[k]:undefined,o);
+const setP=(o,p,v)=>{const ks=p.split(".");const last=ks.pop();let t=o;ks.forEach(k=>{if(t[k]===undefined)t[k]={};t=t[k];});t[last]=v;};
+
+/* =====================================================================
+   バインド（入力 → state）
+   ===================================================================== */
+function bindAll(){
+  document.querySelectorAll("[data-bind]").forEach(el=>{
+    const path = el.getAttribute("data-bind");
+    const ev = (el.type==="checkbox"||el.type==="radio"||el.tagName==="SELECT")?"change":"input";
+    el.addEventListener(ev, ()=>{
+      let v;
+      if(el.type==="checkbox") v=el.checked;
+      else v=el.value;
+      setP(state,path,v);
+      onChange(path);
+      scheduleSave();
+    });
+  });
+}
+function hydrate(){
+  document.querySelectorAll("[data-bind]").forEach(el=>{
+    const path=el.getAttribute("data-bind");
+    const v=getP(state,path);
+    if(el.type==="checkbox") el.checked=!!v;
+    else if(el.type==="radio") el.checked=(el.value===v);
+    else if(v!==undefined&&v!==null) el.value=v;
+  });
+}
+
+/* =====================================================================
+   変化時の処理（条件表示・計算）
+   ===================================================================== */
+function onChange(path){
+  if(path==="kubun.kengen") refreshKengen();
+  if(path==="shinseisha.isCorp") refreshCorp();
+  if(path==="honkyo.same") refreshHonkyo();
+  if(path==="shoudaku.keiyakuSame") refreshKeiyaku();
+  if(path==="shoudaku.forOwner") refreshShoudakuMode();
+  if(path==="hokan.distance") refreshDist();
+  if(path.startsWith("haichi")) {drawHaichi();checkHaichi();}
+  if(path==="shoudaku.useFrom"||path==="shoudaku.useTo") checkPeriod();
+  if(path==="shozai.mode") refreshShozai();
+  if(path==="kubun.shinseiType"||path==="kubun.station"){ refreshKei(); refreshHeader(); }
+  refreshChoiceCards();
+}
+function refreshChoiceCards(){
+  document.querySelectorAll(".choice").forEach(c=>{
+    const inp=c.querySelector("input"); c.classList.toggle("sel", inp.checked);
+  });
+}
+function refreshKengen(){
+  const k=state.kubun.kengen;
+  document.querySelectorAll(".kengen-jinin").forEach(e=>e.style.display=(k==="jinin")?"":"none");
+  document.querySelectorAll(".kengen-shoudaku").forEach(e=>e.style.display=(k==="jinin")?"none":"");
+  document.getElementById("kyoyuNote").style.display=(k==="kyoyu")?"":"none";
+}
+function refreshCorp(){
+  document.querySelectorAll(".corp-only").forEach(e=>e.style.display=state.shinseisha.isCorp?"":"none");
+}
+function refreshHonkyo(){
+  const f=document.getElementById("honkyoAddrField");
+  if(state.honkyo.same){ f.style.opacity=.5; f.querySelector("input").disabled=true; }
+  else { f.style.opacity=1; f.querySelector("input").disabled=false; }
+}
+function refreshKeiyaku(){
+  document.querySelector(".keiyaku-fields").style.display=state.shoudaku.keiyakuSame?"none":"";
+}
+function refreshShoudakuMode(){ const el=document.querySelector(".owner-fields"); if(el) el.style.display=(state.shoudaku.forOwner!==false)?"none":""; }
+function refreshShozai(){ const cb=document.getElementById("shozaiBeppu"); if(cb) cb.checked=(state.shozai.mode==="beppu"); }
+function setBeppu(on){ state.shozai.mode = on?"beppu":"image"; scheduleSave(); }
+function maybeAutoShozai(){
+  if(GMAPS.key && !shozaiComposite && !GMAPS.shozaiAutoTried && state.shozai.mode!=="beppu" && honkyoAddr() && state.hokan.addr){
+    GMAPS.shozaiAutoTried=true; autoShozai();
+  }
+}
+function buildStationOptions(){
+  const sel=document.getElementById("stationSel");
+  if(!sel) return;
+  sel.innerHTML=STATIONS.map(s=>`<option value="${s.key}">${s.name}（${s.area}）</option>`).join("");
+}
+function refreshKei(){
+  const st=stn();
+  const hint=document.getElementById("stationHint");
+  if(hint) hint.textContent=st.zip+" "+st.addr+" / "+st.tel;
+  const banner=document.getElementById("keiBanner");
+  if(!banner) return;
+  if(!isKei()){ banner.innerHTML=""; return; }
+  if(st.kei==="none"){
+    banner.innerHTML=`<div class="note warn">【${st.area}】は<b>軽自動車の保管場所届出が不要な地域</b>です。車庫の確保は必要ですが、警察への届出書類の提出は不要です（書類は控え用として作成できます）。</div>`;
+  } else {
+    const ex = st.keiEx ? `<br>※同じ管轄でも地域差あり：${st.keiEx}。` : "※旧町村部は対象外の場合あり、要確認。";
+    banner.innerHTML=`<div class="note info">【${st.keiArea||st.area}】は<b>軽自動車の届出義務地域</b>です。ナンバー取得後<b>15日以内</b>に届出（手数料無料・証明書交付なし）。${ex}</div>`;
+  }
+}
+function refreshHeader(){
+  const sub=document.querySelector("header.app .sub");
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請");
+}
+function refreshDist(){
+  const d=parseInt(state.hokan.distance,10);
+  const bar=document.getElementById("distBar"), lab=document.getElementById("distLabel");
+  const fill=bar.querySelector("i");
+  if(isNaN(d)){ fill.style.width="0%"; bar.classList.remove("over"); lab.textContent="距離を入力すると2km判定を表示します"; lab.style.color="var(--muted)"; return; }
+  const pct=Math.min(100, d/2000*100);
+  fill.style.width=pct+"%";
+  if(d>2000){ bar.classList.add("over"); lab.textContent="⚠ 2kmを超えています（直線2km以内が要件・このままでは不許可）"; lab.style.color="var(--warn)"; }
+  else { bar.classList.remove("over"); lab.textContent="✓ 2km以内（残り "+(2000-d)+"m） 直線距離 "+d+"m"; lab.style.color="var(--ok)"; }
+}
+function checkPeriod(){
+  const h=document.getElementById("periodHint");
+  const {useFrom,useTo}=state.shoudaku;
+  if(!useFrom||!useTo){ h.textContent=""; return; }
+  const f=new Date(useFrom), t=new Date(useTo);
+  const months=(t-f)/(1000*60*60*24*30.4);
+  if(t<=f){ h.textContent="⚠ 終了日は開始日より後にしてください"; h.style.color="var(--warn)"; }
+  else if(months<1){ h.textContent="⚠ 使用期間が1か月未満です。1か月以上必要（親族からの借用は1年以上が目安）"; h.style.color="var(--warn)"; }
+  else { h.textContent="✓ 使用期間 約"+Math.round(months)+"か月"; h.style.color="var(--ok)"; }
+}
+
+/* =====================================================================
+   配置図 自動作図（SVG）
+   ===================================================================== */
+function drawHaichi(){
+  const prev=document.getElementById("haichiPrev"); if(!prev) return;
+  if(haichiComposite){ prev.innerHTML='<img src="'+haichiComposite+'" style="width:100%;border-radius:8px;display:block">'; return; }
+  const h=state.haichi;
+  const w=parseFloat(h.w)||0, d=parseFloat(h.d)||0, road=parseFloat(h.road)||0, gate=parseFloat(h.gate)||0;
+  const svg=buildHaichiSVG(h,w,d,road,gate);
+  prev.innerHTML = (w&&d)? svg : '<div style="padding:24px;text-align:center;color:#8aa">幅と奥行を入力すると図が表示されます</div>';
+}
+function buildHaichiSVG(h,w,d,road,gate){
+  // キャンバス 320x300 のレイアウト。道路は roadSide に配置。
+  const W=320,H=300, m=40;
+  const ix=m, iy=m, iw=W-m*2, ih=H-m*2-30; // 駐車スペース描画領域
+  const carName = (w&&d)? (w.toFixed(1)+"m × "+d.toFixed(1)+"m") : "";
+  const shutter = h.shutter;
+  const side = h.roadSide||"south";
+  // 道路バー
+  let roadBar="", roadLabel="", arrow="";
+  const rt=26;
+  if(side==="south"){ roadBar=`<rect x="0" y="${H-rt}" width="${W}" height="${rt}" fill="#d9d9d9" stroke="#000"/>`;
+    roadLabel=`<text x="${W/2}" y="${H-8}" text-anchor="middle" font-size="11">前面道路 ${road?road.toFixed(1)+"m":"幅員__m"}</text>`;
+    arrow=`<line x1="${W/2}" y1="${iy+ih}" x2="${W/2}" y2="${H-rt}" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>`;}
+  else if(side==="north"){ roadBar=`<rect x="0" y="0" width="${W}" height="${rt}" fill="#d9d9d9" stroke="#000"/>`;
+    roadLabel=`<text x="${W/2}" y="${17}" text-anchor="middle" font-size="11">前面道路 ${road?road.toFixed(1)+"m":"幅員__m"}</text>`;}
+  else if(side==="west"){ roadBar=`<rect x="0" y="0" width="${rt}" height="${H}" fill="#d9d9d9" stroke="#000"/>`;
+    roadLabel=`<text x="13" y="${H/2}" text-anchor="middle" font-size="11" transform="rotate(-90 13 ${H/2})">前面道路 ${road?road.toFixed(1)+"m":"幅員__m"}</text>`;}
+  else { roadBar=`<rect x="${W-rt}" y="0" width="${rt}" height="${H}" fill="#d9d9d9" stroke="#000"/>`;
+    roadLabel=`<text x="${W-13}" y="${H/2}" text-anchor="middle" font-size="11" transform="rotate(90 ${W-13} ${H/2})">前面道路 ${road?road.toFixed(1)+"m":"幅員__m"}</text>`;}
+
+  const space=`<rect x="${ix}" y="${iy}" width="${iw}" height="${ih}" fill="#eef6ff" stroke="#000" stroke-width="2"/>`;
+  const wLabel=`<text x="${ix+iw/2}" y="${iy-10}" text-anchor="middle" font-size="12" font-weight="bold">幅 ${w?w.toFixed(1)+"m":"__m"}</text>`;
+  const dLabel=`<text x="${ix-12}" y="${iy+ih/2}" text-anchor="middle" font-size="12" font-weight="bold" transform="rotate(-90 ${ix-12} ${iy+ih/2})">奥行 ${d?d.toFixed(1)+"m":"__m"}</text>`;
+  const carLabel=`<text x="${ix+iw/2}" y="${iy+ih/2}" text-anchor="middle" font-size="12">駐車スペース</text>
+                  <text x="${ix+iw/2}" y="${iy+ih/2+18}" text-anchor="middle" font-size="11" fill="#15406b">${carName}</text>`;
+  const gateLabel = gate? `<text x="${ix+iw/2}" y="${iy+ih+16}" text-anchor="middle" font-size="10.5">出入口 ${gate.toFixed(1)}m</text>`:"";
+  const shut = shutter? `<line x1="${ix}" y1="${iy+ih}" x2="${ix+iw}" y2="${iy+ih}" stroke="#c0392b" stroke-width="3" stroke-dasharray="5 3"/><text x="${ix+iw-4}" y="${iy+ih-5}" text-anchor="end" font-size="9.5" fill="#c0392b">シャッター</text>`:"";
+  const north=`<g transform="translate(${W-26},${36})"><line x1="0" y1="12" x2="0" y2="-6" stroke="#000" marker-end="url(#a)"/><text x="0" y="-9" text-anchor="middle" font-size="11" font-weight="bold">北</text></g>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#000"/></marker></defs>
+    <rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>
+    ${roadBar}${roadLabel}${space}${wLabel}${dLabel}${carLabel}${gateLabel}${shut}${arrow}${north}
+  </svg>`;
+}
+function checkHaichi(){
+  const el=document.getElementById("haichiCheck");
+  const h=state.haichi, v=state.vehicle;
+  const sw=parseFloat(h.w)*100, sd=parseFloat(h.d)*100;
+  const vw=parseFloat(v.wid), vl=parseFloat(v.len);
+  let msgs=[];
+  if(sw&&vw&&sw<vw) msgs.push("⚠ スペース幅("+h.w+"m)が車幅("+v.wid+"cm)より狭い可能性");
+  if(sd&&vl&&sd<vl) msgs.push("⚠ スペース奥行("+h.d+"m)が車長("+v.len+"cm)より短い可能性");
+  if(msgs.length){ el.innerHTML=msgs.join("<br>"); el.style.color="var(--warn)"; }
+  else if(sw&&sd&&vw&&vl){ el.textContent="✓ 車両がスペースに収まります"; el.style.color="var(--ok)"; }
+  else el.textContent="";
+}
+
+/* =====================================================================
+   画像で図面を作る（配置図=航空写真トレース / 所在図=地図に本拠・車庫を記入）
+   画像はすべて端末内・メモリのみで処理（localStorageには保存しない）
+   ===================================================================== */
+let haichiComposite=null, shozaiComposite=null;  // 合成結果(dataURL)
+let _haichiSrc=null, _shozaiSrc=null;            // 取り込んだ元画像(縮小済)
+const ED={ mode:null, img:null, canvas:null, ctx:null,
+  corners:[], veil:0.22, marks:{a:{x:0,y:0},b:{x:0,y:0}}, view:{scale:1,ox:0,oy:0}, drag:null };
+
+function editorHTML(mode){
+  const isH = mode==="haichi";
+  const ctrls = isH ? `
+    <div class="ed-ctrl"><label>写真の濃さ</label><input type="range" id="edVeil" min="0" max="60" value="22"></div>
+    <button class="inline-btn" style="width:100%;margin-top:2px" onclick="resetCorners()">枠を中央にリセット</button>` : "";
+  const tip = isH ? "駐車スペースの四隅に①〜④を合わせます（①左上→②右上→③右下→④左下／③④側＝前面道路）。「拡大」で寄れます。空いた所をドラッグで移動。"
+                  : "「本拠」と「車庫」の印をドラッグして置きます。「拡大」で寄れます。空いた所をドラッグで移動。";
+  const mapBtn = isH ? `<button class="fig-btn" style="border-color:var(--teal);background:#eafafa;color:#0f6b6b;margin-top:8px" onclick="aerialFromMap(0)">🛰 地図から航空写真を取得（地図連携）</button>` : "";
+  return `<button class="close" onclick="closeModal()">×</button>
+  <h3>${isH?"配置図を航空写真でなぞる":"地図に本拠・車庫を記入"}</h3>
+  <div id="edPick" class="ed-pick" onclick="document.getElementById('edFile').click()">
+    📷 タップして写真を選択<br><span style="font-size:11px">${isH?"Googleマップの航空写真など":"本拠と車庫が写った地図など"}（端末内のみで処理）</span>
+  </div>
+  ${mapBtn}
+  <input type="file" id="edFile" accept="image/*" style="display:none">
+  <div id="edCanvasWrap" class="ed-canvas-wrap" style="display:none">
+    <canvas id="edCanvas"></canvas>
+    <div class="ed-tip">${tip}</div>
+    <div class="ed-ctrl"><label>拡大</label><input type="range" id="edZoom" min="1" max="6" step="0.1" value="1"></div>
+    <div class="ed-ctrl" id="edZoomRow" style="display:none"><label>航空写真</label><button class="inline-btn" onclick="aerialFromMap(-1)">－ 広く</button><button class="inline-btn" onclick="aerialFromMap(1)">＋ 寄る</button></div>
+    ${ctrls}
+    <button class="fig-btn" style="border-color:var(--line);background:#eef2f6;color:var(--navy)" onclick="document.getElementById('edFile').click()">別の写真にする</button>
+  </div>
+  <div class="ed-actions">
+    <button class="ed-cancel" onclick="closeModal()">キャンセル</button>
+    <button class="ed-use" onclick="useEditor()">この図を使う</button>
+  </div>`;
+}
+function openEditor(mode){
+  ED.mode=mode; ED.img=null; ED.canvas=null; ED.ctx=null;
+  document.getElementById("modalBody").innerHTML=editorHTML(mode);
+  document.getElementById("modalBg").classList.add("open");
+  document.getElementById("edFile").addEventListener("change",e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=ev=>loadEditorImage(ev.target.result); r.readAsDataURL(f);
+  });
+  const src = mode==="haichi"? _haichiSrc : _shozaiSrc;
+  if(src) loadEditorImage(src);
+}
+function loadEditorImage(dataURL){
+  const im=new Image();
+  im.onload=()=>{
+    const maxDim=1000; let w=im.naturalWidth, h=im.naturalHeight;
+    const sc=Math.min(1, maxDim/Math.max(w,h)); w=Math.round(w*sc); h=Math.round(h*sc);
+    const off=document.createElement("canvas"); off.width=w; off.height=h;
+    off.getContext("2d").drawImage(im,0,0,w,h);
+    ED.img=off;
+    const url=off.toDataURL("image/jpeg",0.85);
+    if(ED.mode==="haichi") _haichiSrc=url; else _shozaiSrc=url;
+    setupEditorCanvas();
+  };
+  im.src=dataURL;
+}
+function setupEditorCanvas(){
+  document.getElementById("edPick").style.display="none";
+  document.getElementById("edCanvasWrap").style.display="block";
+  const c=document.getElementById("edCanvas");
+  c.width=ED.img.width; c.height=ED.img.height;
+  ED.canvas=c; ED.ctx=c.getContext("2d");
+  resetView();
+  if(ED.mode==="haichi"){
+    ED.veil=0.22; resetCorners();
+    const ve=document.getElementById("edVeil"); if(ve){ ve.value=22; ve.oninput=()=>{ED.veil=(+ve.value)/100; drawEditor();}; }
+  } else {
+    ED.marks={a:{x:c.width*0.30,y:c.height*0.42}, b:{x:c.width*0.70,y:c.height*0.60}};
+  }
+  const zo=document.getElementById("edZoom"); if(zo){ zo.value=1; zo.oninput=()=>setZoom(+zo.value); }
+  bindEditorPointer();
+  drawEditor();
+}
+function resetView(){ ED.view={scale:1,ox:0,oy:0}; }
+function I2S(p){ const v=ED.view; return {x:p.x*v.scale+v.ox, y:p.y*v.scale+v.oy}; }
+function S2I(p){ const v=ED.view; return {x:(p.x-v.ox)/v.scale, y:(p.y-v.oy)/v.scale}; }
+function clampView(){ const c=ED.canvas, v=ED.view, iw=ED.img.width*v.scale, ih=ED.img.height*v.scale;
+  v.ox = iw<=c.width ? (c.width-iw)/2 : Math.min(0,Math.max(c.width-iw,v.ox));
+  v.oy = ih<=c.height ? (c.height-ih)/2 : Math.min(0,Math.max(c.height-ih,v.oy)); }
+function setZoom(z){ const c=ED.canvas, v=ED.view; const ix=(c.width/2-v.ox)/v.scale, iy=(c.height/2-v.oy)/v.scale;
+  v.scale=z; v.ox=c.width/2-ix*z; v.oy=c.height/2-iy*z; clampView(); drawEditor(); }
+function resetCorners(){ const c=ED.canvas; if(!c) return;
+  const wm=parseFloat(state.haichi.w)||2.5, dm=parseFloat(state.haichi.d)||5.0, ar=dm/wm, v=ED.view;
+  const visH=c.height/v.scale, cx=(c.width/2-v.ox)/v.scale, cy=(c.height/2-v.oy)/v.scale;
+  let fw=(c.width/v.scale)*0.5, fh=fw*ar; if(fh>visH*0.66){ fh=visH*0.66; fw=fh/ar; }
+  ED.corners=[{x:cx-fw/2,y:cy-fh/2},{x:cx+fw/2,y:cy-fh/2},{x:cx+fw/2,y:cy+fh/2},{x:cx-fw/2,y:cy+fh/2}];
+  drawEditor();
+}
+function pointInQuad(p,P){ let inside=false; for(let i=0,j=3;i<4;j=i++){ const xi=P[i].x,yi=P[i].y,xj=P[j].x,yj=P[j].y;
+  if(((yi>p.y)!==(yj>p.y)) && (p.x<(xj-xi)*(p.y-yi)/(yj-yi)+xi)) inside=!inside; } return inside; }
+function drawEditor(clean){
+  const ctx=ED.ctx, c=ED.canvas; if(!ctx) return;
+  const v=ED.view;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle="#e9eef2"; ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(ED.img, v.ox, v.oy, ED.img.width*v.scale, ED.img.height*v.scale);
+  if(ED.mode==="haichi"){
+    ctx.fillStyle="rgba(255,255,255,"+ED.veil+")"; ctx.fillRect(0,0,c.width,c.height);
+    const wm=parseFloat(state.haichi.w)||2.5, dm=parseFloat(state.haichi.d)||5.0;
+    const P=ED.corners.map(I2S), u=Math.max(2,c.width/220);
+    ctx.beginPath(); ctx.moveTo(P[0].x,P[0].y); for(let i=1;i<4;i++) ctx.lineTo(P[i].x,P[i].y); ctx.closePath();
+    ctx.fillStyle="rgba(31,138,138,0.22)"; ctx.fill();
+    ctx.lineWidth=u*1.7; ctx.strokeStyle="#15406b"; ctx.stroke();
+    ctx.strokeStyle="#c0392b"; ctx.lineWidth=u*2.6; ctx.beginPath(); ctx.moveTo(P[3].x,P[3].y); ctx.lineTo(P[2].x,P[2].y); ctx.stroke();
+    const fs=Math.max(13,c.width/32), mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+    ctx.font="bold "+fs+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    const lab=(t,p,col)=>{ const hw=ctx.measureText(t).width/2+5; ctx.fillStyle="rgba(255,255,255,.88)"; ctx.fillRect(p.x-hw,p.y-fs*0.75,hw*2,fs*1.5); ctx.fillStyle=col; ctx.fillText(t,p.x,p.y); };
+    lab("幅 "+wm.toFixed(1)+"m", mid(P[0],P[1]), "#15406b");
+    lab("奥行 "+dm.toFixed(1)+"m", mid(P[1],P[2]), "#15406b");
+    const road=parseFloat(state.haichi.road); if(road) lab("前面道路 "+road.toFixed(1)+"m", mid(P[2],P[3]), "#c0392b");
+    drawNorth(c.width-fs*1.6, fs*1.9, fs);
+    if(!clean){ const r=Math.max(12,c.width/24);
+      for(let i=0;i<4;i++){ ctx.beginPath(); ctx.fillStyle="rgba(255,255,255,.92)"; ctx.strokeStyle="#15406b"; ctx.lineWidth=u*1.4; ctx.arc(P[i].x,P[i].y,r,0,7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle="#15406b"; ctx.font="bold "+r+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(String(i+1),P[i].x,P[i].y); } }
+  } else {
+    const a=I2S(ED.marks.a), b=I2S(ED.marks.b), u=Math.max(2,c.width/250);
+    ctx.strokeStyle="#c0392b"; ctx.lineWidth=u*1.4; ctx.setLineDash([10,7]);
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.setLineDash([]);
+    if(state.hokan.distance){ const m={x:(a.x+b.x)/2,y:(a.y+b.y)/2}, t="直線 "+state.hokan.distance+"m", fs=Math.max(13,c.width/34);
+      ctx.font="bold "+fs+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      const hw=ctx.measureText(t).width/2+6; ctx.fillStyle="rgba(255,255,255,.9)"; ctx.fillRect(m.x-hw,m.y-fs*0.7,hw*2,fs*1.4); ctx.fillStyle="#c0392b"; ctx.fillText(t,m.x,m.y); }
+    drawMark(a,"本拠","#c0392b"); drawMark(b,"車庫","#15406b");
+  }
+}
+function drawNorth(x,y,fs){ const ctx=ED.ctx; ctx.save(); ctx.translate(x,y); ctx.strokeStyle="#000"; ctx.fillStyle="#000"; ctx.lineWidth=Math.max(2,fs/8);
+  ctx.beginPath(); ctx.moveTo(0,fs*0.8); ctx.lineTo(0,-fs*0.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-fs*0.85); ctx.lineTo(-fs*0.3,-fs*0.3); ctx.lineTo(fs*0.3,-fs*0.3); ctx.closePath(); ctx.fill();
+  ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.font="bold "+fs+"px sans-serif"; ctx.fillText("北",0,fs*1.35); ctx.restore(); }
+function drawMark(p,label,col){ const ctx=ED.ctx, c=ED.canvas, r=Math.max(10,c.width/26);
+  ctx.lineWidth=Math.max(3,c.width/150); ctx.strokeStyle=col; ctx.fillStyle="rgba(255,255,255,.55)";
+  ctx.beginPath(); ctx.arc(p.x,p.y,r,0,7); ctx.fill(); ctx.stroke();
+  const fs=Math.max(12,c.width/36), ly=p.y+r+fs; ctx.font="bold "+fs+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  const hw=ctx.measureText(label).width/2+6; ctx.fillStyle=col; ctx.fillRect(p.x-hw,ly-fs*0.7,hw*2,fs*1.4); ctx.fillStyle="#fff"; ctx.fillText(label,p.x,ly); }
+function evtPos(e){ const c=ED.canvas, r=c.getBoundingClientRect(); return {x:(e.clientX-r.left)*c.width/r.width, y:(e.clientY-r.top)*c.height/r.height}; }
+function bindEditorPointer(){
+  const c=ED.canvas;
+  c.onpointerdown=(e)=>{ e.preventDefault(); try{c.setPointerCapture(e.pointerId);}catch(_){} const sp=evtPos(e), r=Math.max(20,c.width/16);
+    if(ED.mode==="haichi"){
+      let hit=-1, bd=Infinity; for(let i=0;i<4;i++){ const s=I2S(ED.corners[i]), d=Math.hypot(sp.x-s.x,sp.y-s.y); if(d<bd){bd=d;hit=i;} }
+      ED.drag = (bd<=r)? {t:"c",i:hit} : {t:"pan",x:sp.x,y:sp.y};
+    } else {
+      const sa=I2S(ED.marks.a), sb=I2S(ED.marks.b), da=Math.hypot(sp.x-sa.x,sp.y-sa.y), db=Math.hypot(sp.x-sb.x,sp.y-sb.y);
+      ED.drag = (Math.min(da,db)<=r)? {t:(da<db)?"a":"b"} : {t:"pan",x:sp.x,y:sp.y};
+    } };
+  c.onpointermove=(e)=>{ if(!ED.drag) return; e.preventDefault(); const sp=evtPos(e);
+    if(ED.drag.t==="pan"){ ED.view.ox+=sp.x-ED.drag.x; ED.view.oy+=sp.y-ED.drag.y; ED.drag.x=sp.x; ED.drag.y=sp.y; clampView(); }
+    else if(ED.drag.t==="c"){ ED.corners[ED.drag.i]=S2I(sp); }
+    else { ED.marks[ED.drag.t]=S2I(sp); }
+    drawEditor(); };
+  const up=()=>{ ED.drag=null; };
+  c.onpointerup=up; c.onpointercancel=up;
+}
+function useEditor(){
+  if(!ED.canvas || !ED.img){ toast("写真を選択してください"); return; }
+  if(ED.mode==="haichi") drawEditor(true);   // クリーン描画（角の①〜④番号を消して出力）
+  const url=ED.canvas.toDataURL("image/jpeg",0.85);
+  if(ED.mode==="haichi"){ drawEditor(false); haichiComposite=url; haichiKind="航空写真"; drawHaichi(); refreshFigStatus("haichi"); toast("配置図に反映しました"); }
+  else { shozaiComposite=url; state.shozai.mode="image"; refreshShozai(); refreshFigStatus("shozai"); toast("所在図に反映しました"); }
+  closeModal();
+}
+function clearFig(mode){
+  if(mode==="haichi"){ haichiComposite=null; haichiKind=""; _haichiSrc=null; drawHaichi(); } else { shozaiComposite=null; _shozaiSrc=null; }
+  refreshFigStatus(mode);
+}
+function refreshFigStatus(mode){
+  const el=document.getElementById(mode==="haichi"?"haichiFigStatus":"shozaiFigStatus"); if(!el) return;
+  const img=mode==="haichi"?haichiComposite:shozaiComposite;
+  const lab = mode==="haichi" ? ("配置図（"+(haichiKind||"作図")+"）") : "地図の所在図";
+  el.innerHTML = img ? `<div class="fig-status"><img src="${img}"><div class="fs-t">✓ ${lab}を使用中</div><button onclick="clearFig('${mode}')">解除</button></div>` : "";
+}
+
+/* =====================================================================
+   スタンプ式 配置図エディタ（部品を置いて移動・拡大縮小・回転）
+   ===================================================================== */
+let haichiKind="";
+const ST={ canvas:null, ctx:null, stamps:[], sel:-1, drag:null, bgImg:null, useBg:false };
+const STAMP_DEFS={
+  park:{label:"保管場所", w:150,h:280, fill:"rgba(31,138,138,.18)", stroke:"#15406b"},
+  home:{label:"自宅",     w:200,h:150, fill:"rgba(21,64,107,.10)", stroke:"#15406b"},
+  bldg:{label:"建物・隣家",w:170,h:130, fill:"rgba(120,120,120,.12)", stroke:"#555"},
+  road:{label:"道路",     w:760,h:70,  fill:"rgba(150,150,150,.22)", stroke:"#555"},
+  door:{label:"出入口",   w:104,h:78,  fill:"rgba(192,57,43,.10)", stroke:"#c0392b"},
+  north:{label:"北",      w:66, h:90,  fill:"none", stroke:"#000"}
+};
+function rrect(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function openStampEditor(){
+  document.getElementById("modalBody").innerHTML=stampEditorHTML();
+  document.getElementById("modalBg").classList.add("open");
+  const c=document.getElementById("stCanvas"); c.width=820; c.height=600; ST.canvas=c; ST.ctx=c.getContext("2d");
+  ST.stamps=[]; ST.sel=-1; ST.drag=null; ST.useBg=false; ST.bgImg=null;
+  addStamp('road',30,510,false); addStamp('park',335,170,false); ST.sel=-1;
+  bindStampPointer(); drawStamps();
+}
+function stampEditorHTML(){ return `<button class="close" onclick="closeModal()">×</button>
+  <h3>スタンプで配置図を作る</h3>
+  <div class="ed-tip">下のボタンで部品を置き、<b>ドラッグで移動／右下の⤡で大きさ変更</b>。選択中は［×］削除・上の⟳で回転。サイズ・回転・削除はボタンでも操作できます。</div>
+  <canvas id="stCanvas"></canvas>
+  <div class="stamp-palette">
+    <button onclick="addStamp('park')">🅿 保管場所</button>
+    <button onclick="addStamp('home')">🏠 自宅</button>
+    <button onclick="addStamp('road')">🛣 道路</button>
+    <button onclick="addStamp('bldg')">🏢 建物・隣家</button>
+    <button onclick="addStamp('door')">↧ 出入口</button>
+    <button onclick="addStamp('north')">🧭 方位（北）</button>
+  </div>
+  <div class="stamp-ctrl">
+    <button onclick="stampScale(1.15)">＋大きく</button>
+    <button onclick="stampScale(0.87)">－小さく</button>
+    <button onclick="stampRotate(-15)">⟲回転</button>
+    <button onclick="stampRotate(15)">⟳回転</button>
+    <button onclick="stampDelete()" style="color:var(--warn)">🗑削除</button>
+  </div>
+  <label class="chk" style="margin-top:6px"><input type="checkbox" id="stBg" onchange="stampToggleBg(this.checked)"><span>航空写真を背景に使う（取得済みのとき）</span></label>
+  <div class="ed-actions">
+    <button class="ed-cancel" onclick="closeModal()">キャンセル</button>
+    <button class="ed-use" onclick="useStampEditor()">この図を使う</button>
+  </div>`;
+}
+function addStamp(type,x,y,select){
+  const d=STAMP_DEFS[type]; if(!d||!ST.canvas) return;
+  const n=ST.stamps.length;
+  ST.stamps.push({type,w:d.w,h:d.h,rot:0,
+    x:(x!==undefined?x:(ST.canvas.width-d.w)/2+(n%5)*18),
+    y:(y!==undefined?y:(ST.canvas.height-d.h)/2+(n%5)*18)});
+  if(select!==false) ST.sel=ST.stamps.length-1;
+  drawStamps();
+}
+function stampLabel(s){
+  if(s.type==="park"){ const wm=parseFloat(state.haichi.w),dm=parseFloat(state.haichi.d); return "保管場所"+((wm&&dm)?("\n"+wm.toFixed(1)+"m×"+dm.toFixed(1)+"m"):""); }
+  if(s.type==="road"){ const r=parseFloat(state.haichi.road); return "道路"+(r?("\n幅員"+r.toFixed(1)+"m"):""); }
+  return STAMP_DEFS[s.type].label;
+}
+function drawStamps(clean){
+  const ctx=ST.ctx,c=ST.canvas; if(!ctx) return;
+  ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle="#fff"; ctx.fillRect(0,0,c.width,c.height);
+  if(ST.useBg&&ST.bgImg){ const im=ST.bgImg,r=Math.min(c.width/im.width,c.height/im.height),w=im.width*r,h=im.height*r;
+    ctx.drawImage(im,(c.width-w)/2,(c.height-h)/2,w,h); ctx.fillStyle="rgba(255,255,255,.30)"; ctx.fillRect(0,0,c.width,c.height); }
+  ST.stamps.forEach((s,i)=>{ drawOneStamp(s); if(!clean&&i===ST.sel) drawStampChrome(s); });
+}
+function drawOneStamp(s){
+  const ctx=ST.ctx,d=STAMP_DEFS[s.type],cx=s.x+s.w/2,cy=s.y+s.h/2;
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(s.rot*Math.PI/180);
+  if(s.type==="north"){
+    ctx.strokeStyle="#000"; ctx.fillStyle="#000"; ctx.lineJoin="round"; ctx.lineWidth=Math.max(2,s.w*0.06);
+    ctx.beginPath(); ctx.moveTo(0,s.h*0.02); ctx.lineTo(0,-s.h*0.22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-s.h*0.46); ctx.lineTo(-s.w*0.28,-s.h*0.22); ctx.lineTo(s.w*0.28,-s.h*0.22); ctx.closePath(); ctx.fill();
+    ctx.font="bold "+Math.min(s.h*0.32,s.w*0.62)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("北",0,s.h*0.30);
+  } else {
+    if(d.fill!=="none"){ ctx.fillStyle=d.fill; rrect(ctx,-s.w/2,-s.h/2,s.w,s.h,8); ctx.fill(); }
+    ctx.lineWidth=2.5; ctx.strokeStyle=d.stroke; rrect(ctx,-s.w/2,-s.h/2,s.w,s.h,8); ctx.stroke();
+    if(s.type==="door"){
+      ctx.strokeStyle="#c0392b"; ctx.fillStyle="#c0392b"; ctx.lineJoin="round"; ctx.lineWidth=Math.max(3,s.h*0.07);
+      ctx.beginPath(); ctx.moveTo(0,-s.h*0.32); ctx.lineTo(0,-s.h*0.06); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,s.h*0.06); ctx.lineTo(-s.w*0.13,-s.h*0.06); ctx.lineTo(s.w*0.13,-s.h*0.06); ctx.closePath(); ctx.fill();
+      ctx.fillStyle=d.stroke; ctx.font="bold "+Math.min(s.h*0.30,s.w*0.26)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("出入口",0,s.h*0.33);
+    } else {
+      const lbl=stampLabel(s).split("\n"); ctx.fillStyle=d.stroke; ctx.font="bold 15px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      lbl.forEach((t,k)=>ctx.fillText(t,0,(k-(lbl.length-1)/2)*18));
+    }
+  }
+  ctx.restore();
+}
+function stampCorner(s,lx,ly){ const cx=s.x+s.w/2,cy=s.y+s.h/2,a=s.rot*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a); return {x:cx+lx*ca-ly*sa,y:cy+lx*sa+ly*ca}; }
+function drawStampChrome(s){
+  const ctx=ST.ctx, p=[stampCorner(s,-s.w/2,-s.h/2),stampCorner(s,s.w/2,-s.h/2),stampCorner(s,s.w/2,s.h/2),stampCorner(s,-s.w/2,s.h/2)];
+  ctx.strokeStyle="#e8821a"; ctx.lineWidth=2; ctx.setLineDash([6,4]); ctx.beginPath(); ctx.moveTo(p[0].x,p[0].y); for(let i=1;i<4;i++)ctx.lineTo(p[i].x,p[i].y); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  const rotp=stampCorner(s,0,-s.h/2-30);
+  stHandle(p[2].x,p[2].y,"#15406b","⤡"); stHandle(p[1].x,p[1].y,"#c0392b","×"); stHandle(rotp.x,rotp.y,"#1f8a8a","⟳");
+}
+function stHandle(x,y,col,gly){ const ctx=ST.ctx; ctx.fillStyle="#fff"; ctx.strokeStyle=col; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y,14,0,7); ctx.fill(); ctx.stroke(); ctx.fillStyle=col; ctx.font="bold 15px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(gly,x,y); }
+function stPos(e){ const c=ST.canvas,r=c.getBoundingClientRect(); return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}; }
+function inStamp(s,p){ const cx=s.x+s.w/2,cy=s.y+s.h/2,a=-s.rot*Math.PI/180,dx=p.x-cx,dy=p.y-cy,lx=dx*Math.cos(a)-dy*Math.sin(a),ly=dx*Math.sin(a)+dy*Math.cos(a); return Math.abs(lx)<=s.w/2&&Math.abs(ly)<=s.h/2; }
+function bindStampPointer(){
+  const c=ST.canvas;
+  c.onpointerdown=(e)=>{ e.preventDefault(); try{c.setPointerCapture(e.pointerId);}catch(_){} const p=stPos(e);
+    if(ST.sel>=0){ const s=ST.stamps[ST.sel];
+      const br=stampCorner(s,s.w/2,s.h/2),del=stampCorner(s,s.w/2,-s.h/2),rp=stampCorner(s,0,-s.h/2-30);
+      if(Math.hypot(p.x-del.x,p.y-del.y)<=18){ stampDelete(); return; }
+      if(Math.hypot(p.x-br.x,p.y-br.y)<=18){ ST.drag={mode:"resize"}; return; }
+      if(Math.hypot(p.x-rp.x,p.y-rp.y)<=18){ ST.drag={mode:"rot"}; return; } }
+    for(let i=ST.stamps.length-1;i>=0;i--){ if(inStamp(ST.stamps[i],p)){ ST.sel=i; ST.drag={mode:"move",px:p.x,py:p.y}; drawStamps(); return; } }
+    ST.sel=-1; ST.drag=null; drawStamps(); };
+  c.onpointermove=(e)=>{ if(!ST.drag) return; e.preventDefault(); const p=stPos(e),s=ST.stamps[ST.sel]; if(!s) return; const cx=s.x+s.w/2,cy=s.y+s.h/2;
+    if(ST.drag.mode==="move"){ s.x+=p.x-ST.drag.px; s.y+=p.y-ST.drag.py; ST.drag.px=p.x; ST.drag.py=p.y; }
+    else if(ST.drag.mode==="resize"){ const a=-s.rot*Math.PI/180,dx=p.x-cx,dy=p.y-cy,lx=dx*Math.cos(a)-dy*Math.sin(a),ly=dx*Math.sin(a)+dy*Math.cos(a),nw=Math.max(28,Math.abs(lx)*2),nh=Math.max(24,Math.abs(ly)*2); s.x=cx-nw/2; s.y=cy-nh/2; s.w=nw; s.h=nh; }
+    else if(ST.drag.mode==="rot"){ s.rot=Math.atan2(p.y-cy,p.x-cx)*180/Math.PI+90; }
+    drawStamps(); };
+  const up=()=>{ ST.drag=null; }; c.onpointerup=up; c.onpointercancel=up;
+}
+function stampDelete(){ if(ST.sel>=0){ ST.stamps.splice(ST.sel,1); ST.sel=-1; ST.drag=null; drawStamps(); } else toast("部品を選択してください"); }
+function stampScale(f){ if(ST.sel<0){toast("部品を選択してください");return;} const s=ST.stamps[ST.sel],cx=s.x+s.w/2,cy=s.y+s.h/2; s.w=Math.max(28,s.w*f); s.h=Math.max(24,s.h*f); s.x=cx-s.w/2; s.y=cy-s.h/2; drawStamps(); }
+function stampRotate(deg){ if(ST.sel<0){toast("部品を選択してください");return;} ST.stamps[ST.sel].rot+=deg; drawStamps(); }
+function stampToggleBg(on){ ST.useBg=on; if(on){ if(!_haichiSrc){ toast("先に航空写真を取得/取り込みしてください"); const cb=document.getElementById("stBg"); if(cb)cb.checked=false; ST.useBg=false; return; } if(!ST.bgImg){ const im=new Image(); im.onload=()=>{ST.bgImg=im; drawStamps();}; im.src=_haichiSrc; return; } } drawStamps(); }
+function useStampEditor(){ if(!ST.stamps.length){ toast("部品を置いてください"); return; } ST.sel=-1; drawStamps(true); haichiComposite=ST.canvas.toDataURL("image/png"); haichiKind="スタンプ"; drawHaichi(); refreshFigStatus("haichi"); toast("配置図に反映しました"); closeModal(); }
+
+/* =====================================================================
+   地図リンク
+   ===================================================================== */
+/* =====================================================================
+   Google Maps 連携（APIキーは端末内のみ保存。未設定/オフライン時は手動方式）
+   ===================================================================== */
+const GKEY="shako_tobu_gmapkey";
+let GMAPS={ key:(localStorage.getItem(GKEY)||""), ready:false, failed:false, geocoder:null, _p:null, honkyoLL:null, hokanLL:null, aerialZoom:20 };
+
+function gmapsLoad(){
+  if(GMAPS.ready) return Promise.resolve(true);
+  if(!GMAPS.key) return Promise.reject("nokey");
+  if(!navigator.onLine) return Promise.reject("offline");
+  if(GMAPS._p) return GMAPS._p;
+  GMAPS._p=new Promise((resolve,reject)=>{
+    window.__gmapsReady=function(){ GMAPS.ready=true; try{GMAPS.geocoder=new google.maps.Geocoder();}catch(e){} resolve(true); };
+    window.gm_authFailure=function(){ GMAPS.failed=true; GMAPS.ready=false; GMAPS._p=null; toast("Google Maps APIキーが無効か制限超過です"); reject("authfail"); };
+    const s=document.createElement("script");
+    s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(GMAPS.key)+"&libraries=geometry&loading=async&callback=__gmapsReady";
+    s.async=true; s.onerror=function(){ GMAPS._p=null; reject("scripterror"); };
+    document.head.appendChild(s);
+  });
+  return GMAPS._p;
+}
+function geocodeAddr(addr){ return new Promise((res,rej)=>{ if(!GMAPS.geocoder){rej("nogeo");return;}
+  GMAPS.geocoder.geocode({address:addr, region:"jp", language:"ja"}, (r,st)=>{ if(st==="OK"&&r&&r[0]) res(r[0].geometry.location); else rej(st); }); }); }
+function gmapsErrMsg(e){ return e==="offline"?"オフラインです（地図機能はオンライン時のみ）": (e==="nokey"?"先に⚙からAPIキーを設定してください":"地図に接続できません（キー/通信を確認）"); }
+
+async function autoDistance(){
+  const o=honkyoAddr(), d=state.hokan.addr;
+  if(!o||!d){ toast("本拠と保管場所の住所を入力してください"); return; }
+  if(!GMAPS.key){ toast("先に⚙からAPIキーを設定してください"); openModal("gmap"); return; }
+  try{ await gmapsLoad(); }catch(e){ toast(gmapsErrMsg(e)); return; }
+  toast("住所から計算中…");
+  try{
+    const a=await geocodeAddr(o), b=await geocodeAddr(d); GMAPS.honkyoLL=a; GMAPS.hokanLL=b;
+    const m=Math.round(google.maps.geometry.spherical.computeDistanceBetween(a,b));
+    state.hokan.distance=String(m); hydrate(); refreshDist(); scheduleSave();
+    toast("直線距離 "+m+"m を入力しました"+(m>2000?"（2km超）":""));
+  }catch(e){ toast("住所が特定できませんでした（"+e+"）"); }
+}
+function staticAerialURL(ll,zoom){ return "https://maps.googleapis.com/maps/api/staticmap?center="+ll.lat()+","+ll.lng()+"&zoom="+zoom+"&size=640x440&scale=2&maptype=hybrid&key="+encodeURIComponent(GMAPS.key); }
+function staticShozaiURL(a,b){
+  const mA="markers="+encodeURIComponent("color:red|label:H|"+a.lat()+","+a.lng());
+  const mB="markers="+encodeURIComponent("color:blue|label:P|"+b.lat()+","+b.lng());
+  const pa="path="+encodeURIComponent("color:0xc0392bdd|weight:4|"+a.lat()+","+a.lng()+"|"+b.lat()+","+b.lng());
+  return "https://maps.googleapis.com/maps/api/staticmap?size=640x480&scale=2&maptype=roadmap&language=ja&"+mA+"&"+mB+"&"+pa+"&key="+encodeURIComponent(GMAPS.key);
+}
+async function aerialFromMap(dz){
+  if(!GMAPS.key){ toast("先に⚙からAPIキーを設定してください"); openModal("gmap"); return; }
+  try{ await gmapsLoad(); }catch(e){ toast(gmapsErrMsg(e)); return; }
+  let ll=GMAPS.hokanLL;
+  if(dz===0 || !ll){
+    const addr=state.hokan.addr||honkyoAddr();
+    if(!addr){ toast("保管場所の住所を入力してください"); return; }
+    try{ ll=await geocodeAddr(addr); GMAPS.hokanLL=ll; }catch(e){ toast("住所が特定できませんでした"); return; }
+  }
+  GMAPS.aerialZoom=Math.max(16,Math.min(21,(GMAPS.aerialZoom||19)+(dz||0)));
+  toast("航空写真を取得中…");
+  const im=new Image(); im.crossOrigin="anonymous";
+  im.onload=function(){ const o=document.createElement("canvas"); o.width=im.naturalWidth; o.height=im.naturalHeight; o.getContext("2d").drawImage(im,0,0);
+    try{ o.toDataURL("image/jpeg",0.5); }catch(err){ toast("画像の取り込みに失敗しました。スクショ方式をお使いください"); return; }
+    ED.mode="haichi"; ED.img=o; _haichiSrc=null; setupEditorCanvas();
+    const zr=document.getElementById("edZoomRow"); if(zr) zr.style.display="flex"; };
+  im.onerror=function(){ toast("航空写真の取得に失敗しました"); };
+  im.src=staticAerialURL(ll,GMAPS.aerialZoom);
+}
+async function autoShozai(){
+  if(!GMAPS.key){ toast("先に⚙からAPIキーを設定してください"); openModal("gmap"); return; }
+  const o=honkyoAddr(), d=state.hokan.addr;
+  if(!o||!d){ toast("本拠と保管場所の住所を入力してください"); return; }
+  try{ await gmapsLoad(); }catch(e){ toast(gmapsErrMsg(e)); return; }
+  toast("地図を作成中…");
+  try{
+    const a=await geocodeAddr(o), b=await geocodeAddr(d); GMAPS.honkyoLL=a; GMAPS.hokanLL=b;
+    try{ const m=Math.round(google.maps.geometry.spherical.computeDistanceBetween(a,b)); state.hokan.distance=String(m); hydrate(); refreshDist(); }catch(_){}
+    const url=staticShozaiURL(a,b);
+    // まずURLを所在図として確定（CORS不可でも<img>として確実に表示・印刷できる）
+    shozaiComposite=url; state.shozai.mode="image"; hydrate(); refreshShozai(); refreshFigStatus("shozai");
+    toast("所在図を自動作成しました");
+    // 可能なら距離ラベルを画像に合成して差し替え（CORS可のときのみ）
+    if(state.hokan.distance){ const im=new Image(); im.crossOrigin="anonymous";
+      im.onload=function(){ try{ const cv=document.createElement("canvas"); cv.width=im.naturalWidth; cv.height=im.naturalHeight; const cx=cv.getContext("2d"); cx.drawImage(im,0,0);
+        const t="直線 "+state.hokan.distance+"m", fs=Math.max(16,cv.width/34), mx=cv.width/2, my=cv.height/2;
+        cx.font="bold "+fs+"px sans-serif"; cx.textAlign="center"; cx.textBaseline="middle"; const hw=cx.measureText(t).width/2+8;
+        cx.fillStyle="rgba(255,255,255,.9)"; cx.fillRect(mx-hw,my-fs*0.8,hw*2,fs*1.6); cx.fillStyle="#c0392b"; cx.fillText(t,mx,my);
+        shozaiComposite=cv.toDataURL("image/jpeg",0.85); refreshFigStatus("shozai"); }catch(e){} };
+      im.src=url; }
+  }catch(e){ toast("住所が特定できませんでした"); }
+}
+function gmapModal(){
+  const on=GMAPS.ready, has=!!GMAPS.key;
+  const stat = on?'<div class="note ok" style="margin-top:12px">✓ 地図連携：有効</div>'
+    : (has?'<div class="note warn" style="margin-top:12px">キーは保存済みですが未接続（オフライン/無効の可能性）。</div>'
+         :'<div class="note info" style="margin-top:12px">未設定：現在は手動（スクショ）方式で動作中。</div>');
+  return `<button class="close" onclick="closeModal()">×</button>
+  <h3>地図連携（Google Maps APIキー）</h3>
+  <p style="font-size:12.5px;color:#5a6b7b;line-height:1.65">APIキーを入れると、住所からの<b>直線距離の自動計算</b>・<b>航空写真の取り込み</b>・<b>所在図の自動作成</b>がアプリ内で完結します。キーは<b>この端末内だけに保存</b>され、外部やリポジトリには出ません。</p>
+  <div class="field"><label class="lbl">Google Maps APIキー</label>
+    <input type="text" id="gmapKeyInput" placeholder="AIza..." value="${esc(GMAPS.key)}" autocomplete="off"></div>
+  <div class="row"><button class="inline-btn" style="flex:1" onclick="gmapSaveKey()">保存して有効化</button>
+    <button class="inline-btn" style="flex:0 0 84px;border-color:var(--warn);color:var(--warn)" onclick="gmapClearKey()">削除</button></div>
+  ${stat}
+  <hr class="hr">
+  <h3 style="font-size:14px">キーの作り方（Google Cloud）</h3>
+  <ol style="font-size:12.5px;line-height:1.7;padding-left:18px;color:var(--ink)">
+    <li>Google Cloud でプロジェクト作成・<b>請求先（カード）を登録</b></li>
+    <li>APIを有効化：<b>Maps JavaScript API / Geocoding API / Maps Static API</b></li>
+    <li>「認証情報」→ APIキーを作成</li>
+    <li><b>キーを制限</b>：アプリの制限＝HTTPリファラー <code>atsunaricoda-maker.github.io/*</code>、API制限＝上記3つ</li>
+    <li>予算アラート・割当上限を設定（想定外課金の防止）</li>
+  </ol>
+  <p style="font-size:11px;color:#5a6b7b">※住所はジオコーディングでGoogleへ送信されます。地図機能はオンライン時のみ。料金はGoogleの最新の無料枠・単価をご確認ください。</p>`;
+}
+function gmapSaveKey(){ const v=(document.getElementById("gmapKeyInput").value||"").trim(); const had=!!(window.google&&window.google.maps);
+  GMAPS.key=v; localStorage.setItem(GKEY,v);
+  if(!v){ GMAPS.ready=false; GMAPS.geocoder=null; toast("キーを空にしました"); openModal("gmap"); return; }
+  if(had){ toast("再読み込みして有効化します…"); setTimeout(function(){ location.reload(); },800); return; }
+  GMAPS.ready=false; GMAPS.failed=false; GMAPS.geocoder=null; GMAPS._p=null;
+  gmapsLoad().then(function(){ toast("地図連携を有効化しました"); openModal("gmap"); }).catch(function(e){ toast(gmapsErrMsg(e)); openModal("gmap"); });
+}
+function gmapClearKey(){ GMAPS.key=""; localStorage.removeItem(GKEY); GMAPS.ready=false; GMAPS.geocoder=null; GMAPS._p=null; toast("APIキーを削除しました"); openModal("gmap"); }
+
+function openMapMeasure(){
+  const o=encodeURIComponent(honkyoAddr()||""), dst=encodeURIComponent(state.hokan.addr||"");
+  if(!o&&!dst){ toast("住所を入力してください"); return; }
+  window.open(`https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${dst}&travelmode=walking`,"_blank");
+}
+function openMapForAddr(){
+  const q=encodeURIComponent(state.hokan.addr||honkyoAddr()||"沼津市");
+  window.open(`https://www.google.com/maps/search/?api=1&query=${q}`,"_blank");
+}
+function honkyoAddr(){ return state.honkyo.same? state.shinseisha.addr : state.honkyo.addr; }
+
+/* =====================================================================
+   ステップ移動
+   ===================================================================== */
+function buildStepNav(){
+  const nav=document.getElementById("stepNav");
+  nav.innerHTML="";
+  STEP_LABELS.forEach((l,i)=>{
+    const c=document.createElement("div");
+    c.className="step-chip"; c.onclick=()=>gotoStep(i);
+    c.innerHTML=`<span class="n">${i+1}</span>${l}`;
+    nav.appendChild(c);
+  });
+}
+function gotoStep(i){
+  step=Math.max(0,Math.min(TOTAL-1,i));
+  document.querySelectorAll("section.step").forEach(s=>s.classList.toggle("active", +s.dataset.step===step));
+  document.querySelectorAll(".step-chip").forEach((c,idx)=>{
+    c.classList.toggle("active", idx===step);
+    c.classList.toggle("done", idx<step);
+  });
+  // フッターボタン
+  document.getElementById("btnPrev").style.visibility = step===0?"hidden":"visible";
+  const next=document.getElementById("btnNext");
+  if(step===TOTAL-1){ next.textContent="📄 書類を作成"; next.className="btn make"; next.onclick=makeDocs; }
+  else { next.textContent="次へ"; next.className="btn next"; next.onclick=()=>go(1); }
+  // 確認ステップ更新
+  if(step===TOTAL-1){ renderSummary(); renderValid(); renderDocPick(); }
+  if(step===6) drawHaichi();
+  if(step===7) maybeAutoShozai();
+  // ステップナビを該当位置へスクロール
+  const chip=document.querySelectorAll(".step-chip")[step];
+  if(chip) chip.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function go(dir){
+  // 権原がjininなら関係ないが、ステップ自体はスキップしない（権原ステップは中身が切替）
+  gotoStep(step+dir);
+}
+
+/* =====================================================================
+   確認・バリデーション
+   ===================================================================== */
+function reqList(){
+  const s=state, miss=[];
+  const need=(cond,label)=>{ if(!cond) miss.push(label); };
+  need(s.shinseisha.name,"申請者氏名");
+  need(s.shinseisha.tel,"申請者電話番号");
+  need(s.shinseisha.addr,"申請者住所");
+  need(s.vehicle.maker,"車名");
+  need(s.vehicle.katashiki,"型式");
+  need(s.vehicle.daiban,"車台番号");
+  need(s.vehicle.len&&s.vehicle.wid&&s.vehicle.hei,"自動車の大きさ");
+  need(honkyoAddr(),"使用の本拠の住所");
+  need(s.hokan.addr,"保管場所の住所");
+  need(s.haichi.w&&s.haichi.d,"配置図の幅・奥行");
+  need(s.haichi.road,"前面道路の幅員");
+  if(s.kubun.kengen!=="jinin"){
+    need(s.shoudaku.kankei,"使用者と契約者の関係");
+    need(s.shoudaku.useFrom&&s.shoudaku.useTo,"使用期間");
+  }
+  return miss;
+}
+function renderValid(){
+  const box=document.getElementById("validBox");
+  const miss=reqList();
+  const d=parseInt(state.hokan.distance,10);
+  let warns=[];
+  if(!isNaN(d)&&d>2000) warns.push("使用の本拠と保管場所の直線距離が2kmを超えています。");
+  let html="";
+  if(miss.length){
+    html+=`<div class="note warn"><b>未入力の必須項目（${miss.length}）</b><br>`+miss.map(m=>"・"+m).join("<br>")+`<br><span style="font-size:11px">※未入力でも作成できますが、空欄で出力されます。</span></div>`;
+  } else {
+    html+=`<div class="note ok"><b>✓ 必須項目はすべて入力済みです。</b></div>`;
+  }
+  if(warns.length) html+=`<div class="note warn">`+warns.map(w=>"⚠ "+w).join("<br>")+`</div>`;
+  if(isKei() && stn().kei==="none"){
+    html+=`<div class="note info"><b>${stn().area}は軽自動車の届出が不要な地域</b>です。提出は原則不要ですが、控え用として書類は作成できます。</div>`;
+  }
+  box.innerHTML=html;
+}
+function renderSummary(){
+  const s=state;
+  const applicant = s.shinseisha.isCorp? (s.shinseisha.corpName+" "+(s.shinseisha.daihyo||"")) : s.shinseisha.name;
+  const size = (s.vehicle.len&&s.vehicle.wid&&s.vehicle.hei)? `${s.vehicle.len}×${s.vehicle.wid}×${s.vehicle.hei}cm`:"";
+  const kengenName={jinin:"自己所有（自認書）",shoudaku:"他人所有（使用承諾証明書）",kyoyu:"共有（共有者全員の承諾書）"}[s.kubun.kengen];
+  const rows=[
+    ["申請種別", isKei()?"軽自動車（保管場所届出）":"普通自動車（証明申請）"],
+    ["提出先", stn().name+"（"+stn().area+"）"],
+    ["権原区分",kengenName],
+    ["申請者",applicant],
+    ["申請者住所",s.shinseisha.addr],
+    ["電話",s.shinseisha.tel],
+    ["車名／型式",[s.vehicle.maker,s.vehicle.katashiki].filter(Boolean).join(" / ")],
+    ["車台番号",s.vehicle.daiban],
+    ["大きさ",size],
+    ["使用の本拠",honkyoAddr()],
+    ["保管場所",s.hokan.addr+(s.hokan.kukaku?(" "+s.hokan.kukaku):"")],
+    ["直線距離",s.hokan.distance?(s.hokan.distance+"m"):""],
+    ["駐車スペース",(s.haichi.w&&s.haichi.d)?`${s.haichi.w}m×${s.haichi.d}m（道路${s.haichi.road||"-"}m）`:""],
+  ];
+  document.getElementById("summaryGrid").innerHTML=rows.map(([k,v])=>
+    `<div class="srow"><div class="sk">${k}</div><div class="sv ${v?"":"empty"}">${v||"未入力"}</div></div>`).join("");
+}
+function renderDocPick(){
+  const s=state, kei=isKei();
+  let docs=[ kei
+    ? ["届","自動車保管場所届出書","届出書＋控えを印刷（軽・手数料無料）"]
+    : ["申","自動車保管場所証明申請書（下書き）","見本。公式様式（原本）に転記して提出"] ];
+  if(s.kubun.kengen==="jinin") docs.push(["自","保管場所使用権原疎明書面（自認書）","自己所有のため"]);
+  else docs.push(["承","保管場所使用承諾証明書", state.shoudaku.forOwner!==false?"権利者（所有者）記入用・原本":"記入済み（控え）"]);
+  docs.push(["図","保管場所の所在図・配置図","配置図は自動作図"]);
+  docs.push(["✓","提出チェックリスト（控え）","行政書士用の確認シート"]);
+  document.getElementById("docPick").innerHTML=docs.map(([i,t,n])=>
+    `<div class="doc-card"><div class="di">${i}</div><div><div class="dt">${t}</div><div class="dn">${n}</div></div></div>`).join("");
+}
+
+/* =====================================================================
+   書類生成（印刷用HTML）
+   ===================================================================== */
+const POLICE="静岡", JST_DATE=()=>state.appDate? wareki(state.appDate):"令和　　年　　月　　日";
+function wareki(iso){
+  if(!iso) return "令和　　年　　月　　日";
+  const d=new Date(iso); const y=d.getFullYear(), m=d.getMonth()+1, day=d.getDate();
+  const r=y-2018; // 2019=令和1
+  return `令和${r<=1?"元":r}年${m}月${day}日`;
+}
+function esc(v){ return (v==null?"":(""+v)).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+function docMain(){ return isKei()? docTodoke() : docShinseiOfficial(); }
+
+/* 普通車：自動車保管場所証明申請書（静岡県警 公式様式 別記様式第1号 を忠実再現） */
+function docShinseiOfficial(){
+  const s=state, v=s.vehicle;
+  const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}　${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
+  const hokan = `${esc(s.hokan.addr)}　${esc(s.hokan.name)}　${esc(s.hokan.kukaku)}`;
+  const daiko = s.kubun.daiko? "　※行政書士による代理申請（委任状の要否は窓口確認）。":"";
+  return `<div class="sheet draft">
+    <div class="draft-banner">下書き（転記用）― この用紙は提出できません。公式様式（原本）に転記してください</div>
+    <div class="offlbl">別記様式第１号（第１条関係）</div>
+    <table class="off">
+      <tr><td colspan="6" class="ttl">自動車保管場所証明申請書</td></tr>
+      <tr>
+        <td class="hd" style="width:17%">車　名</td>
+        <td class="hd" style="width:17%">型　式</td>
+        <td class="hd" style="width:24%">車台番号</td>
+        <td class="hd" colspan="3">自動車の大きさ</td>
+      </tr>
+      <tr style="height:62px">
+        <td class="v ctr">${esc(v.maker)}</td>
+        <td class="v ctr">${esc(v.katashiki)}</td>
+        <td class="v ctr">${esc(v.daiban)}</td>
+        <td colspan="3" style="font-size:12px;line-height:1.7">長さ　${esc(v.len)||"　　　"}　センチメートル<br>幅　　${esc(v.wid)||"　　　"}　センチメートル<br>高さ　${esc(v.hei)||"　　　"}　センチメートル</td>
+      </tr>
+      <tr><td class="hd">自動車の使用の本拠の位置</td><td colspan="5" class="v">${esc(honkyoAddr())}</td></tr>
+      <tr><td class="hd">自動車の保管場所の位置</td><td colspan="5" class="v">${hokan}</td></tr>
+      <tr><td colspan="6" class="offbody" style="padding:8px 10px">
+        自動車の保管場所の位置欄記載の場所は、申請に係る自動車の保管場所として確保されていることを証明願います。
+        <div style="text-align:right;margin:10px 24px 4px 0">${JST_DATE()}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+          <div style="white-space:nowrap;padding-bottom:8px;font-size:13px">${ate()}</div>
+          <div class="applibox" style="flex:1;max-width:60%">
+            〒（　${esc(s.shinseisha.zip)}　）<br>
+            住所　${esc(s.shinseisha.addr)}<br>
+            <div style="display:flex;justify-content:space-between"><span>申請者</span><span>電話　${esc(s.shinseisha.tel)}</span></div>
+            氏名（名称）　${applicant}
+          </div>
+        </div>
+      </td></tr>
+      <tr><td colspan="6" style="font-size:12px">第　　　　　　号</td></tr>
+      <tr><td colspan="6" class="ttl" style="font-size:15px;letter-spacing:.3em">自動車保管場所証明書</td></tr>
+      <tr><td colspan="6" class="offbody" style="padding:8px 10px">
+        自動車の保管場所の位置欄記載の場所は、上記申請に係る自動車の保管場所として確保されていることを証明する。
+        <div style="text-align:right;margin:10px 24px 4px 0">令和　　　年　　　月　　　日</div>
+        <div style="text-align:right;padding-right:10px;font-size:13px">静岡県${esc(stn().name)}長　　　　　㊞</div>
+      </td></tr>
+      <tr>
+        <td class="ctr" style="font-size:10px">使用権原</td>
+        <td colspan="2" style="font-size:11px">自己 ・ 他人 ・ 共有</td>
+        <td class="ctr" style="font-size:10px">連絡先</td>
+        <td colspan="2" style="font-size:10px">氏名<br>電話</td>
+      </tr>
+    </table>
+    <div class="offsmall" style="margin-top:5px">※ 自動車の登録手続に必要となる自動車保管場所証明書は、登録申請日からさかのぼっておおむね１か月以内に発行されたものとなりますので、注意してください。</div>
+    <div class="offsmall" style="margin-top:4px">備考　1　次に掲げる場合は、所在図の添付を省略することができる。ただし、警察署長は、保管場所の付近の目標となる地物及びその位置を知るため特に必要があると認めるときは、所在図の提出を求めることができる。<br>
+      　(1)　自動車の使用の本拠の位置が、旧自動車（申請者が保有者である自動車であって申請に係るもの以外のものをいう。以下同じ。）に係る使用の本拠の位置と同一であり、かつ、申請に係る場所が旧自動車の保管場所と同一であるとき。<br>
+      　(2)　自動車の使用の本拠の位置が、保管場所の位置と同一であるとき（(1)に該当する場合を除く。）。<br>
+      　2　用紙の大きさは、日本産業規格Ａ列４番とする。</div>
+    <p class="offsmall" style="margin-top:6px">※ 静岡県警察の公式様式（別記様式第1号）に準拠。正・副2通を提出。押印は令和3年〜不要。最終的な様式は提出先（${esc(stn().name)}）でご確認ください。${daiko}</p>
+  </div>`;
+}
+
+/* 軽：自動車保管場所届出書 */
+function docTodoke(){
+  const s=state, v=s.vehicle;
+  const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}<br>${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
+  const daikoNote = s.kubun.daiko?`<br>※ 行政書士が代理届出（委任状の要否は${esc(stn().name)}にご確認ください）。`:"";
+  return `<div class="sheet draft">
+    <div class="draft-banner">下書き（転記用）― この用紙は提出できません。公式様式（原本）に転記してください</div>
+    <h2 class="dt">自動車保管場所届出書</h2>
+    <div class="dt-sub">（${ate()}）　※届出書＋控え 2通 提出</div>
+    <table class="ftable">
+      <tr><th>車名（メーカー）</th><td class="val big">${esc(v.maker)}</td><th>型式</th><td class="val big">${esc(v.katashiki)}</td></tr>
+      <tr><th>車台番号</th><td class="val big" colspan="3">${esc(v.daiban)}</td></tr>
+      <tr><th>自動車の大きさ</th><td class="val" colspan="3">長さ ${esc(v.len)} cm　幅 ${esc(v.wid)} cm　高さ ${esc(v.hei)} cm</td></tr>
+      <tr><th>自動車の使用の<br>本拠の位置</th><td class="val" colspan="3">${esc(honkyoAddr())}</td></tr>
+      <tr><th>自動車の保管<br>場所の位置</th><td class="val" colspan="3">${esc(s.hokan.addr)} ${esc(s.hokan.name)} ${esc(s.hokan.kukaku)}</td></tr>
+    </table>
+    <div class="addr-block right">
+      ${JST_DATE()}<br>
+      届出者　住所　${esc(s.shinseisha.addr)}<br>
+      氏名（名称）　${applicant}　<br>
+      電話　${esc(s.shinseisha.tel)}
+    </div>
+    <p class="small" style="margin-top:18px">※ 軽自動車は車検・ナンバー取得後の届出です（届出義務地域は15日以内）。手数料は無料・証明書の交付はありません。押印不要。車名等は車検証のとおり記入。${daikoNote}</p>
+  </div>`;
+}
+function docJinin(){
+  const s=state;
+  return `<div class="sheet">
+    <h2 class="dt" style="letter-spacing:.2em">保管場所使用権原疎明書面（自認書）</h2>
+    <div class="dt-sub">${ate()}</div>
+    <table class="ftable" style="margin-top:10px">
+      <tr><th>保管場所の位置</th><td class="val" colspan="3">${esc(s.hokan.addr)} ${esc(s.hokan.name)} ${esc(s.hokan.kukaku)}</td></tr>
+      <tr><th>自己が所有するもの</th><td class="val" colspan="3">${["土地","建物","土地・建物"].map(o=>`<span style="margin-right:18px">${s.jinin.obj===o?"●":"○"} ${o}</span>`).join("")}</td></tr>
+    </table>
+    <p class="bodytext">上記の自動車の保管場所として使用する${esc(s.jinin.obj)}は、私が所有するものであり、当該場所を保管場所として使用する権原を有することに相違ありません。</p>
+    <div class="addr-block right">
+      ${JST_DATE()}<br>
+      住所　${esc(s.shinseisha.addr)}<br>
+      氏名（名称）　${esc(s.shinseisha.isCorp?(s.shinseisha.corpName+" "+s.shinseisha.daihyo):s.shinseisha.name)}　<br>
+      電話　${esc(s.shinseisha.tel)}
+    </div>
+    <p class="small" style="margin-top:18px">※ 押印は不要です（令和3年〜）。共有の場合は他の共有者全員の使用承諾証明書が必要です。</p>
+  </div>`;
+}
+function docShoudaku(){
+  const s=state, d=s.shoudaku, fo=(d.forOwner!==false);
+  const keiyaku = d.keiyakuSame ? "上記使用者に同じ"
+    : `${esc(d.keiyakuName)}　${esc(d.keiyakuAddr)}　${esc(d.keiyakuTel)}`;
+  const ln="________________________________";
+  const banner = fo ? `<div class="center" style="border:2px solid #000;border-radius:4px;padding:6px;margin:6px 0 4px;font-weight:700;font-size:13px">土地・建物の所有者（管理者）記入用 ― この用紙にご記入・ご署名ください</div>` : "";
+  const ownerBlock = fo
+    ? `令和　　年　　月　　日<br>
+      土地・建物の所有者<br>（又は管理委託者）　※下欄をご記入ください<br>
+      住所　${ln}<br>
+      氏名（名称）　${ln}　印<br>
+      電話　${ln}`
+    : `${JST_DATE()}<br>
+      土地・建物の所有者<br>（又は管理委託者）<br>
+      住所　${esc(d.ownerAddr)}<br>
+      氏名（名称）　${esc(d.ownerName)}　<br>
+      電話　${esc(d.ownerTel)}`;
+  return `<div class="sheet">
+    <h2 class="dt" style="letter-spacing:.25em">保管場所使用承諾証明書</h2>
+    <div class="dt-sub">${ate()}</div>
+    ${banner}
+    <table class="ftable" style="margin-top:10px">
+      <tr><th>保管場所の位置</th><td class="val" colspan="3">${esc(s.hokan.addr)}</td></tr>
+      <tr><th>保管場所の名称・区画</th><td class="val" colspan="3">${esc(s.hokan.name)}　${esc(s.hokan.kukaku)}</td></tr>
+      <tr><th>保管場所の使用者</th><td class="val" colspan="3">住所　${esc(s.shinseisha.addr)}<br>氏名　${esc(s.shinseisha.isCorp?s.shinseisha.corpName:s.shinseisha.name)}</td></tr>
+      <tr><th>使用者と契約者の関係</th><td class="val" colspan="3">${esc(d.kankei)}</td></tr>
+      <tr><th>契約者</th><td class="val" colspan="3">${keiyaku}</td></tr>
+      <tr><th>使用期間</th><td class="val" colspan="3">${esc(wareki(d.useFrom))}　から　${esc(wareki(d.useTo))}　まで</td></tr>
+    </table>
+    <p class="bodytext">上記のとおり、当方所有（管理）の土地・建物を、上記使用者が自動車の保管場所として使用することを承諾します。</p>
+    <div class="addr-block right">
+      ${ownerBlock}
+    </div>
+    <p class="small" style="margin-top:14px">※ この書面は<b>所有者・管理者ご本人</b>が記入・署名してください（原本）。証明日から3か月以内のものが必要です。押印は原則不要（求められる場合あり）。</p>
+  </div>`;
+}
+function docZu(){
+  const s=state,h=s.haichi;
+  const w=parseFloat(h.w)||0,d=parseFloat(h.d)||0,road=parseFloat(h.road)||0,gate=parseFloat(h.gate)||0;
+  const haichiSvg = haichiComposite
+    ? `<img src="${haichiComposite}" style="width:100%;border:1px solid #999;border-radius:4px;display:block">`
+    : ((w&&d)? buildHaichiSVG(h,w,d,road,gate) : '<div style="padding:30px;text-align:center;color:#999">（寸法未入力）</div>');
+  let shozai;
+  const shozaiImg = (s.shozai.mode==="image") ? (shozaiComposite || mapImage || null) : null;
+  if(shozaiImg){
+    shozai=`<img src="${shozaiImg}" style="max-width:100%;max-height:360px;display:block;margin:0 auto;border:1px solid #999">
+            <p class="small center" style="margin-top:6px">○：使用の本拠　／　○：保管場所　／　直線距離 ${esc(s.hokan.distance)||"___"}m</p>`;
+  } else {
+    shozai=`<div style="min-height:230px;border:1px dashed #999;border-radius:4px;padding:14px;font-size:13px;line-height:2.2">
+      別紙のとおり（Googleマップ等の地図を添付）<br>
+      ・使用の本拠の位置：${esc(honkyoAddr())}<br>
+      ・保管場所の位置　：${esc(s.hokan.addr)}<br>
+      ・本拠から保管場所までの直線距離：${esc(s.hokan.distance)||"___"}m（2km以内）</div>`;
+  }
+  return `<div class="sheet">
+    <h2 class="dt" style="letter-spacing:.3em">所在図・配置図</h2>
+    <div class="dt-sub">${ate()}</div>
+    <div class="zu-wrap" style="margin-top:10px">
+      <div class="zu-cell">
+        <div class="zt">所在図（使用の本拠と保管場所の位置関係）</div>
+        ${shozai}
+      </div>
+      <div class="zu-cell">
+        <div class="zt">配置図（保管場所の寸法・出入口・前面道路）</div>
+        <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:1;min-width:240px">${haichiSvg}</div>
+          <div style="flex:0 0 auto;font-size:12px;line-height:1.9">
+            幅：${esc(h.w)||"__"} m<br>奥行：${esc(h.d)||"__"} m<br>
+            出入口：${esc(h.gate)||"__"} m<br>前面道路：${esc(h.road)||"__"} m<br>
+            シャッター：${h.shutter?"有":"無"}<br>種別：${esc(h.type)}<br>
+            ${h.rinsetsu?("備考："+esc(h.rinsetsu)):""}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function docChecklist(){
+  const s=state, kei=isKei(), st=stn();
+  const kengenDoc = s.kubun.kengen==="jinin"?"自認書":"使用承諾証明書"+(s.kubun.kengen==="kyoyu"?"（共有者全員）":"");
+  const mainDoc = kei? "自動車保管場所届出書（届出書＋控え 2通）" : "自動車保管場所証明申請書（正・副 2通）";
+  const items=[
+    mainDoc,
+    "保管場所の所在図・配置図（1通）",
+    `権原書面：${kengenDoc}（1通）`,
+    s.kubun.kengen!=="jinin"?"（承諾書に代えて）駐車場賃貸借契約書の写しでも可":"",
+    kei? "手数料：無料（軽自動車の届出）" : "手数料：静岡県収入証紙 2,400円分",
+    s.kubun.daiko?`委任状（代理${kei?"届出":"申請"}の場合・要否は窓口確認）`:""
+  ].filter(Boolean);
+  const feeRow = kei? "無料（軽自動車の保管場所届出）" : "2,400円（静岡県収入証紙）";
+  const flowRow = kei? "届出書を提出（事後届出。義務地域はナンバー取得後15日以内）。証明書の交付はなく、控えに受理印。" : "提出 → 2〜3日後に現地調査 → 中3日程度で交付（窓口の交付予定日に従う）";
+  const keiNote = !kei ? ""
+    : (st.kei==="none")
+      ? `<tr><th style="color:#c0392b">重要</th><td class="val"><b>${esc(st.area)}は軽自動車の保管場所届出が不要な地域</b>です。この書類の提出は原則不要（車庫の確保自体は必要）。</td></tr>`
+      : `<tr><th style="color:#c0392b">重要</th><td class="val"><b>${esc(st.keiArea||st.area)}は軽自動車の保管場所届出が必要な地域</b>（ナンバー取得後15日以内）。${st.keiEx?`<br>ただし${esc(st.keiEx)}。`:""}</td></tr>`;
+  return `<div class="sheet">
+    <h2 class="dt" style="letter-spacing:.15em;font-size:17px">提出チェックリスト（控え）</h2>
+    <div class="dt-sub">行政書士用 ・ 提出前の最終確認</div>
+    <table class="ftable" style="margin-top:10px">
+      <tr><th>提出先</th><td class="val">${esc(st.name)} 交通課 車庫証明窓口</td></tr>
+      <tr><th>所在地</th><td class="val">${esc(st.zip)} ${esc(st.addr)}　TEL ${esc(st.tel)}</td></tr>
+      <tr><th>手数料</th><td class="val">${feeRow}　※標章は2025/4/1廃止（シール交付・手数料なし）</td></tr>
+      <tr><th>手続の流れ</th><td class="val">${flowRow}</td></tr>
+      ${keiNote}
+      <tr><th>${kei?"届出者":"申請者"}</th><td class="val">${esc(s.shinseisha.isCorp?s.shinseisha.corpName:s.shinseisha.name)}</td></tr>
+    </table>
+    <div class="zt" style="margin:16px 0 8px;border-left:4px solid #000;padding-left:8px;font-weight:700">添付書類チェック</div>
+    <div class="cl-list">
+      ${items.map(t=>`<div class="cli"><span class="cb"></span><span>${esc(t)}</span></div>`).join("")}
+    </div>
+    <p class="small" style="margin-top:16px">確認事項：①本拠と保管場所が直線2km以内　②駐車スペースに車両全体が収まる　③道路から支障なく出入りできる　④使用権原がある。<br>
+    ※ 様式・手数料は2026年6月時点。最新は静岡県警ページ・${esc(st.name)}窓口でご確認ください。静岡県警ページ本文に「標章を受け取り」の旧表記が残る場合がありますが、標章は廃止済みです。</p>
+  </div>`;
+}
+
+function makeDocs(){
+  const parts=[docMain()];
+  if(state.kubun.kengen==="jinin") parts.push(docJinin());
+  else parts.push(docShoudaku());
+  parts.push(docZu());
+  parts.push(docChecklist());
+  const area=document.getElementById("print-area");
+  area.innerHTML=parts.join("");
+  area.classList.add("preview");
+  // プレビューへスクロール＋印刷ボタン提示
+  showPreviewBar();
+  area.scrollIntoView({behavior:"smooth"});
+  toast("書類を作成しました");
+}
+function showPreviewBar(){
+  let bar=document.getElementById("previewBar");
+  if(!bar){
+    bar=document.createElement("div");
+    bar.id="previewBar"; bar.className="footnav";
+    bar.innerHTML=`<div class="wrapf">
+      <button class="btn prev" onclick="hidePreview()">編集に戻る</button>
+      <button class="btn prev" style="flex:0 0 auto" onclick="saveHistoryNow()">📋 履歴</button>
+      <button class="btn make" onclick="window.print()">🖨 印刷 / PDF保存</button></div>`;
+    document.body.appendChild(bar);
+  }
+  bar.style.display="flex";
+  document.querySelector(".footnav:not(#previewBar)").style.display="none";
+}
+function hidePreview(){
+  document.getElementById("print-area").classList.remove("preview");
+  document.getElementById("print-area").innerHTML="";
+  document.getElementById("previewBar").style.display="none";
+  document.querySelector(".footnav:not(#previewBar)").style.display="flex";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* =====================================================================
+   保存・下書き
+   ===================================================================== */
+let saveTimer=null;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ localStorage.setItem(AUTOSAVE, JSON.stringify(state)); },400); }
+function loadAuto(){ try{ const j=localStorage.getItem(AUTOSAVE); if(j) state=Object.assign(DEFAULT(),JSON.parse(j)); }catch(e){} }
+function getDrafts(){ try{ return JSON.parse(localStorage.getItem(DRAFTS)||"[]"); }catch(e){ return []; } }
+function saveDraft(){
+  const name=document.getElementById("draftName").value.trim()||("案件 "+new Date().toLocaleDateString("ja-JP"));
+  const ds=getDrafts();
+  ds.unshift({name, ts:new Date().toLocaleString("ja-JP"), data:JSON.parse(JSON.stringify(state))});
+  localStorage.setItem(DRAFTS, JSON.stringify(ds.slice(0,30)));
+  toast("「"+name+"」を保存しました");
+  openModal("draft");
+}
+function loadDraft(i){ const ds=getDrafts(); if(ds[i]){ state=Object.assign(DEFAULT(),ds[i].data); hydrate(); applyAll(); closeModal(); toast("読み込みました"); gotoStep(0); } }
+function delDraft(i){ const ds=getDrafts(); ds.splice(i,1); localStorage.setItem(DRAFTS,JSON.stringify(ds)); openModal("draft"); }
+function newCase(){ if(confirm("入力内容をクリアして新規作成しますか？")){ state=DEFAULT(); mapImage=null; haichiComposite=null; shozaiComposite=null; _haichiSrc=null; _shozaiSrc=null; GMAPS.shozaiAutoTried=false; localStorage.removeItem(AUTOSAVE); hydrate(); applyAll(); refreshFigStatus("haichi"); refreshFigStatus("shozai"); closeModal(); gotoStep(0); toast("新規作成"); } }
+function exportJson(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="車庫証明_"+(state.shinseisha.name||"案件")+".json"; a.click();
+}
+
+/* =====================================================================
+   顧客マスタ・申請履歴
+   保存先は自動判定: GAS配信ならスプレッドシート / それ以外は端末localStorage
+   ===================================================================== */
+const HAS_GAS = (typeof google!=="undefined" && google.script && google.script.run);
+const CUST_KEY="shako_tobu_customers", HIST_KEY="shako_tobu_history";
+let _custCache=[];
+const Store={
+  getCustomers(cb){
+    if(HAS_GAS){ google.script.run.withSuccessHandler(cb).withFailureHandler(()=>{toast("読込に失敗");cb([]);}).getCustomers(); }
+    else cb(JSON.parse(localStorage.getItem(CUST_KEY)||"[]"));
+  },
+  saveCustomer(rec,cb){
+    if(HAS_GAS){ google.script.run.withSuccessHandler(cb).withFailureHandler(()=>toast("保存に失敗")).saveCustomer(rec); }
+    else { let l=JSON.parse(localStorage.getItem(CUST_KEY)||"[]");
+      if(!rec.id){ rec.id="c"+Date.now(); l.unshift(rec); }
+      else { const i=l.findIndex(x=>x.id===rec.id); if(i>=0) l[i]=rec; else l.unshift(rec); }
+      localStorage.setItem(CUST_KEY,JSON.stringify(l)); cb(rec); }
+  },
+  deleteCustomer(id,cb){
+    if(HAS_GAS){ google.script.run.withSuccessHandler(cb).deleteCustomer(id); }
+    else { const l=JSON.parse(localStorage.getItem(CUST_KEY)||"[]").filter(x=>x.id!==id); localStorage.setItem(CUST_KEY,JSON.stringify(l)); cb(); }
+  },
+  saveHistory(rec,cb){
+    if(HAS_GAS){ google.script.run.withSuccessHandler(cb||function(){}).withFailureHandler(()=>toast("履歴保存に失敗")).saveHistory(rec); }
+    else { const h=JSON.parse(localStorage.getItem(HIST_KEY)||"[]"); rec.id="h"+Date.now(); h.unshift(rec); localStorage.setItem(HIST_KEY,JSON.stringify(h.slice(0,300))); if(cb)cb(rec); }
+  }
+};
+function customerFromState(label){
+  const s=state.shinseisha,h=state.honkyo;
+  return { id:"", label:(label||s.corpName||s.name||"無名").trim(), isCorp:!!s.isCorp, corpName:s.corpName||"", daihyo:s.daihyo||"",
+    name:s.name||"", kana:s.kana||"", zip:s.zip||"", tel:s.tel||"", addr:s.addr||"",
+    honkyoSame:h.same!==false, honkyoAddr:h.addr||"" };
+}
+function applyCustomer(c){
+  state.shinseisha={ isCorp:!!c.isCorp, corpName:c.corpName||"", daihyo:c.daihyo||"", name:c.name||"", kana:c.kana||"", zip:c.zip||"", tel:c.tel||"", addr:c.addr||"" };
+  state.honkyo={ same:c.honkyoSame!==false, addr:c.honkyoAddr||"" };
+  hydrate(); applyAll(); scheduleSave();
+}
+function custModal(){
+  return `<button class="close" onclick="closeModal()">×</button>
+  <h3>顧客マスタ</h3>
+  <p style="font-size:12px;color:#5a6b7b">よく依頼を受ける顧客の氏名・住所・連絡先を保存し、次回ワンタップで呼び出せます。${HAS_GAS?"保存先：スプレッドシート（事務所で共有）":"保存先：この端末"}。</p>
+  <div class="field"><label class="lbl">いまの「申請者」を顧客として登録</label>
+    <div class="suffix"><input type="text" id="custLabel" placeholder="表示名（例）山田太郎 / ○○商事">
+    <button class="inline-btn" onclick="saveCurrentCustomer()">登録</button></div>
+    <div class="hint">申請者ステップの氏名・住所・電話・本拠が保存されます。</div></div>
+  <hr class="hr">
+  <div id="custList"><p style="font-size:13px;color:#5a6b7b">読み込み中…</p></div>`;
+}
+function renderCustList(){
+  Store.getCustomers(list=>{
+    _custCache=list||[];
+    const el=document.getElementById("custList"); if(!el) return;
+    if(!_custCache.length){ el.innerHTML=`<p style="font-size:13px;color:#5a6b7b">登録された顧客はありません。</p>`; return; }
+    el.innerHTML=_custCache.map((c,i)=>`<div class="draft-item"><div class="dni"><div class="dnm">${esc(c.label||c.name||"無名")}</div><div class="dts">${esc(c.addr||"")} ${esc(c.tel||"")}</div></div>
+      <button class="ld" onclick="loadCustomer(${i})">呼出</button>
+      <button class="dl" onclick="delCustomer(${i})">削除</button></div>`).join("");
+  });
+}
+function saveCurrentCustomer(){
+  const inp=document.getElementById("custLabel");
+  const rec=customerFromState(inp?inp.value:"");
+  if(!rec.name && !rec.corpName){ toast("先に申請者の氏名を入力してください"); return; }
+  Store.saveCustomer(rec, ()=>{ toast("顧客を登録しました"); if(inp)inp.value=""; renderCustList(); });
+}
+function loadCustomer(i){ const c=_custCache[i]; if(c){ applyCustomer(c); closeModal(); toast("顧客を読み込みました"); gotoStep(1); } }
+function delCustomer(i){ const c=_custCache[i]; if(c && confirm("「"+(c.label||c.name)+"」を削除しますか？")){ Store.deleteCustomer(c.id, ()=>{ toast("削除しました"); renderCustList(); }); } }
+function historyFromState(){
+  const s=state;
+  return { id:"", custName:(s.shinseisha.isCorp?s.shinseisha.corpName:s.shinseisha.name)||"",
+    type:isKei()?"軽(届出)":"普通(証明)", station:stn().name,
+    kengen:{jinin:"自己所有",shoudaku:"承諾",kyoyu:"共有"}[s.kubun.kengen]||"",
+    maker:s.vehicle.maker||"", katashiki:s.vehicle.katashiki||"", daiban:s.vehicle.daiban||"",
+    hokan:s.hokan.addr||"" };
+}
+function saveHistoryNow(){ Store.saveHistory(historyFromState(), ()=>toast("申請履歴に保存しました")); }
+
+/* =====================================================================
+   モーダル
+   ===================================================================== */
+function openModal(type){
+  const b=document.getElementById("modalBody");
+  if(type==="info") b.innerHTML=infoModal();
+  else if(type==="draft") b.innerHTML=draftModal();
+  else if(type==="cust"){ b.innerHTML=custModal(); renderCustList(); }
+  else if(type==="gmap") b.innerHTML=gmapModal();
+  document.getElementById("modalBg").classList.add("open");
+}
+function closeModal(){ document.getElementById("modalBg").classList.remove("open"); }
+function infoModal(){
+  const st=stn(), kei=isKei();
+  const feeRow = kei? "<b>無料</b>（軽自動車の保管場所届出）" : "<b>2,400円</b>（保管場所証明手数料）<br>静岡県<b>収入証紙</b>で納付（令和8年4月1日改定）";
+  const keiRow = kei? `<tr><th>軽の届出義務</th><td>${st.kei==="none"?`<b>${esc(st.area)}は届出不要地域</b>（車庫の確保は必要）`:`<b>${esc(st.keiArea||st.area)}は届出義務地域</b>（ナンバー取得後15日以内）${st.keiEx?`<br><span style="font-size:11px">※${esc(st.keiEx)}</span>`:""}`}</td></tr>` : "";
+  return `<button class="close" onclick="closeModal()">×</button>
+  <h3>提出先・手数料（${esc(st.area)}）</h3>
+  <table>
+    <tr><th>提出先</th><td>${esc(st.name)} 交通課 車庫証明窓口</td></tr>
+    <tr><th>所在地</th><td>${esc(st.zip)}<br>${esc(st.addr)}<br>TEL ${esc(st.tel)}</td></tr>
+    <tr><th>手数料</th><td>${feeRow}</td></tr>
+    <tr><th>標章</th><td>2025年4月1日に<b>廃止</b>。車庫シールの交付・貼付・手数料はありません。</td></tr>
+    ${keiRow}
+    <tr><th>必要書類</th><td>①${kei?"保管場所届出書":"証明申請書(正副2通)"} ②所在図・配置図 ③権原書面(自認書/承諾書/契約書写し)${kei?"":" ④収入証紙2,400円"}</td></tr>
+    <tr><th>要件</th><td>本拠と保管場所が<b>直線2km以内</b>／車両全体が収まる／出入り可能／使用権原あり</td></tr>
+  </table>
+  <p style="font-size:11px;color:#5a6b7b">静岡県内は手数料2,400円・収入証紙・標章廃止が全署共通。市が変わっても提出先（管轄署）のみが異なります。</p>
+  <h3 style="font-size:14px;margin-top:14px">公式様式ダウンロード（静岡県警）</h3>
+  <div class="linklist">
+    <a href="https://www.pref.shizuoka.jp/police/shinse/kotsu/kiseka/index.html" target="_blank">▶ 車庫証明の申請（静岡県警 案内）</a>
+    <a href="https://www.pref.shizuoka.jp/police/shinse/kotsu/kiseka/jikayo.html" target="_blank">▶ 自家用車（普通車）の手続ページ</a>
+    ${kei?'<a href="https://www.pref.shizuoka.jp/police/shinse/kotsu/kiseka/kejidosha.html" target="_blank">▶ 軽自動車の保管場所届出ページ</a>':''}
+    <a href="https://www.pref.shizuoka.jp/police/_res/projects/project_police/_page_/002/000/577/2-1syoumeisinsei0803.pdf" target="_blank">▶ 保管場所証明申請書（PDF）</a>
+    <a href="https://www.pref.shizuoka.jp/police/_res/projects/project_police/_page_/002/000/577/2-3hokanbasyozu0803.pdf" target="_blank">▶ 所在図・配置図（PDF）</a>
+    <a href="https://www.pref.shizuoka.jp/police/_res/projects/project_police/_page_/002/000/577/2-5someisyomen0803.pdf" target="_blank">▶ 自認書（PDF）</a>
+    <a href="https://www.pref.shizuoka.jp/police/_res/projects/project_police/_page_/002/000/577/2-7syoudakusyoumei0803.pdf" target="_blank">▶ 使用承諾証明書（PDF）</a>
+  </div>
+  <p style="font-size:11px;color:#5a6b7b">出典：静岡県警察 各手続ページ（2026年6月確認）。窓口での最終確認を推奨します。</p>`;
+}
+function draftModal(){
+  const ds=getDrafts();
+  let list=ds.length? ds.map((d,i)=>`<div class="draft-item"><div class="dni"><div class="dnm">${esc(d.name)}</div><div class="dts">${esc(d.ts)}</div></div>
+    <button class="ld" onclick="loadDraft(${i})">開く</button><button class="dl" onclick="delDraft(${i})">削除</button></div>`).join("")
+    : `<p style="color:#5a6b7b;font-size:13px">保存された案件はありません。</p>`;
+  return `<button class="close" onclick="closeModal()">×</button>
+  <h3>案件の保存・読み込み</h3>
+  <div class="field"><label class="lbl">この案件に名前を付けて保存</label>
+    <div class="suffix"><input type="text" id="draftName" placeholder="例）山田様 プリウス">
+    <button class="inline-btn" onclick="saveDraft()">保存</button></div></div>
+  <p style="font-size:11px;color:#5a6b7b">入力は自動保存もされます（同じ端末・ブラウザ）。案件ごとに名前を付けて複数管理できます。</p>
+  <hr class="hr">
+  <div>${list}</div>
+  <hr class="hr">
+  <div class="row">
+    <button class="inline-btn" style="flex:1" onclick="exportJson()">⬇ JSONで書き出し</button>
+    <button class="inline-btn" style="flex:1;border-color:var(--warn);color:var(--warn)" onclick="newCase()">新規作成（クリア）</button>
+  </div>`;
+}
+
+/* =====================================================================
+   初期化
+   ===================================================================== */
+function applyAll(){
+  refreshKengen(); refreshCorp(); refreshHonkyo(); refreshKeiyaku(); refreshShoudakuMode();
+  refreshDist(); refreshShozai(); refreshChoiceCards(); drawHaichi(); checkHaichi(); checkPeriod();
+  refreshKei(); refreshHeader();
+}
+function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1800); }
+
+function boot(){
+  loadAuto();
+  if(!state.appDate){ state.appDate=new Date().toISOString().slice(0,10); }
+  buildStepNav();
+  buildStationOptions();
+  bindAll();
+  hydrate();
+  applyAll();
+  // 画像添付
+  const mi=document.getElementById("mapImgInput");
+  if(mi) mi.addEventListener("change",e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=ev=>{ mapImage=ev.target.result;
+      document.getElementById("mapImgDrop").innerHTML='<img class="thumb" src="'+mapImage+'">';
+    }; r.readAsDataURL(f);
+  });
+  if(GMAPS.key && navigator.onLine){ gmapsLoad().catch(function(){}); }
+  gotoStep(0);
+}
+/* このスクリプトはbody末尾にあるためDOMは解析済み。GASのHtmlServiceではDOMContentLoadedが
+   発火しないことがあるので、待たずに直接初期化する（localhost/GitHub Pagesでも同様に動作）。 */
+try{ boot(); }catch(e){ console.error("boot error", e); }
+
+/* PWA: Service Worker 登録（https/localhostのみ。GAS(googleusercontent)やfile://では登録しない） */
+if("serviceWorker" in navigator && !/googleusercontent\.com$/.test(location.hostname)){
+  window.addEventListener("load", ()=>{
+    try{ navigator.serviceWorker.register("sw.js").catch(()=>{}); }catch(e){}
+  });
+}
+</script>
+</body>
+</html>

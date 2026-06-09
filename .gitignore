@@ -1,0 +1,5 @@
+# 開発専用・公開不要
+.claude/
+*.b64
+Thumbs.db
+desktop.ini
