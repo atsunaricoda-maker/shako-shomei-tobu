@@ -663,7 +663,7 @@ textarea{resize:vertical;min-height:64px;}
         <div id="sendStatus"></div>
         <button class="fig-btn" style="border-color:var(--accent);background:#fff4e8;color:#a85a14" onclick="sendByMail()">📤 メールで送信</button>
         <button class="inline-btn" style="width:100%;margin-top:10px" onclick="copyCaseLink()">🔗 リンクをコピー（LINE等で送る）</button>
-        <div class="hint" style="margin-top:8px">送信元（お店名）・送信先（事務所メール）は右上の<b>⚙</b>で設定。リンクには個人情報が含まれます（身内の連絡手段で送ってください）。航空写真トレース画像はリンクに含めません。</div>
+        <div class="hint" style="margin-top:8px">送信元（お店名）・送信先（事務所メール）は右上の<b>⚙</b>で設定。リンクには個人情報が含まれます（身内の連絡手段で送ってください）。スタンプで作った配置図は送られます（航空写真の“写真”は容量のため非同梱）。</div>
       </div>
 
       <div class="card">
@@ -1095,12 +1095,12 @@ function useEditor(){
   if(!ED.canvas || !ED.img){ toast("写真を選択してください"); return; }
   if(ED.mode==="haichi") drawEditor(true);   // クリーン描画（角の①〜④番号を消して出力）
   const url=ED.canvas.toDataURL("image/jpeg",0.85);
-  if(ED.mode==="haichi"){ drawEditor(false); haichiComposite=url; haichiKind="航空写真"; drawHaichi(); refreshFigStatus("haichi"); toast("配置図に反映しました"); }
+  if(ED.mode==="haichi"){ drawEditor(false); haichiComposite=url; haichiKind="航空写真"; state.haichiStamps=null; scheduleSave(); drawHaichi(); refreshFigStatus("haichi"); toast("配置図に反映しました"); }
   else { shozaiComposite=url; state.shozai.mode="image"; refreshShozai(); refreshFigStatus("shozai"); toast("所在図に反映しました"); }
   closeModal();
 }
 function clearFig(mode){
-  if(mode==="haichi"){ haichiComposite=null; haichiKind=""; _haichiSrc=null; drawHaichi(); } else { shozaiComposite=null; _shozaiSrc=null; }
+  if(mode==="haichi"){ haichiComposite=null; haichiKind=""; _haichiSrc=null; state.haichiStamps=null; scheduleSave(); drawHaichi(); } else { shozaiComposite=null; _shozaiSrc=null; }
   refreshFigStatus(mode);
 }
 function refreshFigStatus(mode){
@@ -1232,7 +1232,24 @@ function stampDelete(){ if(ST.sel>=0){ ST.stamps.splice(ST.sel,1); ST.sel=-1; ST
 function stampScale(f){ if(ST.sel<0){toast("部品を選択してください");return;} const s=ST.stamps[ST.sel],cx=s.x+s.w/2,cy=s.y+s.h/2; s.w=Math.max(28,s.w*f); s.h=Math.max(24,s.h*f); s.x=cx-s.w/2; s.y=cy-s.h/2; drawStamps(); }
 function stampRotate(deg){ if(ST.sel<0){toast("部品を選択してください");return;} ST.stamps[ST.sel].rot+=deg; drawStamps(); }
 function stampToggleBg(on){ ST.useBg=on; if(on){ if(!_haichiSrc){ toast("先に航空写真を取得/取り込みしてください"); const cb=document.getElementById("stBg"); if(cb)cb.checked=false; ST.useBg=false; return; } if(!ST.bgImg){ const im=new Image(); im.onload=()=>{ST.bgImg=im; drawStamps();}; im.src=_haichiSrc; return; } } drawStamps(); }
-function useStampEditor(){ if(!ST.stamps.length){ toast("部品を置いてください"); return; } ST.sel=-1; drawStamps(true); haichiComposite=ST.canvas.toDataURL("image/png"); haichiKind="スタンプ"; drawHaichi(); refreshFigStatus("haichi"); toast("配置図に反映しました"); closeModal(); }
+function useStampEditor(){ if(!ST.stamps.length){ toast("部品を置いてください"); return; } ST.sel=-1; drawStamps(true); haichiComposite=ST.canvas.toDataURL("image/png"); haichiKind="スタンプ";
+  state.haichiStamps={ w:ST.canvas.width, h:ST.canvas.height, stamps:ST.stamps.map(s=>({type:s.type,x:Math.round(s.x),y:Math.round(s.y),w:Math.round(s.w),h:Math.round(s.h),rot:Math.round(s.rot||0)})) };
+  scheduleSave();
+  drawHaichi(); refreshFigStatus("haichi"); toast("配置図に反映しました"); closeModal(); }
+/* スタンプ配置図をデータ(state.haichiStamps)から再描画してPNGを復元する。
+   画像そのものはリンク/メールに乗せられないため、置いた部品の座標・サイズ・回転だけを送り、受信側で同じ図を再生成する。
+   リンク受信・再読込・案件読込のいずれでも配置図が消えない（送信側の図保持にもなる）。 */
+function rebuildStampComposite(){
+  const hs=state.haichiStamps;
+  if(!hs||!hs.stamps||!hs.stamps.length) return;
+  const cv=document.createElement("canvas"); cv.width=hs.w||820; cv.height=hs.h||600;
+  const sv={canvas:ST.canvas,ctx:ST.ctx,stamps:ST.stamps,sel:ST.sel,useBg:ST.useBg,bgImg:ST.bgImg};
+  ST.canvas=cv; ST.ctx=cv.getContext("2d");
+  ST.stamps=hs.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0}));
+  ST.sel=-1; ST.useBg=false; ST.bgImg=null;
+  try{ drawStamps(true); haichiComposite=cv.toDataURL("image/png"); haichiKind="スタンプ"; }catch(e){}
+  ST.canvas=sv.canvas; ST.ctx=sv.ctx; ST.stamps=sv.stamps; ST.sel=sv.sel; ST.useBg=sv.useBg; ST.bgImg=sv.bgImg;
+}
 
 /* =====================================================================
    地図リンク
@@ -1779,7 +1796,7 @@ function saveDraft(){
   toast("「"+name+"」を保存しました");
   openModal("draft");
 }
-function loadDraft(i){ const ds=getDrafts(); if(ds[i]){ state=Object.assign(DEFAULT(),ds[i].data); hydrate(); applyAll(); closeModal(); toast("読み込みました"); gotoStep(0); } }
+function loadDraft(i){ const ds=getDrafts(); if(ds[i]){ state=Object.assign(DEFAULT(),ds[i].data); mapImage=null; haichiComposite=null; shozaiComposite=null; _haichiSrc=null; _shozaiSrc=null; haichiKind=""; hydrate(); applyAll(); refreshFigStatus("haichi"); refreshFigStatus("shozai"); closeModal(); toast("読み込みました"); gotoStep(0); } }
 function delDraft(i){ const ds=getDrafts(); ds.splice(i,1); localStorage.setItem(DRAFTS,JSON.stringify(ds)); openModal("draft"); }
 function newCase(){ if(confirm("入力内容をクリアして新規作成しますか？")){ state=DEFAULT(); mapImage=null; haichiComposite=null; shozaiComposite=null; _haichiSrc=null; _shozaiSrc=null; GMAPS.shozaiAutoTried=false; localStorage.removeItem(AUTOSAVE); hydrate(); applyAll(); refreshFigStatus("haichi"); refreshFigStatus("shozai"); closeModal(); gotoStep(0); toast("新規作成"); } }
 function exportJson(){
@@ -1930,6 +1947,7 @@ function draftModal(){
    初期化
    ===================================================================== */
 function applyAll(){
+  rebuildStampComposite();
   refreshKengen(); refreshCorp(); refreshHonkyo(); refreshKeiyaku(); refreshShoudakuMode();
   refreshDist(); refreshShozai(); refreshChoiceCards(); drawHaichi(); checkHaichi(); checkPeriod();
   refreshKei(); refreshHeader();
