@@ -202,6 +202,13 @@ textarea{resize:vertical;min-height:64px;}
   opacity:0;transition:.25s;z-index:70;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+/* 新バージョン通知バー（自動更新） */
+#updateBar{position:fixed;left:50%;transform:translateX(-50%);bottom:78px;z-index:75;max-width:94%;
+  background:var(--navy-d);color:#fff;display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);font-size:13px;font-weight:700;animation:fade .2s ease;}
+#updateBar #updateBtn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;}
+#updateBar #updateLater{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:8px;width:30px;height:30px;font-size:15px;cursor:pointer;flex:0 0 auto;padding:0;}
+
 .foot-meta{text-align:center;font-size:11px;color:var(--muted);padding:8px 16px 0;}
 
 /* =========================================================
@@ -2036,11 +2043,38 @@ function boot(){
    発火しないことがあるので、待たずに直接初期化する（localhost/GitHub Pagesでも同様に動作）。 */
 try{ boot(); }catch(e){ console.error("boot error", e); }
 
-/* PWA: Service Worker 登録（https/localhostのみ。GAS(googleusercontent)やfile://では登録しない） */
+/* PWA: Service Worker 登録＋自動更新
+   新しい版を検知したら画面下にバナー表示→ワンタップで更新。
+   入力中に勝手にリロードしないよう、適用はユーザーが「更新」を押したときだけ。 */
 if("serviceWorker" in navigator && !/googleusercontent\.com$/.test(location.hostname)){
-  window.addEventListener("load", ()=>{
-    try{ navigator.serviceWorker.register("sw.js").catch(()=>{}); }catch(e){}
+  let swReg=null, refreshing=false;
+  navigator.serviceWorker.addEventListener("controllerchange", ()=>{
+    if(refreshing) return; refreshing=true; location.reload();
   });
+  function showUpdateBanner(worker){
+    if(!worker || document.getElementById("updateBar")) return;
+    const bar=document.createElement("div"); bar.id="updateBar";
+    bar.innerHTML='<span>🔄 新しい版があります</span><button id="updateBtn">更新</button><button id="updateLater" title="閉じる">×</button>';
+    document.body.appendChild(bar);
+    document.getElementById("updateBtn").onclick=function(){
+      this.textContent="更新中…";
+      try{ worker.postMessage({type:"SKIP_WAITING"}); }catch(e){}
+      setTimeout(()=>{ if(!refreshing){ refreshing=true; location.reload(); } }, 2500);
+    };
+    document.getElementById("updateLater").onclick=()=>bar.remove();
+  }
+  function watchWorker(w){ if(!w) return; w.addEventListener("statechange", ()=>{ if(w.state==="installed" && navigator.serviceWorker.controller) showUpdateBanner(w); }); }
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("sw.js").then(reg=>{
+      swReg=reg;
+      if(reg.waiting && navigator.serviceWorker.controller) showUpdateBanner(reg.waiting); // 既に待機中の新版
+      reg.addEventListener("updatefound", ()=>watchWorker(reg.installing));               // インストール中の新版を監視
+    }).catch(()=>{});
+  });
+  // アプリに戻った/オンライン復帰で更新チェック（ホーム画面起動でも新版を拾う）
+  function checkUpdate(){ if(swReg){ try{ swReg.update(); }catch(e){} } }
+  document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") checkUpdate(); });
+  window.addEventListener("online", checkUpdate);
 }
 </script>
 </body>

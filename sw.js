@@ -1,6 +1,6 @@
 /* 車庫証明かんたん作成（静岡県東部）— Service Worker
    オフライン動作のためアプリ一式をキャッシュ。更新時は CACHE のバージョンを上げる。 */
-const CACHE = "shako-tobu-v3";
+const CACHE = "shako-tobu-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -12,8 +12,13 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (e) => {
-  self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS).catch(() => {})));
+});
+
+/* ページから「SKIP_WAITING」を受け取ったら待機中の新SWを即時有効化（ワンタップ更新用）。
+   自動 skipWaiting はしない＝入力中に勝手に切り替わらないよう、適用はユーザー操作のときだけ。 */
+self.addEventListener("message", (e) => {
+  if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
