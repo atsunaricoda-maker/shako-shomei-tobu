@@ -659,8 +659,11 @@ textarea{resize:vertical;min-height:64px;}
         <h3 style="font-size:14px;color:var(--navy);margin:0 0 6px">作成される書類</h3>
         <div class="docpick" id="docPick"></div>
 
-        <div class="note info" style="margin-top:14px">
+        <div class="note info office-only" style="margin-top:14px">
           作成されるのは<b>下書き（見本）</b>です。下の「公式様式（原本）」を印刷し、下書きを見ながら<b>原本へ転記</b>して提出してください。出力はスマホの<b>共有→プリント</b>／「PDFに保存」。
+        </div>
+        <div class="note ok dealer-only" style="margin-top:14px;display:none">
+          入力できたら、下の<b>📤 メールで送信</b>（または下部の<b>📤 事務所へ送信</b>）で事務所へ送ってください。印刷は事務所側で行います。
         </div>
       </div>
 
@@ -673,7 +676,7 @@ textarea{resize:vertical;min-height:64px;}
         <div class="hint" style="margin-top:8px">送信元（お店名）・送信先（事務所メール）は右上の<b>⚙</b>で設定。リンクには個人情報が含まれます（身内の連絡手段で送ってください）。スタンプで作った配置図は送られます（航空写真の“写真”は容量のため非同梱）。</div>
       </div>
 
-      <div class="card">
+      <div class="card office-only">
         <h2>公式様式（原本）の入手</h2>
         <p class="lead">提出は静岡県警の<b>公式様式（原本）</b>に記入します。原本を開いて印刷・保存し、上で作った下書きを見本に転記してください。</p>
         <div class="linklist">
@@ -858,7 +861,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請");
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"");
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1355,6 +1358,14 @@ function gmapModal(){
          :'<div class="note info" style="margin-top:12px">未設定：現在は手動（スクショ）方式で動作中。</div>');
   return `<button class="close" onclick="closeModal()">×</button>
   <h3>設定</h3>
+  <h3 style="font-size:14.5px;margin:6px 0 4px">🧰 利用モード</h3>
+  <div class="choices">
+    <label class="choice"><input type="radio" name="appmode" value="office" onchange="setMode('office')" ${APPMODE!=='dealer'?'checked':''}><span><span class="ct">事務所（印刷あり）</span><span class="cd">入力・送信・受信・印刷すべて使える</span></span></label>
+    <label class="choice"><input type="radio" name="appmode" value="dealer" onchange="setMode('dealer')" ${APPMODE==='dealer'?'checked':''}><span><span class="ct">車屋（送信のみ）</span><span class="cd">入力して事務所へ送るだけ・印刷なし</span></span></label>
+  </div>
+  <div class="hint" style="margin-top:8px">車屋さんに配るURL（開くと自動で車屋モードになり、端末に記憶されます）：</div>
+  <div class="row" style="gap:6px;margin-top:4px"><input type="text" id="dealerUrlInput" readonly value="${esc(location.origin+location.pathname+'?role=dealer')}" style="flex:1;font-size:12px" onclick="this.select()"><button class="inline-btn" style="flex:0 0 auto" onclick="copyDealerUrl()">コピー</button></div>
+  <hr class="hr">
   <h3 style="font-size:14.5px;margin:6px 0 4px">📤 データ送信設定</h3>
   <p style="font-size:12.5px;color:#5a6b7b;line-height:1.65">「事務所へ送信」で使う情報。<b>この端末内だけ</b>に保存され、外部やリポジトリには出ません。</p>
   <div class="field"><label class="lbl">送信元（お店・事業者名）<span class="opt">任意</span></label>
@@ -1424,7 +1435,7 @@ function gotoStep(i){
   // フッターボタン
   document.getElementById("btnPrev").style.visibility = step===0?"hidden":"visible";
   const next=document.getElementById("btnNext");
-  if(step===TOTAL-1){ next.textContent="📄 書類を作成"; next.className="btn make"; next.onclick=makeDocs; }
+  if(step===TOTAL-1){ if(isDealer()){ next.textContent="📤 事務所へ送信"; next.onclick=sendByMail; } else { next.textContent="📄 書類を作成"; next.onclick=makeDocs; } next.className="btn make"; }
   else { next.textContent="次へ"; next.className="btn next"; next.onclick=()=>go(1); }
   // 確認ステップ更新
   if(step===TOTAL-1){ renderSummary(); renderValid(); renderDocPick(); renderSendStatus(); }
@@ -2016,9 +2027,48 @@ function renderSendStatus(){
   else el.innerHTML=`<div class="note warn" style="margin:0 0 10px">送信先メールが未設定です。右上の<b>⚙</b>→「データ送信設定」で入力してください。</div>`;
 }
 
+/* =====================================================================
+   利用モード（事務所＝印刷あり / 車屋＝送信のみ）。
+   ・?role=dealer を付けたURLを開くと車屋モード（端末に記憶＝配布用）
+   ・受信リンク(#d=)を開いた側は自動で事務所モード（印刷できる）
+   ・⚙でいつでも手動切替
+   ===================================================================== */
+const MODE_KEY="shako_tobu_mode";
+let APPMODE="office";
+function isDealer(){ return APPMODE==="dealer"; }
+function detectMode(){
+  try{
+    const p=new URLSearchParams(location.search);
+    const role=(p.get("role")||p.get("mode")||"").toLowerCase();
+    if(role==="dealer"||role==="car"){ localStorage.setItem(MODE_KEY,"dealer"); }
+    else if(role==="office"){ localStorage.setItem(MODE_KEY,"office"); }
+  }catch(e){}
+  let m=localStorage.getItem(MODE_KEY)||"office";
+  if(readIncoming()) m="office";          // リンクを開いた側は印刷できる事務所モードに
+  APPMODE=(m==="dealer")?"dealer":"office";
+}
+function applyMode(){
+  const dealer=isDealer();
+  document.querySelectorAll(".office-only").forEach(e=>{ e.style.display=dealer?"none":""; });
+  document.querySelectorAll(".dealer-only").forEach(e=>{ e.style.display=dealer?"":"none"; });
+}
+function setMode(m){
+  APPMODE=(m==="dealer")?"dealer":"office";
+  localStorage.setItem(MODE_KEY,APPMODE);
+  applyMode(); refreshHeader();
+  if(step===TOTAL-1) gotoStep(TOTAL-1);
+  toast(isDealer()?"車屋モード（送信のみ）に切替":"事務所モード（印刷あり）に切替");
+}
+function copyDealerUrl(){
+  const u=location.origin+location.pathname+"?role=dealer";
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(()=>toast("車屋用URLをコピーしました")).catch(()=>fallbackCopy(u)); }
+  else fallbackCopy(u);
+}
+
 function boot(){
   loadAuto();
   loadSend();
+  detectMode();
   const incoming=readIncoming();
   if(incoming){ state=Object.assign(DEFAULT(), incoming); }
   if(!state.appDate){ state.appDate=new Date().toISOString().slice(0,10); }
@@ -2027,6 +2077,7 @@ function boot(){
   bindAll();
   hydrate();
   applyAll();
+  applyMode();
   // 画像添付
   const mi=document.getElementById("mapImgInput");
   if(mi) mi.addEventListener("change",e=>{
