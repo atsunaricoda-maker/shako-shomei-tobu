@@ -1142,6 +1142,7 @@ const STAMP_DEFS={
   door:{label:"出入口",   w:104,h:78,  fill:"rgba(192,57,43,.10)", stroke:"#c0392b"},
   north:{label:"北",      w:66, h:90,  fill:"none", stroke:"#000"},
   line:{label:"直線",     w:240,h:24,  fill:"none", stroke:"#000"},
+  curve:{label:"曲線",    w:200,h:90,  fill:"none", stroke:"#000"},
   text:{label:"文字",     w:160,h:48,  fill:"none", stroke:"#000"}
 };
 function rrect(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
@@ -1163,6 +1164,7 @@ function stampEditorHTML(){ return `<button class="close" onclick="closeModal()"
     <button onclick="addStamp('road')">🛣 道路</button>
     <button onclick="addStamp('bldg')">⬜ 四角枠</button>
     <button onclick="addStamp('line')">／ 直線</button>
+    <button onclick="addStamp('curve')">⌒ 曲線</button>
     <button onclick="addStamp('door')">↧ 出入口</button>
     <button onclick="addStamp('north')">🧭 方位（北）</button>
   </div>
@@ -1218,6 +1220,9 @@ function drawOneStamp(s){
   } else if(s.type==="line"){
     ctx.strokeStyle=d.stroke; ctx.lineCap="round"; ctx.lineWidth=Math.max(2.5,s.h*0.18);
     ctx.beginPath(); ctx.moveTo(-s.w/2,0); ctx.lineTo(s.w/2,0); ctx.stroke();
+  } else if(s.type==="curve"){
+    ctx.strokeStyle=d.stroke; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.lineWidth=Math.max(2.5,Math.min(s.w,s.h)*0.05);
+    ctx.beginPath(); ctx.moveTo(-s.w/2,s.h/2); ctx.quadraticCurveTo(0,-s.h*1.4,s.w/2,s.h/2); ctx.stroke();
   } else if(s.type==="text"){
     ctx.fillStyle="#000"; ctx.font="bold "+Math.max(12,s.h*0.55)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
     const lines=(s.text||"文字").split("\n"); lines.forEach((t,k)=>ctx.fillText(t,0,(k-(lines.length-1)/2)*s.h*0.6));
