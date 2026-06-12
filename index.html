@@ -261,6 +261,10 @@ textarea{resize:vertical;min-height:64px;}
 .zu-cell{padding:10px;}
 .zu-cell+.zu-cell{border-top:1px solid #000;}
 .zu-cell .zt{font-size:13px;font-weight:700;margin-bottom:6px;border-left:4px solid #000;padding-left:8px;}
+/* 所在図・配置図を横並び（横長印刷用） */
+.zu-wrap.zu-2col{flex-direction:row;}
+.zu-wrap.zu-2col>.zu-cell{flex:1 1 50%;width:50%;min-width:0;}
+.zu-wrap.zu-2col>.zu-cell+.zu-cell{border-top:0;border-left:1px solid #000;}
 .cl-list{font-size:13px;line-height:1.5;}
 .cl-list .cli{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #999;}
 .cl-list .cb{flex:0 0 auto;width:16px;height:16px;border:1.5px solid #000;border-radius:3px;}
@@ -281,6 +285,10 @@ textarea{resize:vertical;min-height:64px;}
   #print-area.preview .sheet{box-shadow:none !important;border-radius:0 !important;
     width:210mm;margin:0 auto;padding:16mm 15mm;}
   @page{size:A4;margin:0;}
+  /* 所在図・配置図シートだけ横長（ランドスケープ）で印刷 */
+  @page zu{size:A4 landscape;margin:0;}
+  .sheet.zu-land{page:zu;width:297mm;min-height:200mm;}
+  #print-area.preview .sheet.zu-land{width:297mm;}
 }
 /* 画面上のプレビュー表示 */
 #print-area.preview{display:block;background:#5a6b7b;padding:16px 0;margin:0 -14px;}
@@ -288,6 +296,7 @@ textarea{resize:vertical;min-height:64px;}
   width:100%;max-width:210mm;background:#fff;margin:0 auto 16px;padding:14mm;
   box-shadow:0 4px 16px rgba(0,0,0,.3);border-radius:2px;
 }
+#print-area.preview .sheet.zu-land{max-width:297mm;}
 </style>
 </head>
 <body>
@@ -1701,10 +1710,10 @@ function docZu(){
       ・保管場所の位置　：${esc(s.hokan.addr)}<br>
       ・本拠から保管場所までの直線距離：${esc(s.hokan.distance)||"___"}m（2km以内）</div>`;
   }
-  return `<div class="sheet">
+  return `<div class="sheet zu-land">
     <h2 class="dt" style="letter-spacing:.3em">所在図・配置図</h2>
     <div class="dt-sub">${ate()}</div>
-    <div class="zu-wrap" style="margin-top:10px">
+    <div class="zu-wrap zu-2col" style="margin-top:10px">
       <div class="zu-cell">
         <div class="zt">所在図（使用の本拠と保管場所の位置関係）</div>
         ${shozai}
