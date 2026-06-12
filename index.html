@@ -326,15 +326,15 @@ textarea{resize:vertical;min-height:64px;}
     <section class="step" data-step="0">
       <div class="card">
         <h2>① 申請の区分</h2>
-        <p class="lead">まず申請のパターンを選びます。選んだ内容に合わせて、必要な書類・提出先・手数料が自動で切り替わります。</p>
+        <p class="lead">まず申請のパターンを選びます。選んだ内容に合わせて、必要な書類・提出先が自動で切り替わります。</p>
 
         <div class="field">
           <label class="lbl">申請の種別<span class="req">必須</span></label>
           <div class="choices">
             <label class="choice"><input type="radio" name="shinseiType" value="futsu" data-bind="kubun.shinseiType">
-              <span><span class="ct">普通自動車（証明申請）</span><span class="cd">車庫証明書の交付を受ける。手数料2,400円</span></span></label>
+              <span><span class="ct">普通自動車（証明申請）</span><span class="cd">車庫証明書の交付を受ける</span></span></label>
             <label class="choice"><input type="radio" name="shinseiType" value="kei" data-bind="kubun.shinseiType">
-              <span><span class="ct">軽自動車（保管場所届出）</span><span class="cd">ナンバー取得後に届出。手数料無料・証明書なし</span></span></label>
+              <span><span class="ct">軽自動車（保管場所届出）</span><span class="cd">ナンバー取得後に届出・証明書なし</span></span></label>
           </div>
         </div>
 
@@ -352,9 +352,7 @@ textarea{resize:vertical;min-height:64px;}
             <label class="choice"><input type="radio" name="kengen" value="jinin" data-bind="kubun.kengen">
               <span><span class="ct">自分の土地・建物に駐車</span><span class="cd">自宅敷地・自己所有の車庫など →「自認書」を作成</span></span></label>
             <label class="choice"><input type="radio" name="kengen" value="shoudaku" data-bind="kubun.kengen">
-              <span><span class="ct">他人の土地・月極駐車場を借りる</span><span class="cd">賃貸駐車場・親族の土地など →「使用承諾証明書」を作成</span></span></label>
-            <label class="choice"><input type="radio" name="kengen" value="kyoyu" data-bind="kubun.kengen">
-              <span><span class="ct">共有の土地に駐車</span><span class="cd">申請者を含む共有 → 共有者全員の「使用承諾証明書」が必要</span></span></label>
+              <span><span class="ct">他人の土地・月極駐車場を借りる</span><span class="cd">賃貸駐車場・親族の土地など →「使用承諾証明書」は各自で用意（案内を表示）</span></span></label>
           </div>
         </div>
 
@@ -364,7 +362,7 @@ textarea{resize:vertical;min-height:64px;}
         </div>
 
         <div class="note info" style="font-size:11.5px">
-          静岡県内は手数料・様式が共通のため、上の提出先を選ぶだけで東部の他市にも対応できます（証明手数料2,400円・収入証紙・標章2025年廃止は県内共通）。
+          静岡県内は様式が共通のため、上の提出先を選ぶだけで東部の他市にも対応できます（標章2025年廃止は県内共通）。
         </div>
       </div>
     </section>
@@ -444,11 +442,6 @@ textarea{resize:vertical;min-height:64px;}
           </div>
           <div class="hint">車検証の寸法（cm）。配置図の駐車スペース寸法と矛盾しないように。</div>
         </div>
-        <div class="field">
-          <label class="lbl">保管場所標章番号<span class="opt">旧制度・任意</span></label>
-          <input type="text" data-bind="vehicle.hyoshoNo" placeholder="買替えで旧番号がある場合のみ">
-          <div class="hint">標章は2025年4月1日に廃止。買替えで従前車の番号がある場合のみ記入すると所在図を省略できることがあります。新規は空欄。</div>
-        </div>
       </div>
     </section>
 
@@ -476,14 +469,16 @@ textarea{resize:vertical;min-height:64px;}
         <div class="field">
           <label class="lbl">保管場所の住所<span class="req">必須</span></label>
           <input type="text" data-bind="hokan.addr" placeholder="例）沼津市○○町4番5">
+          <div class="hint tip">ここは<b>駐車場（車庫）の所在地</b>です。自宅マンション等の<b>部屋番号は不要</b>（番地まででOK）。</div>
         </div>
+        <div class="note warn" style="font-size:12px">駐車場の<b>名称・区画番号がある場合は必ず記入</b>してください（月極・集合住宅の駐車場など）。賃貸契約書のとおりに。</div>
         <div class="row">
           <div class="field">
-            <label class="lbl">駐車場の名称<span class="opt">任意</span></label>
+            <label class="lbl">駐車場の名称<span class="opt">ある場合は必須</span></label>
             <input type="text" data-bind="hokan.name" placeholder="例）○○パーキング">
           </div>
           <div class="field" style="flex:0 0 40%">
-            <label class="lbl">区画番号<span class="opt">任意</span></label>
+            <label class="lbl">区画番号<span class="opt">ある場合は必須</span></label>
             <input type="text" data-bind="hokan.kukaku" placeholder="例）12番">
           </div>
         </div>
@@ -522,55 +517,21 @@ textarea{resize:vertical;min-height:64px;}
             <label class="choice"><input type="radio" name="jinin_obj" value="土地・建物" data-bind="jinin.obj"><span class="ct">土地・建物の両方</span></label>
           </div>
         </div>
-        <div class="note info">土地と建物で所有者が異なる場合や<b>共有</b>の場合は、他の所有者の「使用承諾証明書」が別途必要です（①の区分を見直してください）。</div>
+        <div class="note info">土地と建物で所有者が異なる場合や共有の場合は、他の所有者の<b>使用承諾証明書</b>が別途必要です（このアプリでは作成できないため各自ご用意ください）。</div>
       </div>
 
-      <!-- 使用承諾証明書 -->
+      <!-- 使用承諾証明書：アプリでは作成せず案内のみ -->
       <div class="card kengen-shoudaku">
-        <h2>⑥ 使用承諾証明書の内容 <span class="badge">他人所有・月極</span></h2>
-        <p class="lead">駐車場の所有者・管理会社に記入してもらう書面です。把握している範囲で入力し、最終的な記名は所有者・管理者にしてもらってください。</p>
-        <div class="note warn">この書面は<b>所有者・管理者本人</b>が作成・記名するものです。申請者が無断で作成すると私文書偽造になります。証明日から<b>3か月以内</b>のものが必要です。</div>
-
-        <div class="field">
-          <label class="chk"><input type="checkbox" data-bind="shoudaku.forOwner" id="shoudakuForOwner">
-            <span><b>権利者（所有者）記入用で出力する（推奨）</b><span class="hint">所有者欄・承諾日を空欄にして印刷し、所有者・管理者ご本人に手書き・署名してもらう原本用です。チェックを外すと内容を印字（控え用）。</span></span></label>
+        <h2>⑥ 保管場所の使用承諾について <span class="badge">他人所有・月極</span></h2>
+        <div class="note warn"><b>「保管場所使用承諾証明書」はこのアプリでは作成しません。</b>所有者本人の記名・署名が必要な書面のため、申請者が無断で作成すると私文書偽造になります。</div>
+        <p class="lead" style="margin-top:10px"><b>次のどちらかをご自身で用意して提出してください。</b></p>
+        <div class="note info" style="line-height:1.8">
+          <b>① 保管場所使用承諾証明書</b><br>
+          土地・駐車場の<b>所有者／管理会社</b>に記入・署名してもらう（証明日から<b>3か月以内</b>）。様式は管理会社の書式や警察署の様式を使用（⑨に公式様式リンクあり）。<br><br>
+          <b>② 駐車場の賃貸借契約書の写し（こちらでも可）</b><br>
+          保管場所の住所・契約者・契約期間が分かるもの。<b>賃貸契約のときにもらった契約書類がそのまま使えること</b>が多いので、まずは手元の契約書を確認してください。
         </div>
-
-        <div class="field">
-          <label class="lbl">使用者と契約者の関係<span class="req">必須</span></label>
-          <select data-bind="shoudaku.kankei">
-            <option value="">選択してください</option>
-            <option value="本人">本人（使用者＝契約者）</option>
-            <option value="家族">家族（親・子など）</option>
-            <option value="法人とその役員・従業員">法人とその役員・従業員</option>
-            <option value="その他">その他</option>
-          </select>
-        </div>
-        <div class="row">
-          <div class="field"><label class="lbl">使用期間（開始）<span class="req">必須</span></label><input type="date" data-bind="shoudaku.useFrom"></div>
-          <div class="field"><label class="lbl">使用期間（終了）<span class="req">必須</span></label><input type="date" data-bind="shoudaku.useTo"></div>
-        </div>
-        <div class="hint" id="periodHint"></div>
-
-        <div class="owner-fields">
-        <hr class="hr">
-        <p class="lead" style="margin-bottom:8px"><b>土地・建物の所有者または管理委託者</b>（承諾する人）<span class="opt">「記入済み」出力のときのみ使用</span></p>
-        <div class="field"><label class="lbl">氏名・名称</label><input type="text" data-bind="shoudaku.ownerName" placeholder="例）○○不動産株式会社"></div>
-        <div class="field"><label class="lbl">住所</label><input type="text" data-bind="shoudaku.ownerAddr" placeholder="所有者・管理会社の住所"></div>
-        <div class="field"><label class="lbl">電話番号</label><input type="tel" data-bind="shoudaku.ownerTel" placeholder="055-000-0000" inputmode="tel"></div>
-        </div>
-
-        <hr class="hr">
-        <p class="lead" style="margin-bottom:8px"><b>契約者</b>（駐車場の賃貸借契約者）</p>
-        <div class="field">
-          <label class="chk"><input type="checkbox" data-bind="shoudaku.keiyakuSame" id="keiyakuSame"><span>使用者と同じ（「上記に同じ」と記載）</span></label>
-        </div>
-        <div class="keiyaku-fields">
-          <div class="field"><label class="lbl">契約者 氏名</label><input type="text" data-bind="shoudaku.keiyakuName"></div>
-          <div class="field"><label class="lbl">契約者 住所</label><input type="text" data-bind="shoudaku.keiyakuAddr"></div>
-          <div class="field"><label class="lbl">契約者 電話番号</label><input type="tel" data-bind="shoudaku.keiyakuTel" inputmode="tel"></div>
-        </div>
-        <div class="note info" id="kyoyuNote" style="display:none"><b>共有</b>の場合は、共有者全員からこの承諾書をもらってください（人数分作成）。</div>
+        <div class="hint" style="margin-top:8px">どちらが使えるかは提出先の警察署で異なる場合があります。迷ったら窓口でご確認ください。</div>
       </div>
     </section>
 
@@ -582,11 +543,18 @@ textarea{resize:vertical;min-height:64px;}
 
         <div class="field">
           <label class="lbl">駐車場のタイプ</label>
-          <select data-bind="haichi.type">
-            <option value="平面">平面（青空・1台）</option>
-            <option value="屋内">屋内・カーポート</option>
-            <option value="機械式">機械式・立体</option>
+          <select data-bind="haichi.type" id="haichiType">
+            <option value="平面">平面（青空）</option>
+            <option value="車庫">車庫</option>
+            <option value="カーポート">カーポート</option>
+            <option value="ガレージ">ガレージ</option>
+            <option value="機械式">機械式・立体駐車場</option>
           </select>
+        </div>
+        <div class="field" id="heightField" style="display:none">
+          <label class="lbl">床から天井までの高さ（m）<span class="req">必須</span></label>
+          <div class="suffix"><input type="number" step="0.1" data-bind="haichi.height" placeholder="例）2.1" inputmode="decimal"><span class="u">m</span></div>
+          <div class="hint tip">車庫・カーポート・ガレージ・立駐は、<b>車が入る高さ（床〜天井）</b>の記載が必要です。車検証の全高より高いことを確認してください。</div>
         </div>
         <div class="row">
           <div class="field"><label class="lbl">スペース 幅（m）<span class="req">必須</span></label>
@@ -621,13 +589,9 @@ textarea{resize:vertical;min-height:64px;}
         <div class="hint" id="haichiCheck"></div>
 
         <hr class="hr">
-        <button class="fig-btn" onclick="openEditor('haichi')">📷 航空写真でなぞって配置図を作る（任意）</button>
-        <div class="ed-tip">Googleマップの航空写真をスクショ → 取り込み → 駐車枠を実際の位置にドラッグして、サイズ・向きを合わせます。上で入れた寸法が枠に表示されます。</div>
-        <div id="haichiFigStatus"></div>
-
-        <hr class="hr">
         <button class="fig-btn" onclick="openStampEditor()">✏️ スタンプで配置図を作る（部品を置いて作図）</button>
-        <div class="ed-tip">「保管場所」「自宅」「道路」などの部品を置いて、ドラッグで移動・大きさ変更。航空写真なしでも直感的に作図できます。</div>
+        <div class="ed-tip">「保管場所」「自宅」「道路」などの部品を置いて、ドラッグで移動・大きさ変更。<b>集合住宅は「区画をまとめて配置」</b>で番号付きの駐車区画を一括で置けます。</div>
+        <div id="haichiFigStatus"></div>
       </div>
     </section>
 
@@ -712,7 +676,7 @@ textarea{resize:vertical;min-height:64px;}
 
   <div class="foot-meta">
     本ツールは入力内容をすべて端末内で処理し、外部に送信しません。<br>
-    様式・手数料は2026年6月時点の情報です。最新は管轄警察署・静岡県警でご確認ください。
+    様式は2026年6月時点の情報です。最新は管轄警察署・静岡県警でご確認ください。
   </div>
 
   <!-- ========== 印刷エリア ========== -->
@@ -740,7 +704,7 @@ const DEFAULT = ()=>({
   jinin:{ obj:"土地" },
   shoudaku:{ kankei:"", useFrom:"", useTo:"", ownerName:"", ownerAddr:"", ownerTel:"", forOwner:true,
              keiyakuSame:true, keiyakuName:"", keiyakuAddr:"", keiyakuTel:"" },
-  haichi:{ type:"平面", w:"", d:"", gate:"", road:"", roadSide:"south", shutter:false, rinsetsu:"" },
+  haichi:{ type:"平面", height:"", w:"", d:"", gate:"", road:"", roadSide:"south", shutter:false, rinsetsu:"" },
   shozai:{ mode:"image" },
   appDate:""
 });
@@ -813,7 +777,7 @@ function onChange(path){
   if(path==="shoudaku.keiyakuSame") refreshKeiyaku();
   if(path==="shoudaku.forOwner") refreshShoudakuMode();
   if(path==="hokan.distance") refreshDist();
-  if(path.startsWith("haichi")) {drawHaichi();checkHaichi();}
+  if(path.startsWith("haichi")) {drawHaichi();checkHaichi();refreshParkType();}
   if(path==="shoudaku.useFrom"||path==="shoudaku.useTo") checkPeriod();
   if(path==="shozai.mode") refreshShozai();
   if(path==="kubun.shinseiType"||path==="kubun.station"){ refreshKei(); refreshHeader(); }
@@ -828,8 +792,8 @@ function refreshKengen(){
   const k=state.kubun.kengen;
   document.querySelectorAll(".kengen-jinin").forEach(e=>e.style.display=(k==="jinin")?"":"none");
   document.querySelectorAll(".kengen-shoudaku").forEach(e=>e.style.display=(k==="jinin")?"none":"");
-  document.getElementById("kyoyuNote").style.display=(k==="kyoyu")?"":"none";
 }
+function refreshParkType(){ const f=document.getElementById("heightField"); if(!f) return; f.style.display=(state.haichi.type&&state.haichi.type!=="平面")?"":"none"; }
 function refreshCorp(){
   document.querySelectorAll(".corp-only").forEach(e=>e.style.display=state.shinseisha.isCorp?"":"none");
 }
@@ -839,7 +803,8 @@ function refreshHonkyo(){
   else { f.style.opacity=1; f.querySelector("input").disabled=false; }
 }
 function refreshKeiyaku(){
-  document.querySelector(".keiyaku-fields").style.display=state.shoudaku.keiyakuSame?"none":"";
+  const el=document.querySelector(".keiyaku-fields"); if(!el) return;
+  el.style.display=state.shoudaku.keiyakuSame?"none":"";
 }
 function refreshShoudakuMode(){ const el=document.querySelector(".owner-fields"); if(el) el.style.display=(state.shoudaku.forOwner!==false)?"none":""; }
 function refreshShozai(){ const cb=document.getElementById("shozaiBeppu"); if(cb) cb.checked=(state.shozai.mode==="beppu"); }
@@ -865,7 +830,7 @@ function refreshKei(){
     banner.innerHTML=`<div class="note warn">【${st.area}】は<b>軽自動車の保管場所届出が不要な地域</b>です。車庫の確保は必要ですが、警察への届出書類の提出は不要です（書類は控え用として作成できます）。</div>`;
   } else {
     const ex = st.keiEx ? `<br>※同じ管轄でも地域差あり：${st.keiEx}。` : "※旧町村部は対象外の場合あり、要確認。";
-    banner.innerHTML=`<div class="note info">【${st.keiArea||st.area}】は<b>軽自動車の届出義務地域</b>です。ナンバー取得後<b>15日以内</b>に届出（手数料無料・証明書交付なし）。${ex}</div>`;
+    banner.innerHTML=`<div class="note info">【${st.keiArea||st.area}】は<b>軽自動車の届出義務地域</b>です。ナンバー取得後<b>15日以内</b>に届出（証明書交付なし）。${ex}</div>`;
   }
 }
 function refreshHeader(){
@@ -883,7 +848,7 @@ function refreshDist(){
   else { bar.classList.remove("over"); lab.textContent="✓ 2km以内（残り "+(2000-d)+"m） 直線距離 "+d+"m"; lab.style.color="var(--ok)"; }
 }
 function checkPeriod(){
-  const h=document.getElementById("periodHint");
+  const h=document.getElementById("periodHint"); if(!h) return;
   const {useFrom,useTo}=state.shoudaku;
   if(!useFrom||!useTo){ h.textContent=""; return; }
   const f=new Date(useFrom), t=new Date(useTo);
@@ -1143,7 +1108,8 @@ const STAMP_DEFS={
   north:{label:"北",      w:66, h:90,  fill:"none", stroke:"#000"},
   line:{label:"直線",     w:240,h:24,  fill:"none", stroke:"#000"},
   curve:{label:"曲線",    w:200,h:90,  fill:"none", stroke:"#000"},
-  text:{label:"文字",     w:160,h:48,  fill:"none", stroke:"#000"}
+  text:{label:"文字",     w:160,h:48,  fill:"none", stroke:"#000"},
+  cell:{label:"",         w:64, h:104, fill:"none", stroke:"#888"}
 };
 function rrect(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function openStampEditor(){
@@ -1156,10 +1122,12 @@ function openStampEditor(){
 }
 function stampEditorHTML(){ return `<button class="close" onclick="closeModal()">×</button>
   <h3>スタンプで配置図を作る</h3>
-  <div class="ed-tip">部品を置く／<b>「✏️手書き」をONにするとドラッグで自由に線が描けます</b>（集合住宅などに便利）。ドラッグで移動・⤡で大きさ・⟳で回転、文字は下の入力欄から。手書きの線も移動・拡大・複製・元に戻せます。</div>
+  <div class="ed-tip">部品を置いて<b>ドラッグで移動・⤡で大きさ・⟳で回転</b>。<b>集合住宅は下の「区画をまとめて配置」</b>で番号付きの駐車区画を一括作成→自分の区画に「🅿保管場所（赤）」を重ねると分かりやすい。文字は下の入力欄から。</div>
   <canvas id="stCanvas"></canvas>
-  <div style="display:flex;gap:6px;margin:6px 0 2px">
-    <button id="penToggleBtn" class="inline-btn" style="flex:1;border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="togglePen()">✏️ 手書きモード：OFF</button>
+  <div style="display:flex;gap:6px;margin:6px 0 2px;align-items:center">
+    <span style="font-size:12px;font-weight:700;color:#0f6b6b;white-space:nowrap">区画数</span>
+    <input type="number" id="stCellCount" value="6" min="1" max="40" style="flex:0 0 60px;padding:8px;border:1.5px solid var(--line);border-radius:9px;font-size:14px" inputmode="numeric">
+    <button class="inline-btn" style="flex:1;border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="addParkingRow()">区画をまとめて配置（番号つき）</button>
   </div>
   <div class="stamp-palette">
     <button onclick="addStamp('park')">🅿 保管場所</button>
@@ -1247,6 +1215,8 @@ function drawOneStamp(s){
       ctx.fillStyle=d.stroke; ctx.font="bold "+Math.min(s.h*0.30,s.w*0.26)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("出入口",0,s.h*0.33);
     } else if(s.type==="bldg"){
       /* 四角枠のみ・文字なし */
+    } else if(s.type==="cell"){
+      if(s.text){ ctx.fillStyle="#333"; ctx.font="bold "+Math.min(s.h*0.28,s.w*0.5)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(s.text,0,0); }
     } else {
       const lbl=stampLabel(s).split("\n"); ctx.fillStyle=d.stroke; ctx.font="bold 15px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
       lbl.forEach((t,k)=>ctx.fillText(t,0,(k-(lbl.length-1)/2)*18));
@@ -1317,6 +1287,14 @@ function addTextFromInput(){
   ST.sel=ST.stamps.length-1; drawStamps(); inp.value="";
 }
 function syncTextInput(){ const inp=document.getElementById("stTextInput"); if(!inp) return; const s=ST.sel>=0?ST.stamps[ST.sel]:null; if(s&&s.type==="text") inp.value=s.text||""; }
+/* 集合住宅向け：番号つき駐車区画をまとめて配置（必要数を入れて一括作成） */
+function addParkingRow(){
+  const inp=document.getElementById("stCellCount"); let n=parseInt(inp&&inp.value,10); if(!n||n<1)n=6; if(n>40)n=40;
+  stampPushHistory();
+  const d=STAMP_DEFS.cell, gap=2, startX=50, startY=110; let x=startX, y=startY;
+  for(let i=0;i<n;i++){ if(x+d.w>ST.canvas.width-20){ x=startX; y+=d.h+14; } ST.stamps.push({type:"cell",text:String(i+1),w:d.w,h:d.h,rot:0,x,y}); x+=d.w+gap; }
+  ST.sel=-1; drawStamps(); toast(n+"区画を配置しました");
+}
 function stampScale(f){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); const s=ST.stamps[ST.sel],cx=s.x+s.w/2,cy=s.y+s.h/2; s.w=Math.max(20,s.w*f); s.h=Math.max(8,s.h*f); s.x=cx-s.w/2; s.y=cy-s.h/2; drawStamps(); }
 function stampRotate(deg){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); ST.stamps[ST.sel].rot+=deg; drawStamps(); }
 function stampToggleBg(on){ ST.useBg=on; if(on){ if(!_haichiSrc){ toast("先に航空写真を取得/取り込みしてください"); const cb=document.getElementById("stBg"); if(cb)cb.checked=false; ST.useBg=false; return; } if(!ST.bgImg){ const im=new Image(); im.onload=()=>{ST.bgImg=im; drawStamps();}; im.src=_haichiSrc; return; } } drawStamps(); }
@@ -1513,7 +1491,7 @@ function gotoStep(i){
   // フッターボタン
   document.getElementById("btnPrev").style.visibility = step===0?"hidden":"visible";
   const next=document.getElementById("btnNext");
-  if(step===TOTAL-1){ if(isDealer()){ next.textContent="📤 事務所へ送信"; next.onclick=sendByMail; } else { next.textContent="📄 書類を作成"; next.onclick=makeDocs; } next.className="btn make"; }
+  if(step===TOTAL-1){ next.textContent="📄 書類プレビュー"; next.onclick=makeDocs; next.className="btn make"; }
   else { next.textContent="次へ"; next.className="btn next"; next.onclick=()=>go(1); }
   // 確認ステップ更新
   if(step===TOTAL-1){ renderSummary(); renderValid(); renderDocPick(); renderSendStatus(); }
@@ -1546,10 +1524,7 @@ function reqList(){
   need(s.hokan.addr,"保管場所の住所");
   need(s.haichi.w&&s.haichi.d,"配置図の幅・奥行");
   need(s.haichi.road,"前面道路の幅員");
-  if(s.kubun.kengen!=="jinin"){
-    need(s.shoudaku.kankei,"使用者と契約者の関係");
-    need(s.shoudaku.useFrom&&s.shoudaku.useTo,"使用期間");
-  }
+  if(s.haichi.type&&s.haichi.type!=="平面") need(s.haichi.height,"床〜天井の高さ");
   return miss;
 }
 function renderValid(){
@@ -1574,7 +1549,7 @@ function renderSummary(){
   const s=state;
   const applicant = s.shinseisha.isCorp? (s.shinseisha.corpName+" "+(s.shinseisha.daihyo||"")) : s.shinseisha.name;
   const size = (s.vehicle.len&&s.vehicle.wid&&s.vehicle.hei)? `${s.vehicle.len}×${s.vehicle.wid}×${s.vehicle.hei}cm`:"";
-  const kengenName={jinin:"自己所有（自認書）",shoudaku:"他人所有（使用承諾証明書）",kyoyu:"共有（共有者全員の承諾書）"}[s.kubun.kengen];
+  const kengenName={jinin:"自己所有（自認書）",shoudaku:"他人所有（承諾書/契約書は各自用意）",kyoyu:"他人所有（承諾書/契約書は各自用意）"}[s.kubun.kengen];
   const rows=[
     ["申請種別", isKei()?"軽自動車（保管場所届出）":"普通自動車（証明申請）"],
     ["提出先", stn().name+"（"+stn().area+"）"],
@@ -1596,10 +1571,10 @@ function renderSummary(){
 function renderDocPick(){
   const s=state, kei=isKei();
   let docs=[ kei
-    ? ["届","自動車保管場所届出書","届出書＋控えを印刷（軽・手数料無料）"]
+    ? ["届","自動車保管場所届出書","届出書＋控えを印刷（軽）"]
     : ["申","自動車保管場所証明申請書（下書き）","見本。公式様式（原本）に転記して提出"] ];
   if(s.kubun.kengen==="jinin") docs.push(["自","保管場所使用権原疎明書面（自認書）","自己所有のため"]);
-  else docs.push(["承","保管場所使用承諾証明書", state.shoudaku.forOwner!==false?"権利者（所有者）記入用・原本":"記入済み（控え）"]);
+  else docs.push(["承","使用承諾証明書 または 賃貸契約書の写し","各自で用意（アプリでは作成しません）"]);
   docs.push(["図","保管場所の所在図・配置図","配置図は自動作図"]);
   docs.push(["✓","提出チェックリスト（控え）","行政書士用の確認シート"]);
   document.getElementById("docPick").innerHTML=docs.map(([i,t,n])=>
@@ -1703,7 +1678,7 @@ function docTodoke(){
       氏名（名称）　${applicant}　<br>
       電話　${esc(s.shinseisha.tel)}
     </div>
-    <p class="small" style="margin-top:18px">※ 軽自動車は車検・ナンバー取得後の届出です（届出義務地域は15日以内）。手数料は無料・証明書の交付はありません。押印不要。車名等は車検証のとおり記入。${daikoNote}</p>
+    <p class="small" style="margin-top:18px">※ 軽自動車は車検・ナンバー取得後の届出です（届出義務地域は15日以内）。証明書の交付はありません。押印不要。車名等は車検証のとおり記入。${daikoNote}</p>
   </div>`;
 }
 function docJinin(){
@@ -1794,7 +1769,7 @@ function docZu(){
           <div style="flex:0 0 auto;font-size:12px;line-height:1.9">
             幅：${esc(h.w)||"__"} m<br>奥行：${esc(h.d)||"__"} m<br>
             出入口：${esc(h.gate)||"__"} m<br>前面道路：${esc(h.road)||"__"} m<br>
-            シャッター：${h.shutter?"有":"無"}<br>種別：${esc(h.type)}<br>
+            シャッター：${h.shutter?"有":"無"}<br>種別：${esc(h.type)}${(h.type&&h.type!=="平面"&&h.height)?("<br>床〜天井の高さ："+esc(h.height)+"m"):""}<br>
             ${h.rinsetsu?("備考："+esc(h.rinsetsu)):""}
           </div>
         </div>
@@ -1804,17 +1779,15 @@ function docZu(){
 }
 function docChecklist(){
   const s=state, kei=isKei(), st=stn();
-  const kengenDoc = s.kubun.kengen==="jinin"?"自認書":"使用承諾証明書"+(s.kubun.kengen==="kyoyu"?"（共有者全員）":"");
+  const kengenDoc = s.kubun.kengen==="jinin"?"自認書（アプリ作成）":"使用承諾証明書 または 賃貸契約書の写し（各自で用意）";
   const mainDoc = kei? "自動車保管場所届出書（届出書＋控え 2通）" : "自動車保管場所証明申請書（正・副 2通）";
   const items=[
     mainDoc,
     "保管場所の所在図・配置図（1通）",
     `権原書面：${kengenDoc}（1通）`,
-    s.kubun.kengen!=="jinin"?"（承諾書に代えて）駐車場賃貸借契約書の写しでも可":"",
-    kei? "手数料：無料（軽自動車の届出）" : "手数料：静岡県収入証紙 2,400円分",
+    kei? "" : "静岡県収入証紙（窓口で購入・申請書に貼付）",
     s.kubun.daiko?`委任状（代理${kei?"届出":"申請"}の場合・要否は窓口確認）`:""
   ].filter(Boolean);
-  const feeRow = kei? "無料（軽自動車の保管場所届出）" : "2,400円（静岡県収入証紙）";
   const flowRow = kei? "届出書を提出（事後届出。義務地域はナンバー取得後15日以内）。証明書の交付はなく、控えに受理印。" : "提出 → 2〜3日後に現地調査 → 中3日程度で交付（窓口の交付予定日に従う）";
   const keiNote = !kei ? ""
     : (st.kei==="none")
@@ -1826,7 +1799,7 @@ function docChecklist(){
     <table class="ftable" style="margin-top:10px">
       <tr><th>提出先</th><td class="val">${esc(st.name)} 交通課 車庫証明窓口</td></tr>
       <tr><th>所在地</th><td class="val">${esc(st.zip)} ${esc(st.addr)}　TEL ${esc(st.tel)}</td></tr>
-      <tr><th>手数料</th><td class="val">${feeRow}　※標章は2025/4/1廃止（シール交付・手数料なし）</td></tr>
+      <tr><th>標章</th><td class="val">2025/4/1に廃止（車庫シールの交付・貼付なし）</td></tr>
       <tr><th>手続の流れ</th><td class="val">${flowRow}</td></tr>
       ${keiNote}
       <tr><th>${kei?"届出者":"申請者"}</th><td class="val">${esc(s.shinseisha.isCorp?s.shinseisha.corpName:s.shinseisha.name)}</td></tr>
@@ -1836,14 +1809,13 @@ function docChecklist(){
       ${items.map(t=>`<div class="cli"><span class="cb"></span><span>${esc(t)}</span></div>`).join("")}
     </div>
     <p class="small" style="margin-top:16px">確認事項：①本拠と保管場所が直線2km以内　②駐車スペースに車両全体が収まる　③道路から支障なく出入りできる　④使用権原がある。<br>
-    ※ 様式・手数料は2026年6月時点。最新は静岡県警ページ・${esc(st.name)}窓口でご確認ください。静岡県警ページ本文に「標章を受け取り」の旧表記が残る場合がありますが、標章は廃止済みです。</p>
+    ※ 様式は2026年6月時点。最新は静岡県警ページ・${esc(st.name)}窓口でご確認ください。静岡県警ページ本文に「標章を受け取り」の旧表記が残る場合がありますが、標章は廃止済みです。</p>
   </div>`;
 }
 
 function makeDocs(){
   const parts=[docMain()];
   if(state.kubun.kengen==="jinin") parts.push(docJinin());
-  else parts.push(docShoudaku());
   parts.push(docZu());
   parts.push(docChecklist());
   const area=document.getElementById("print-area");
@@ -1856,16 +1828,12 @@ function makeDocs(){
 }
 function showPreviewBar(){
   let bar=document.getElementById("previewBar");
-  if(!bar){
-    bar=document.createElement("div");
-    bar.id="previewBar"; bar.className="footnav";
-    bar.innerHTML=`<div class="wrapf">
-      <button class="btn prev" style="flex:0 0 auto" onclick="hidePreview()">戻る</button>
-      <button class="btn prev" style="flex:0 0 auto" onclick="saveHistoryNow()">📋</button>
-      <button class="btn prev" style="flex:0 0 auto;border-color:var(--accent);color:var(--accent)" onclick="sendByMail()">📤 送信</button>
-      <button class="btn make" onclick="window.print()">🖨 印刷</button></div>`;
-    document.body.appendChild(bar);
-  }
+  if(!bar){ bar=document.createElement("div"); bar.id="previewBar"; bar.className="footnav"; document.body.appendChild(bar); }
+  bar.innerHTML=`<div class="wrapf">
+    <button class="btn prev" style="flex:0 0 auto" onclick="hidePreview()">戻る</button>
+    <button class="btn prev" style="flex:0 0 auto" onclick="saveHistoryNow()">📋</button>
+    <button class="btn make" style="background:var(--accent)" onclick="sendByMail()">📤 事務所へ送信</button>
+    ${isDealer()?"":'<button class="btn make" onclick="window.print()">🖨 印刷</button>'}</div>`;
   bar.style.display="flex";
   document.querySelector(".footnav:not(#previewBar)").style.display="none";
 }
@@ -1993,20 +1961,18 @@ function openModal(type){
 function closeModal(){ document.getElementById("modalBg").classList.remove("open"); }
 function infoModal(){
   const st=stn(), kei=isKei();
-  const feeRow = kei? "<b>無料</b>（軽自動車の保管場所届出）" : "<b>2,400円</b>（保管場所証明手数料）<br>静岡県<b>収入証紙</b>で納付（令和8年4月1日改定）";
   const keiRow = kei? `<tr><th>軽の届出義務</th><td>${st.kei==="none"?`<b>${esc(st.area)}は届出不要地域</b>（車庫の確保は必要）`:`<b>${esc(st.keiArea||st.area)}は届出義務地域</b>（ナンバー取得後15日以内）${st.keiEx?`<br><span style="font-size:11px">※${esc(st.keiEx)}</span>`:""}`}</td></tr>` : "";
   return `<button class="close" onclick="closeModal()">×</button>
-  <h3>提出先・手数料（${esc(st.area)}）</h3>
+  <h3>提出先（${esc(st.area)}）</h3>
   <table>
     <tr><th>提出先</th><td>${esc(st.name)} 交通課 車庫証明窓口</td></tr>
     <tr><th>所在地</th><td>${esc(st.zip)}<br>${esc(st.addr)}<br>TEL ${esc(st.tel)}</td></tr>
-    <tr><th>手数料</th><td>${feeRow}</td></tr>
-    <tr><th>標章</th><td>2025年4月1日に<b>廃止</b>。車庫シールの交付・貼付・手数料はありません。</td></tr>
+    <tr><th>標章</th><td>2025年4月1日に<b>廃止</b>。車庫シールの交付・貼付はありません。</td></tr>
     ${keiRow}
-    <tr><th>必要書類</th><td>①${kei?"保管場所届出書":"証明申請書(正副2通)"} ②所在図・配置図 ③権原書面(自認書/承諾書/契約書写し)${kei?"":" ④収入証紙2,400円"}</td></tr>
+    <tr><th>必要書類</th><td>①${kei?"保管場所届出書":"証明申請書(正副2通)"} ②所在図・配置図 ③権原書面(自認書/承諾書/契約書写し)${kei?"":" ④収入証紙（窓口購入）"}</td></tr>
     <tr><th>要件</th><td>本拠と保管場所が<b>直線2km以内</b>／車両全体が収まる／出入り可能／使用権原あり</td></tr>
   </table>
-  <p style="font-size:11px;color:#5a6b7b">静岡県内は手数料2,400円・収入証紙・標章廃止が全署共通。市が変わっても提出先（管轄署）のみが異なります。</p>
+  <p style="font-size:11px;color:#5a6b7b">静岡県内は様式・標章廃止が全署共通。市が変わっても提出先（管轄署）のみが異なります。</p>
   <h3 style="font-size:14px;margin-top:14px">公式様式ダウンロード（静岡県警）</h3>
   <div class="linklist">
     <a href="https://www.pref.shizuoka.jp/police/shinse/kotsu/kiseka/index.html" target="_blank">▶ 車庫証明の申請（静岡県警 案内）</a>
@@ -2045,7 +2011,7 @@ function draftModal(){
 function applyAll(){
   rebuildStampComposite();
   refreshKengen(); refreshCorp(); refreshHonkyo(); refreshKeiyaku(); refreshShoudakuMode();
-  refreshDist(); refreshShozai(); refreshChoiceCards(); drawHaichi(); checkHaichi(); checkPeriod();
+  refreshDist(); refreshShozai(); refreshChoiceCards(); drawHaichi(); checkHaichi(); checkPeriod(); refreshParkType();
   refreshKei(); refreshHeader();
 }
 function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1800); }
