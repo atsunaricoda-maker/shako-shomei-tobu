@@ -1155,7 +1155,7 @@ function openStampEditor(){
 }
 function stampEditorHTML(){ return `<button class="close" onclick="closeModal()">×</button>
   <h3>スタンプで配置図を作る</h3>
-  <div class="ed-tip">下のボタンで部品を置き、<b>ドラッグで移動／右下の⤡で大きさ変更</b>。選択中は［×］削除・上の⟳で回転。複製・文字追加・元に戻すもボタンから。文字は「🅰文字」、文字スタンプを選んでもう一度「🅰文字」で編集。</div>
+  <div class="ed-tip">下のボタンで部品を置き、<b>ドラッグで移動／右下の⤡で大きさ変更</b>。選択中は［×］削除・上の⟳で回転。<b>文字は下の入力欄に書いて「文字を置く」</b>（文字スタンプを選ぶと入力欄に出て編集できます）。複製・元に戻すもボタンから。</div>
   <canvas id="stCanvas"></canvas>
   <div class="stamp-palette">
     <button onclick="addStamp('park')">🅿 保管場所</button>
@@ -1163,9 +1163,12 @@ function stampEditorHTML(){ return `<button class="close" onclick="closeModal()"
     <button onclick="addStamp('road')">🛣 道路</button>
     <button onclick="addStamp('bldg')">⬜ 四角枠</button>
     <button onclick="addStamp('line')">／ 直線</button>
-    <button onclick="addText()">🅰 文字</button>
     <button onclick="addStamp('door')">↧ 出入口</button>
     <button onclick="addStamp('north')">🧭 方位（北）</button>
+  </div>
+  <div style="display:flex;gap:6px;margin:6px 0 2px">
+    <input type="text" id="stTextInput" placeholder="文字を入力（例：空地・隣家・電柱）" style="flex:1;min-width:0;padding:10px;border:1.5px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit" onkeydown="if(event.key==='Enter'){event.preventDefault();addTextFromInput();}">
+    <button class="inline-btn" style="flex:0 0 auto" onclick="addTextFromInput()">🅰 文字を置く</button>
   </div>
   <div class="stamp-ctrl">
     <button onclick="stampScale(1.15)">＋大きく</button>
@@ -1253,7 +1256,7 @@ function bindStampPointer(){
       if(Math.hypot(p.x-del.x,p.y-del.y)<=18){ stampDelete(); return; }
       if(Math.hypot(p.x-br.x,p.y-br.y)<=18){ ST.drag={mode:"resize"}; return; }
       if(Math.hypot(p.x-rp.x,p.y-rp.y)<=18){ ST.drag={mode:"rot"}; return; } }
-    for(let i=ST.stamps.length-1;i>=0;i--){ if(inStamp(ST.stamps[i],p)){ ST.sel=i; ST.drag={mode:"move",px:p.x,py:p.y}; drawStamps(); return; } }
+    for(let i=ST.stamps.length-1;i>=0;i--){ if(inStamp(ST.stamps[i],p)){ ST.sel=i; ST.drag={mode:"move",px:p.x,py:p.y}; syncTextInput(); drawStamps(); return; } }
     ST.sel=-1; ST.drag=null; drawStamps(); };
   c.onpointermove=(e)=>{ if(!ST.drag) return; e.preventDefault(); const p=stPos(e),s=ST.stamps[ST.sel]; if(!s) return; if(!ST.drag.pushed){ stampPushHistory(); ST.drag.pushed=true; } const cx=s.x+s.w/2,cy=s.y+s.h/2;
     if(ST.drag.mode==="move"){ s.x+=p.x-ST.drag.px; s.y+=p.y-ST.drag.py; ST.drag.px=p.x; ST.drag.py=p.y; }
@@ -1266,14 +1269,18 @@ function stampPushHistory(){ try{ ST.history.push(JSON.stringify(ST.stamps)); if
 function stampUndo(){ if(!ST.history||!ST.history.length){ toast("これ以上戻せません"); return; } ST.stamps=JSON.parse(ST.history.pop()); ST.sel=-1; ST.drag=null; drawStamps(); }
 function stampDelete(){ if(ST.sel>=0){ stampPushHistory(); ST.stamps.splice(ST.sel,1); ST.sel=-1; ST.drag=null; drawStamps(); } else toast("部品を選択してください"); }
 function stampDuplicate(){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); const c=Object.assign({},ST.stamps[ST.sel]); c.x+=20; c.y+=20; ST.stamps.push(c); ST.sel=ST.stamps.length-1; drawStamps(); }
-function addText(){
+function addTextFromInput(){
+  const inp=document.getElementById("stTextInput"); if(!inp) return;
+  const val=(inp.value||"").trim();
+  if(!val){ toast("先に文字を入力してください"); inp.focus(); return; }
   const sel=ST.sel>=0?ST.stamps[ST.sel]:null;
-  if(sel&&sel.type==="text"){ const t=prompt("文字を編集",sel.text||""); if(t===null) return; stampPushHistory(); sel.text=(t||"").trim()||sel.text; drawStamps(); return; }
-  const t=prompt("追加する文字を入力（例：隣家・空地・電柱 など）",""); if(t===null) return; const txt=(t||"").trim(); if(!txt) return;
-  stampPushHistory(); const d=STAMP_DEFS.text,n=ST.stamps.length;
-  ST.stamps.push({type:"text",text:txt,w:d.w,h:d.h,rot:0,x:(ST.canvas.width-d.w)/2+(n%5)*18,y:(ST.canvas.height-d.h)/2+(n%5)*18});
-  ST.sel=ST.stamps.length-1; drawStamps();
+  stampPushHistory();
+  if(sel&&sel.type==="text"){ sel.text=val; drawStamps(); toast("文字を更新しました"); return; }
+  const d=STAMP_DEFS.text,n=ST.stamps.length;
+  ST.stamps.push({type:"text",text:val,w:d.w,h:d.h,rot:0,x:(ST.canvas.width-d.w)/2+(n%5)*18,y:(ST.canvas.height-d.h)/2+(n%5)*18});
+  ST.sel=ST.stamps.length-1; drawStamps(); inp.value="";
 }
+function syncTextInput(){ const inp=document.getElementById("stTextInput"); if(!inp) return; const s=ST.sel>=0?ST.stamps[ST.sel]:null; if(s&&s.type==="text") inp.value=s.text||""; }
 function stampScale(f){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); const s=ST.stamps[ST.sel],cx=s.x+s.w/2,cy=s.y+s.h/2; s.w=Math.max(20,s.w*f); s.h=Math.max(8,s.h*f); s.x=cx-s.w/2; s.y=cy-s.h/2; drawStamps(); }
 function stampRotate(deg){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); ST.stamps[ST.sel].rot+=deg; drawStamps(); }
 function stampToggleBg(on){ ST.useBg=on; if(on){ if(!_haichiSrc){ toast("先に航空写真を取得/取り込みしてください"); const cb=document.getElementById("stBg"); if(cb)cb.checked=false; ST.useBg=false; return; } if(!ST.bgImg){ const im=new Image(); im.onload=()=>{ST.bgImg=im; drawStamps();}; im.src=_haichiSrc; return; } } drawStamps(); }
