@@ -1133,7 +1133,7 @@ function refreshFigStatus(mode){
    スタンプ式 配置図エディタ（部品を置いて移動・拡大縮小・回転）
    ===================================================================== */
 let haichiKind="";
-const ST={ canvas:null, ctx:null, stamps:[], sel:-1, drag:null, bgImg:null, useBg:false, history:[] };
+const ST={ canvas:null, ctx:null, stamps:[], sel:-1, drag:null, bgImg:null, useBg:false, history:[], pen:false, drawing:null };
 const STAMP_DEFS={
   park:{label:"保管場所", w:150,h:280, fill:"rgba(192,57,43,.12)", stroke:"#c0392b"},
   home:{label:"自宅",     w:200,h:150, fill:"rgba(21,64,107,.10)", stroke:"#15406b"},
@@ -1150,14 +1150,17 @@ function openStampEditor(){
   document.getElementById("modalBody").innerHTML=stampEditorHTML();
   document.getElementById("modalBg").classList.add("open");
   const c=document.getElementById("stCanvas"); c.width=820; c.height=600; ST.canvas=c; ST.ctx=c.getContext("2d");
-  ST.stamps=[]; ST.sel=-1; ST.drag=null; ST.useBg=false; ST.bgImg=null; ST.history=[];
+  ST.stamps=[]; ST.sel=-1; ST.drag=null; ST.useBg=false; ST.bgImg=null; ST.history=[]; ST.pen=false; ST.drawing=null;
   addStamp('road',30,510,false); addStamp('park',335,170,false); ST.sel=-1;
   bindStampPointer(); drawStamps();
 }
 function stampEditorHTML(){ return `<button class="close" onclick="closeModal()">×</button>
   <h3>スタンプで配置図を作る</h3>
-  <div class="ed-tip">下のボタンで部品を置き、<b>ドラッグで移動／右下の⤡で大きさ変更</b>。選択中は［×］削除・上の⟳で回転。<b>文字は下の入力欄に書いて「文字を置く」</b>（文字スタンプを選ぶと入力欄に出て編集できます）。複製・元に戻すもボタンから。</div>
+  <div class="ed-tip">部品を置く／<b>「✏️手書き」をONにするとドラッグで自由に線が描けます</b>（集合住宅などに便利）。ドラッグで移動・⤡で大きさ・⟳で回転、文字は下の入力欄から。手書きの線も移動・拡大・複製・元に戻せます。</div>
   <canvas id="stCanvas"></canvas>
+  <div style="display:flex;gap:6px;margin:6px 0 2px">
+    <button id="penToggleBtn" class="inline-btn" style="flex:1;border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="togglePen()">✏️ 手書きモード：OFF</button>
+  </div>
   <div class="stamp-palette">
     <button onclick="addStamp('park')">🅿 保管場所</button>
     <button onclick="addStamp('home')">🏠 自宅</button>
@@ -1211,6 +1214,13 @@ function drawStamps(clean){
 }
 function drawOneStamp(s){
   const ctx=ST.ctx,d=STAMP_DEFS[s.type],cx=s.x+s.w/2,cy=s.y+s.h/2;
+  if(s.type==="stroke"){
+    const sx=s.ow?s.w/s.ow:1, sy=s.oh?s.h/s.oh:1;
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate((s.rot||0)*Math.PI/180); ctx.scale(sx,sy);
+    ctx.strokeStyle=s.color||"#111"; ctx.lineWidth=(s.lw||3)/Math.max(0.2,Math.sqrt(Math.abs(sx*sy))); ctx.lineCap="round"; ctx.lineJoin="round";
+    ctx.beginPath(); (s.pts||[]).forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke();
+    ctx.restore(); return;
+  }
   ctx.save(); ctx.translate(cx,cy); ctx.rotate(s.rot*Math.PI/180);
   if(s.type==="north"){
     ctx.strokeStyle="#000"; ctx.fillStyle="#000"; ctx.lineJoin="round"; ctx.lineWidth=Math.max(2,s.w*0.06);
@@ -1256,6 +1266,7 @@ function inStamp(s,p){ const cx=s.x+s.w/2,cy=s.y+s.h/2,a=-s.rot*Math.PI/180,dx=p
 function bindStampPointer(){
   const c=ST.canvas;
   c.onpointerdown=(e)=>{ e.preventDefault(); try{c.setPointerCapture(e.pointerId);}catch(_){} const p=stPos(e);
+    if(ST.pen){ ST.drawing={pts:[p]}; ST.sel=-1; return; }
     if(ST.sel>=0){ const s=ST.stamps[ST.sel];
       const br=stampCorner(s,s.w/2,s.h/2),del=stampCorner(s,s.w/2,-s.h/2),rp=stampCorner(s,0,-s.h/2-30);
       if(Math.hypot(p.x-del.x,p.y-del.y)<=18){ stampDelete(); return; }
@@ -1263,12 +1274,31 @@ function bindStampPointer(){
       if(Math.hypot(p.x-rp.x,p.y-rp.y)<=18){ ST.drag={mode:"rot"}; return; } }
     for(let i=ST.stamps.length-1;i>=0;i--){ if(inStamp(ST.stamps[i],p)){ ST.sel=i; ST.drag={mode:"move",px:p.x,py:p.y}; syncTextInput(); drawStamps(); return; } }
     ST.sel=-1; ST.drag=null; drawStamps(); };
-  c.onpointermove=(e)=>{ if(!ST.drag) return; e.preventDefault(); const p=stPos(e),s=ST.stamps[ST.sel]; if(!s) return; if(!ST.drag.pushed){ stampPushHistory(); ST.drag.pushed=true; } const cx=s.x+s.w/2,cy=s.y+s.h/2;
+  c.onpointermove=(e)=>{ if(ST.drawing){ e.preventDefault(); const dp=stPos(e),last=ST.drawing.pts[ST.drawing.pts.length-1]; if(!last||Math.hypot(dp.x-last.x,dp.y-last.y)>=4){ ST.drawing.pts.push(dp); drawStamps(); drawLiveStroke(); } return; }
+    if(!ST.drag) return; e.preventDefault(); const p=stPos(e),s=ST.stamps[ST.sel]; if(!s) return; if(!ST.drag.pushed){ stampPushHistory(); ST.drag.pushed=true; } const cx=s.x+s.w/2,cy=s.y+s.h/2;
     if(ST.drag.mode==="move"){ s.x+=p.x-ST.drag.px; s.y+=p.y-ST.drag.py; ST.drag.px=p.x; ST.drag.py=p.y; }
     else if(ST.drag.mode==="resize"){ const a=-s.rot*Math.PI/180,dx=p.x-cx,dy=p.y-cy,lx=dx*Math.cos(a)-dy*Math.sin(a),ly=dx*Math.sin(a)+dy*Math.cos(a),nw=Math.max(28,Math.abs(lx)*2),nh=Math.max(24,Math.abs(ly)*2); s.x=cx-nw/2; s.y=cy-nh/2; s.w=nw; s.h=nh; }
     else if(ST.drag.mode==="rot"){ s.rot=Math.atan2(p.y-cy,p.x-cx)*180/Math.PI+90; }
     drawStamps(); };
-  const up=()=>{ ST.drag=null; }; c.onpointerup=up; c.onpointercancel=up;
+  const up=()=>{ if(ST.drawing){ finalizeStroke(); ST.drawing=null; } ST.drag=null; }; c.onpointerup=up; c.onpointercancel=up;
+}
+function togglePen(){
+  ST.pen=!ST.pen; ST.sel=-1; ST.drawing=null;
+  const b=document.getElementById("penToggleBtn");
+  if(b){ b.textContent=ST.pen?"✏️ 手書きモード：ON（ドラッグで描く）":"✏️ 手書きモード：OFF";
+    b.style.background=ST.pen?"var(--accent)":"#eafafa"; b.style.color=ST.pen?"#fff":"#0f6b6b"; b.style.borderColor=ST.pen?"var(--accent)":"var(--teal)"; }
+  drawStamps();
+  toast(ST.pen?"手書きON：ドラッグで線を描けます":"手書きOFF");
+}
+function drawLiveStroke(){ if(!ST.drawing) return; const ctx=ST.ctx,pts=ST.drawing.pts; if(!pts.length) return; ctx.save(); ctx.strokeStyle="#111"; ctx.lineWidth=3; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke(); ctx.restore(); }
+function finalizeStroke(){
+  const pts=ST.drawing?ST.drawing.pts:[]; if(!pts||pts.length<2){ drawStamps(); return; }
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  pts.forEach(p=>{ if(p.x<minX)minX=p.x; if(p.x>maxX)maxX=p.x; if(p.y<minY)minY=p.y; if(p.y>maxY)maxY=p.y; });
+  const cx=(minX+maxX)/2, cy=(minY+maxY)/2, w=Math.max(8,maxX-minX), h=Math.max(8,maxY-minY);
+  stampPushHistory();
+  ST.stamps.push({type:"stroke",x:minX,y:minY,w,h,ow:w,oh:h,rot:0,lw:3,pts:pts.map(p=>({x:Math.round(p.x-cx),y:Math.round(p.y-cy)}))});
+  ST.sel=ST.stamps.length-1; drawStamps();
 }
 function stampPushHistory(){ try{ ST.history.push(JSON.stringify(ST.stamps)); if(ST.history.length>40) ST.history.shift(); }catch(e){} }
 function stampUndo(){ if(!ST.history||!ST.history.length){ toast("これ以上戻せません"); return; } ST.stamps=JSON.parse(ST.history.pop()); ST.sel=-1; ST.drag=null; drawStamps(); }
@@ -1290,7 +1320,7 @@ function stampScale(f){ if(ST.sel<0){toast("部品を選択してください");
 function stampRotate(deg){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); ST.stamps[ST.sel].rot+=deg; drawStamps(); }
 function stampToggleBg(on){ ST.useBg=on; if(on){ if(!_haichiSrc){ toast("先に航空写真を取得/取り込みしてください"); const cb=document.getElementById("stBg"); if(cb)cb.checked=false; ST.useBg=false; return; } if(!ST.bgImg){ const im=new Image(); im.onload=()=>{ST.bgImg=im; drawStamps();}; im.src=_haichiSrc; return; } } drawStamps(); }
 function useStampEditor(){ if(!ST.stamps.length){ toast("部品を置いてください"); return; } ST.sel=-1; drawStamps(true); haichiComposite=ST.canvas.toDataURL("image/png"); haichiKind="スタンプ";
-  state.haichiStamps={ w:ST.canvas.width, h:ST.canvas.height, stamps:ST.stamps.map(s=>({type:s.type,x:Math.round(s.x),y:Math.round(s.y),w:Math.round(s.w),h:Math.round(s.h),rot:Math.round(s.rot||0),text:s.text})) };
+  state.haichiStamps={ w:ST.canvas.width, h:ST.canvas.height, stamps:ST.stamps.map(s=>({type:s.type,x:Math.round(s.x),y:Math.round(s.y),w:Math.round(s.w),h:Math.round(s.h),rot:Math.round(s.rot||0),text:s.text,pts:s.pts,ow:s.ow,oh:s.oh,lw:s.lw})) };
   scheduleSave();
   drawHaichi(); refreshFigStatus("haichi"); toast("配置図に反映しました"); closeModal(); }
 /* スタンプ配置図をデータ(state.haichiStamps)から再描画してPNGを復元する。
@@ -1302,7 +1332,7 @@ function rebuildStampComposite(){
   const cv=document.createElement("canvas"); cv.width=hs.w||820; cv.height=hs.h||600;
   const sv={canvas:ST.canvas,ctx:ST.ctx,stamps:ST.stamps,sel:ST.sel,useBg:ST.useBg,bgImg:ST.bgImg};
   ST.canvas=cv; ST.ctx=cv.getContext("2d");
-  ST.stamps=hs.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0,text:s.text}));
+  ST.stamps=hs.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0,text:s.text,pts:s.pts,ow:s.ow,oh:s.oh,lw:s.lw}));
   ST.sel=-1; ST.useBg=false; ST.bgImg=null;
   try{ drawStamps(true); haichiComposite=cv.toDataURL("image/png"); haichiKind="スタンプ"; }catch(e){}
   ST.canvas=sv.canvas; ST.ctx=sv.ctx; ST.stamps=sv.stamps; ST.sel=sv.sel; ST.useBg=sv.useBg; ST.bgImg=sv.bgImg;
