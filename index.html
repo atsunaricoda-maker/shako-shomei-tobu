@@ -361,11 +361,6 @@ textarea{resize:vertical;min-height:64px;}
           </div>
         </div>
 
-        <div class="field">
-          <label class="chk"><input type="checkbox" data-bind="kubun.daiko">
-            <span><b>行政書士による代理申請</b><span class="hint">代理申請では委任状等を求められる場合があります。提出先の警察署窓口でご確認ください（公式ページに明記なし）。</span></span></label>
-        </div>
-
         <div class="note info" style="font-size:11.5px">
           静岡県内は様式が共通のため、上の提出先を選ぶだけで東部の他市にも対応できます（標章2025年廃止は県内共通）。
         </div>
@@ -1676,7 +1671,7 @@ function docShinseiOfficial(){
   const s=state, v=s.vehicle;
   const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}　${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
   const hokan = `${esc(s.hokan.addr)}　${esc(s.hokan.name)}　${esc(s.hokan.kukaku)}`;
-  const daiko = s.kubun.daiko? "　※行政書士による代理申請（委任状の要否は窓口確認）。":"";
+  const daiko = "";
   return `<div class="sheet draft">
     <div class="draft-banner">下書き（転記用）― この用紙は提出できません。公式様式（原本）に転記してください</div>
     <div class="offlbl">別記様式第１号（第１条関係）</div>
@@ -1736,7 +1731,7 @@ function docShinseiOfficial(){
 function docTodoke(){
   const s=state, v=s.vehicle;
   const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}<br>${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
-  const daikoNote = s.kubun.daiko?`<br>※ 行政書士が代理届出（委任状の要否は${esc(stn().name)}にご確認ください）。`:"";
+  const daikoNote = "";
   return `<div class="sheet draft">
     <div class="draft-banner">下書き（転記用）― この用紙は提出できません。公式様式（原本）に転記してください</div>
     <h2 class="dt">自動車保管場所届出書</h2>
@@ -1862,7 +1857,7 @@ function docChecklist(){
     "保管場所の所在図・配置図（1通）",
     `権原書面：${kengenDoc}（1通）`,
     kei? "" : "静岡県収入証紙（窓口で購入・申請書に貼付）",
-    s.kubun.daiko?`委任状（代理${kei?"届出":"申請"}の場合・要否は窓口確認）`:""
+    ""
   ].filter(Boolean);
   const flowRow = kei? "届出書を提出（事後届出。義務地域はナンバー取得後15日以内）。証明書の交付はなく、控えに受理印。" : "提出 → 2〜3日後に現地調査 → 中3日程度で交付（窓口の交付予定日に従う）";
   const keiNote = !kei ? ""
