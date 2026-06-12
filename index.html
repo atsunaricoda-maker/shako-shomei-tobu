@@ -324,6 +324,11 @@ textarea{resize:vertical;min-height:64px;}
 
     <!-- STEP 1 申請区分 -->
     <section class="step" data-step="0">
+      <div class="card" style="border-color:var(--accent)">
+        <h2 style="color:var(--accent)">⚡ ひな形から作る</h2>
+        <p class="lead">よくあるケースを選ぶと、権原・駐車場タイプ・寸法・配置図まで自動セット。あとは住所や寸法など<b>必要な所だけ直せば完成</b>です。（1から作りたい場合は下へ）</p>
+        <div id="tmplList" class="docpick"></div>
+      </div>
       <div class="card">
         <h2>① 申請の区分</h2>
         <p class="lead">まず申請のパターンを選びます。選んだ内容に合わせて、必要な書類・提出先が自動で切り替わります。</p>
@@ -1098,7 +1103,7 @@ function refreshFigStatus(mode){
    スタンプ式 配置図エディタ（部品を置いて移動・拡大縮小・回転）
    ===================================================================== */
 let haichiKind="";
-const ST={ canvas:null, ctx:null, stamps:[], sel:-1, drag:null, bgImg:null, useBg:false, history:[], pen:false, drawing:null };
+const ST={ canvas:null, ctx:null, stamps:[], sel:-1, drag:null, bgImg:null, useBg:false, history:[], pen:false, drawing:null, multi:false, selSet:new Set(), marquee:null, gdrag:null, moved:false, tapCand:-1 };
 const STAMP_DEFS={
   park:{label:"保管場所", w:150,h:280, fill:"rgba(192,57,43,.12)", stroke:"#c0392b"},
   home:{label:"自宅",     w:200,h:150, fill:"rgba(21,64,107,.10)", stroke:"#15406b"},
@@ -1111,13 +1116,29 @@ const STAMP_DEFS={
   text:{label:"文字",     w:160,h:48,  fill:"none", stroke:"#000"},
   cell:{label:"",         w:64, h:104, fill:"none", stroke:"#888"}
 };
+/* ケースのひな形（選ぶと権原・駐車場タイプ・寸法・配置図stampsを一括セット。あとは必要箇所だけ修正）。
+   配置図は820x600座標。stampsは _S(type,x,y,w,h,text?) で定義。設計はワークフローで現実性・座標を機械検証済み。 */
+const _S=(type,x,y,w,h,text)=>({type,x,y,w,h,rot:0,text:text});
+const TEMPLATES=[
+ {name:"自宅敷地に青空1台（自認・平面）",desc:"自分名義の戸建てに屋根なし1台。最頻ケース。道路幅員・出入口の向き・寸法だけ直せば完成。",kengen:"jinin",haichiType:"平面",w:"2.5",d:"5.0",gate:"2.5",road:"4.0",height:"",jininObj:"土地・建物",stamps:[_S("north",742,28,66,90),_S("road",30,512,760,70),_S("text",300,528,220,40,"前面道路 幅員4.0m"),_S("home",120,70,200,150),_S("text",150,130,120,34,"自宅"),_S("park",340,230,150,260),_S("text",318,200,200,34,"保管場所 2.5×5.0m"),_S("door",363,434,104,78),_S("bldg",560,250,170,150),_S("text",580,308,130,34,"隣家（A氏宅）")]},
+ {name:"自宅のカーポート（自認・高さ必須）",desc:"自宅敷地の屋根付きカーポートに1台。床〜天井の高さ(既定2.3m)が必須。車検証の全高がこれより低いか確認。",kengen:"jinin",haichiType:"カーポート",w:"2.5",d:"5.0",gate:"2.5",road:"4.0",height:"2.3",jininObj:"土地・建物",stamps:[_S("north",742,28,66,90),_S("road",30,512,760,70),_S("text",300,528,220,40,"前面道路 幅員4.0m"),_S("home",120,70,200,150),_S("text",150,130,120,34,"自宅"),_S("park",340,230,150,260),_S("text",300,196,230,34,"カーポート 2.5×5.0m"),_S("text",325,350,180,34,"天井高 2.3m"),_S("door",363,434,104,78),_S("bldg",560,250,170,150),_S("text",585,308,120,34,"隣家")]},
+ {name:"独立した車庫・ガレージ（自認・高さ必須）",desc:"自宅とは別棟の車庫/ガレージに1台（建物も自分名義）。高さ(既定2.4m)必須。シャッター開口＝出入口。",kengen:"jinin",haichiType:"ガレージ",w:"2.6",d:"5.2",gate:"2.6",road:"4.0",height:"2.4",jininObj:"土地・建物",stamps:[_S("north",742,28,66,90),_S("road",30,512,760,70),_S("text",300,528,220,40,"前面道路 幅員4.0m"),_S("home",500,70,200,150),_S("text",540,130,120,34,"自宅"),_S("bldg",110,200,210,300),_S("text",130,208,190,34,"車庫（ガレージ）"),_S("park",140,236,150,260),_S("text",135,350,160,34,"天井高 2.4m"),_S("door",163,440,104,78),_S("text",330,450,150,34,"シャッター")]},
+ {name:"縦列駐車2台（自宅敷地・自認・平面）",desc:"自宅敷地に前後で2台を縦列。赤枠が縦列全体、中央の線が前後の区切り。1台だけなら下半分を削り奥行を直す。",kengen:"jinin",haichiType:"平面",w:"2.5",d:"10.0",gate:"2.5",road:"5.0",height:"",jininObj:"土地・建物",stamps:[_S("north",742,28,66,90),_S("road",30,512,760,70),_S("text",300,528,220,40,"前面道路 幅員5.0m"),_S("home",110,70,200,150),_S("text",145,130,120,34,"自宅"),_S("park",380,80,150,410),_S("line",380,283,150,4),_S("text",390,160,130,30,"前の車"),_S("text",390,370,130,30,"後の車"),_S("text",560,240,220,34,"縦列2台 奥行約10m"),_S("door",403,434,104,78)]},
+ {name:"月極駐車場の1区画（他人所有・平面）",desc:"月極の平面駐車場で1区画契約。自分の契約区画(赤)を実際の番号位置へ動かす。承諾書/賃貸借契約書の写しは各自用意。",kengen:"shoudaku",haichiType:"平面",w:"2.5",d:"5.0",gate:"2.5",road:"6.0",height:"",jininObj:"",stamps:[_S("north",742,28,66,90),_S("text",300,40,230,30,"月極駐車場"),_S("cell",120,240,64,104,"1"),_S("cell",200,240,64,104,"2"),_S("cell",280,240,64,104,"3"),_S("cell",360,240,64,104,"4"),_S("cell",440,240,64,104,"5"),_S("cell",520,240,64,104,"6"),_S("text",336,206,120,28,"契約区画"),_S("park",358,236,68,112),_S("door",340,410,104,78),_S("road",30,512,760,70),_S("text",300,528,220,40,"前面道路 幅員6.0m")]},
+ {name:"区画グリッド駐車場・8台（他人所有・平面）",desc:"不動産管理の区画駐車場。番号を2段グリッドで配置、契約区画に赤を重ねる。台数が違えば不要な区画を削る。",kengen:"shoudaku",haichiType:"平面",w:"2.5",d:"5.0",gate:"5.0",road:"6.0",height:"",jininObj:"",stamps:[_S("north",742,28,66,90),_S("text",250,30,320,30,"月極駐車場（管理：　　　）"),_S("bldg",40,80,160,110),_S("text",70,118,110,28,"管理棟"),_S("cell",320,200,64,104,"1"),_S("cell",400,200,64,104,"2"),_S("cell",480,200,64,104,"3"),_S("cell",560,200,64,104,"4"),_S("cell",320,330,64,104,"5"),_S("cell",400,330,64,104,"6"),_S("cell",480,330,64,104,"7"),_S("cell",560,330,64,104,"8"),_S("text",452,300,120,26,"契約区画"),_S("park",482,326,60,112),_S("door",462,440,104,78),_S("road",30,512,760,70)]},
+ {name:"親族の土地を借りる（敷地内1台・他人所有）",desc:"親族など所有者の敷地を借りて1台。所有者宅と隣家を目印に借用区画(赤)と出入口を配置。承諾書か賃貸借契約書の写しで可。",kengen:"shoudaku",haichiType:"平面",w:"2.5",d:"5.0",gate:"2.8",road:"5.0",height:"",jininObj:"",stamps:[_S("north",742,28,66,90),_S("text",290,34,270,28,"親族の土地を借用"),_S("home",80,80,200,150),_S("text",80,234,200,26,"親族宅（所有者）"),_S("bldg",560,90,170,130),_S("text",595,234,110,26,"隣家"),_S("text",330,228,230,26,"借用区画（駐車スペース）"),_S("park",360,258,150,230),_S("door",383,432,104,78),_S("road",30,512,760,70),_S("text",300,528,220,40,"前面道路 幅員5.0m")]},
+ {name:"機械式・立体駐車場（他人所有・高さ必須）",desc:"月極の機械式/立体。高さ(既定1.55m=パレット制限値に直す)必須。架台内のパレットから自分の段・列に赤を置く。承諾書は管理会社。",kengen:"shoudaku",haichiType:"機械式",w:"2.5",d:"5.3",gate:"5.0",road:"6.0",height:"1.55",jininObj:"",stamps:[_S("north",742,28,66,90),_S("text",250,34,320,24,"機械式立体駐車場（架台）"),_S("bldg",270,70,280,370),_S("cell",300,90,64,104,"A1"),_S("cell",456,90,64,104,"B1"),_S("cell",456,210,64,104,"B2"),_S("cell",300,322,64,104,"A3"),_S("cell",456,322,64,104,"B3"),_S("park",298,206,68,112),_S("text",70,210,170,30,"契約パレット A2（赤）"),_S("text",600,230,180,30,"高さ制限 1.55m"),_S("door",366,440,104,78),_S("road",30,512,760,70),_S("text",300,528,220,40,"前面道路 幅員6.0m")]}
+];
 function rrect(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function openStampEditor(){
   document.getElementById("modalBody").innerHTML=stampEditorHTML();
   document.getElementById("modalBg").classList.add("open");
   const c=document.getElementById("stCanvas"); c.width=820; c.height=600; ST.canvas=c; ST.ctx=c.getContext("2d");
-  ST.stamps=[]; ST.sel=-1; ST.drag=null; ST.useBg=false; ST.bgImg=null; ST.history=[]; ST.pen=false; ST.drawing=null;
-  addStamp('road',30,510,false); addStamp('park',335,170,false); ST.sel=-1;
+  ST.stamps=[]; ST.sel=-1; ST.drag=null; ST.useBg=false; ST.bgImg=null; ST.history=[]; ST.pen=false; ST.drawing=null; ST.multi=false; ST.selSet=new Set(); ST.marquee=null; ST.gdrag=null;
+  if(state.haichiStamps && state.haichiStamps.stamps && state.haichiStamps.stamps.length){
+    ST.stamps=state.haichiStamps.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0,text:s.text}));
+  } else { addStamp('road',30,510,false); addStamp('park',335,170,false); }
+  ST.sel=-1;
   bindStampPointer(); drawStamps();
 }
 function stampEditorHTML(){ return `<button class="close" onclick="closeModal()">×</button>
@@ -1128,6 +1149,11 @@ function stampEditorHTML(){ return `<button class="close" onclick="closeModal()"
     <span style="font-size:12px;font-weight:700;color:#0f6b6b;white-space:nowrap">区画数</span>
     <input type="number" id="stCellCount" value="6" min="1" max="40" style="flex:0 0 60px;padding:8px;border:1.5px solid var(--line);border-radius:9px;font-size:14px" inputmode="numeric">
     <button class="inline-btn" style="flex:1;border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="addParkingRow()">区画をまとめて配置（番号つき）</button>
+  </div>
+  <div style="display:flex;gap:6px;margin:2px 0">
+    <button id="multiBtn" class="inline-btn" style="flex:1;background:#f3f6f9" onclick="toggleMulti()">☑ まとめ選択</button>
+    <button class="inline-btn" style="flex:0 0 auto" onclick="selectAllStamps()">全選択</button>
+    <button class="inline-btn" style="flex:0 0 auto;border-color:var(--warn);color:var(--warn)" onclick="deleteGroup()">🗑まとめ削除</button>
   </div>
   <div class="stamp-palette">
     <button onclick="addStamp('park')">🅿 保管場所</button>
@@ -1178,7 +1204,14 @@ function drawStamps(clean){
   ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle="#fff"; ctx.fillRect(0,0,c.width,c.height);
   if(ST.useBg&&ST.bgImg){ const im=ST.bgImg,r=Math.min(c.width/im.width,c.height/im.height),w=im.width*r,h=im.height*r;
     ctx.drawImage(im,(c.width-w)/2,(c.height-h)/2,w,h); ctx.fillStyle="rgba(255,255,255,.30)"; ctx.fillRect(0,0,c.width,c.height); }
-  ST.stamps.forEach((s,i)=>{ drawOneStamp(s); if(!clean&&i===ST.sel) drawStampChrome(s); });
+  ST.stamps.forEach((s,i)=>{ drawOneStamp(s);
+    if(!clean){
+      if(ST.multi&&ST.selSet.has(i)){ ctx.save(); ctx.strokeStyle="#2196f3"; ctx.fillStyle="rgba(33,150,243,.18)"; ctx.setLineDash([6,4]); ctx.lineWidth=2; ctx.fillRect(s.x,s.y,s.w,s.h); ctx.strokeRect(s.x,s.y,s.w,s.h); ctx.restore(); }
+      else if(!ST.multi&&i===ST.sel){ drawStampChrome(s); }
+    }
+  });
+  if(!clean&&ST.multi&&ST.selSet.size>0){ const b=groupBBox(); ctx.save(); ctx.strokeStyle="#2196f3"; ctx.lineWidth=1.5; ctx.setLineDash([]); ctx.strokeRect(b.x-3,b.y-3,(b.X-b.x)+6,(b.Y-b.y)+6); ctx.restore(); }
+  if(!clean&&ST.marquee){ const m=normM(ST.marquee); ctx.save(); ctx.fillStyle="rgba(33,150,243,.12)"; ctx.strokeStyle="#2196f3"; ctx.setLineDash([5,4]); ctx.lineWidth=1.5; ctx.fillRect(m.x,m.y,m.X-m.x,m.Y-m.y); ctx.strokeRect(m.x,m.y,m.X-m.x,m.Y-m.y); ctx.restore(); }
 }
 function drawOneStamp(s){
   const ctx=ST.ctx,d=STAMP_DEFS[s.type],cx=s.x+s.w/2,cy=s.y+s.h/2;
@@ -1237,6 +1270,10 @@ function inStamp(s,p){ const cx=s.x+s.w/2,cy=s.y+s.h/2,a=-s.rot*Math.PI/180,dx=p
 function bindStampPointer(){
   const c=ST.canvas;
   c.onpointerdown=(e)=>{ e.preventDefault(); try{c.setPointerCapture(e.pointerId);}catch(_){} const p=stPos(e);
+    if(ST.multi){ const hit=stampAt(p); ST.moved=false; ST.tapCand=hit;
+      if(ST.selSet.size>0){ const b=groupBBox(); if(p.x>=b.x&&p.x<=b.X&&p.y>=b.y&&p.y<=b.Y&&(hit<0||ST.selSet.has(hit))){ ST.gdrag={sx:p.x,sy:p.y,pushed:false,orig:[...ST.selSet].map(i=>({i,x:ST.stamps[i].x,y:ST.stamps[i].y}))}; return; } }
+      if(hit>=0){ ST.gdrag=null; return; }
+      ST.marquee={x0:p.x,y0:p.y,x1:p.x,y1:p.y}; ST.tapCand=-1; return; }
     if(ST.pen){ ST.drawing={pts:[p]}; ST.sel=-1; return; }
     if(ST.sel>=0){ const s=ST.stamps[ST.sel];
       const br=stampCorner(s,s.w/2,s.h/2),del=stampCorner(s,s.w/2,-s.h/2),rp=stampCorner(s,0,-s.h/2-30);
@@ -1245,13 +1282,25 @@ function bindStampPointer(){
       if(Math.hypot(p.x-rp.x,p.y-rp.y)<=18){ ST.drag={mode:"rot"}; return; } }
     for(let i=ST.stamps.length-1;i>=0;i--){ if(inStamp(ST.stamps[i],p)){ ST.sel=i; ST.drag={mode:"move",px:p.x,py:p.y}; syncTextInput(); drawStamps(); return; } }
     ST.sel=-1; ST.drag=null; drawStamps(); };
-  c.onpointermove=(e)=>{ if(ST.drawing){ e.preventDefault(); const dp=stPos(e),last=ST.drawing.pts[ST.drawing.pts.length-1]; if(!last||Math.hypot(dp.x-last.x,dp.y-last.y)>=4){ ST.drawing.pts.push(dp); drawStamps(); drawLiveStroke(); } return; }
+  c.onpointermove=(e)=>{
+    if(ST.multi){
+      if(ST.gdrag){ e.preventDefault(); const gp=stPos(e); if(!ST.gdrag.pushed){ stampPushHistory(); ST.gdrag.pushed=true; } let dx=gp.x-ST.gdrag.sx,dy=gp.y-ST.gdrag.sy; const b=bboxOf(ST.gdrag.orig); dx=clampN(dx,-b.x,820-b.X); dy=clampN(dy,-b.y,600-b.Y); ST.gdrag.orig.forEach(o=>{ST.stamps[o.i].x=o.x+dx;ST.stamps[o.i].y=o.y+dy;}); if(Math.abs(dx)>4||Math.abs(dy)>4)ST.moved=true; drawStamps(); return; }
+      if(ST.marquee){ e.preventDefault(); const mp=stPos(e); ST.marquee.x1=mp.x; ST.marquee.y1=mp.y; ST.moved=true; drawStamps(); return; }
+      return; }
+    if(ST.drawing){ e.preventDefault(); const dp=stPos(e),last=ST.drawing.pts[ST.drawing.pts.length-1]; if(!last||Math.hypot(dp.x-last.x,dp.y-last.y)>=4){ ST.drawing.pts.push(dp); drawStamps(); drawLiveStroke(); } return; }
     if(!ST.drag) return; e.preventDefault(); const p=stPos(e),s=ST.stamps[ST.sel]; if(!s) return; if(!ST.drag.pushed){ stampPushHistory(); ST.drag.pushed=true; } const cx=s.x+s.w/2,cy=s.y+s.h/2;
     if(ST.drag.mode==="move"){ s.x+=p.x-ST.drag.px; s.y+=p.y-ST.drag.py; ST.drag.px=p.x; ST.drag.py=p.y; }
     else if(ST.drag.mode==="resize"){ const a=-s.rot*Math.PI/180,dx=p.x-cx,dy=p.y-cy,lx=dx*Math.cos(a)-dy*Math.sin(a),ly=dx*Math.sin(a)+dy*Math.cos(a),nw=Math.max(28,Math.abs(lx)*2),nh=Math.max(24,Math.abs(ly)*2); s.x=cx-nw/2; s.y=cy-nh/2; s.w=nw; s.h=nh; }
     else if(ST.drag.mode==="rot"){ s.rot=Math.atan2(p.y-cy,p.x-cx)*180/Math.PI+90; }
     drawStamps(); };
-  const up=()=>{ if(ST.drawing){ finalizeStroke(); ST.drawing=null; } ST.drag=null; }; c.onpointerup=up; c.onpointercancel=up;
+  const up=()=>{
+    if(ST.multi){
+      if(ST.marquee){ const m=normM(ST.marquee); ST.stamps.forEach((s,i)=>{ if(rectsOverlap(m,s)) ST.selSet.add(i); }); ST.marquee=null; drawStamps(); return; }
+      if(ST.gdrag){ const mv=ST.moved, tc=ST.tapCand; ST.gdrag=null; if(!mv&&tc>=0)toggleSel(tc); drawStamps(); return; }
+      if(!ST.moved&&ST.tapCand>=0){ toggleSel(ST.tapCand); drawStamps(); return; }
+      drawStamps(); return;
+    }
+    if(ST.drawing){ finalizeStroke(); ST.drawing=null; } ST.drag=null; }; c.onpointerup=up; c.onpointercancel=up;
 }
 function togglePen(){
   ST.pen=!ST.pen; ST.sel=-1; ST.drawing=null;
@@ -1294,6 +1343,33 @@ function addParkingRow(){
   const d=STAMP_DEFS.cell, gap=2, startX=50, startY=110; let x=startX, y=startY;
   for(let i=0;i<n;i++){ if(x+d.w>ST.canvas.width-20){ x=startX; y+=d.h+14; } ST.stamps.push({type:"cell",text:String(i+1),w:d.w,h:d.h,rot:0,x,y}); x+=d.w+gap; }
   ST.sel=-1; drawStamps(); toast(n+"区画を配置しました");
+}
+/* ====== まとめ選択（複数選択して一括移動・削除。区画グループ向け） ====== */
+function stampAt(p){ for(let i=ST.stamps.length-1;i>=0;i--){ if(inStamp(ST.stamps[i],p)) return i; } return -1; }
+function bboxOf(orig){ let x=1e9,y=1e9,X=-1e9,Y=-1e9; orig.forEach(o=>{ const s=ST.stamps[o.i]; if(!s)return; x=Math.min(x,s.x); y=Math.min(y,s.y); X=Math.max(X,s.x+s.w); Y=Math.max(Y,s.y+s.h); }); return {x,y,X,Y}; }
+function groupBBox(){ return bboxOf([...ST.selSet].map(i=>({i}))); }
+function clampN(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+function normM(m){ return {x:Math.min(m.x0,m.x1),y:Math.min(m.y0,m.y1),X:Math.max(m.x0,m.x1),Y:Math.max(m.y0,m.y1)}; }
+function rectsOverlap(m,s){ return !(s.x>m.X||s.x+s.w<m.x||s.y>m.Y||s.y+s.h<m.y); }
+function toggleSel(i){ if(ST.selSet.has(i))ST.selSet.delete(i); else ST.selSet.add(i); }
+function multiBtnState(){ const b=document.getElementById("multiBtn"); if(!b) return; b.style.background=ST.multi?"var(--accent)":"#f3f6f9"; b.style.color=ST.multi?"#fff":""; b.textContent=ST.multi?"☑ まとめ選択 ON":"☑ まとめ選択"; }
+function toggleMulti(){ ST.multi=!ST.multi; ST.sel=-1; ST.selSet.clear(); ST.marquee=null; ST.gdrag=null; multiBtnState(); drawStamps(); toast(ST.multi?"まとめ選択ON：囲む/タップで選び、内側ドラッグで移動":"まとめ選択OFF"); }
+function selectAllStamps(){ if(!ST.stamps.length){toast("先に部品を置いてください");return;} ST.multi=true; ST.selSet=new Set(ST.stamps.map((_,i)=>i)); multiBtnState(); drawStamps(); }
+function deleteGroup(){ if(!ST.multi||!ST.selSet.size){ toast("まとめ選択で部品を囲んでください"); return; } stampPushHistory(); [...ST.selSet].sort((a,b)=>b-a).forEach(i=>ST.stamps.splice(i,1)); ST.selSet.clear(); drawStamps(); toast("まとめて削除しました"); }
+/* ====== ケースのひな形 適用 ====== */
+function applyTemplate(i){
+  const t=TEMPLATES[i]; if(!t) return;
+  state.kubun.kengen=t.kengen;
+  if(t.jininObj) state.jinin.obj=t.jininObj;
+  state.haichi.type=t.haichiType; state.haichi.w=t.w; state.haichi.d=t.d; state.haichi.gate=t.gate||""; state.haichi.road=t.road; state.haichi.height=t.height||"";
+  state.haichiStamps={ w:820, h:600, stamps:t.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0,text:s.text})) };
+  hydrate(); applyAll(); refreshFigStatus("haichi"); scheduleSave();
+  closeModal(); gotoStep(0);
+  toast("ひな形を読み込みました：必要な所だけ直してください");
+}
+function renderTemplates(){
+  const el=document.getElementById("tmplList"); if(!el) return;
+  el.innerHTML=TEMPLATES.map((t,i)=>`<div class="doc-card" style="cursor:pointer" onclick="applyTemplate(${i})"><div class="di" style="background:#fff4e8;color:var(--accent)">⚡</div><div><div class="dt">${esc(t.name)}</div><div class="dn">${esc(t.desc)}</div></div></div>`).join("");
 }
 function stampScale(f){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); const s=ST.stamps[ST.sel],cx=s.x+s.w/2,cy=s.y+s.h/2; s.w=Math.max(20,s.w*f); s.h=Math.max(8,s.h*f); s.x=cx-s.w/2; s.y=cy-s.h/2; drawStamps(); }
 function stampRotate(deg){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); ST.stamps[ST.sel].rot+=deg; drawStamps(); }
@@ -2118,6 +2194,7 @@ function boot(){
   if(!state.appDate){ state.appDate=new Date().toISOString().slice(0,10); }
   buildStepNav();
   buildStationOptions();
+  renderTemplates();
   bindAll();
   hydrate();
   applyAll();
