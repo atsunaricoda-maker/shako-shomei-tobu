@@ -312,6 +312,7 @@ textarea{resize:vertical;min-height:64px;}
       <button class="hbtn" id="btnCust" onclick="withPin(()=>openModal('cust'))">顧客</button>
       <button class="hbtn" id="btnDraft" onclick="withPin(()=>openModal('draft'))">案件</button>
       <button class="hbtn" onclick="openModal('info')">提出先</button>
+      <button class="hbtn" onclick="openModal('help')" title="使い方">❓</button>
       <button class="hbtn" onclick="withPin(()=>openModal('gmap'))" title="設定">⚙</button>
     </div>
   </header>
@@ -2034,6 +2035,7 @@ function openModal(type){
   else if(type==="draft") b.innerHTML=draftModal();
   else if(type==="cust"){ b.innerHTML=custModal(); renderCustList(); }
   else if(type==="gmap") b.innerHTML=gmapModal();
+  else if(type==="help") b.innerHTML=helpModal();
   else if(type==="privacy") b.innerHTML=privacyModal();
   document.getElementById("modalBg").classList.add("open");
 }
@@ -2053,6 +2055,72 @@ function privacyModal(){
   </table>
   <p style="font-size:11.5px;color:#5a6b7b;margin-top:8px">※個人情報の管理責任は本ツールを利用する各事務所・事業者にあります。お客様からの開示・訂正・削除等のご請求は、提出先となる行政書士事務所へお問い合わせください。</p>
   </div>`;
+}
+/* アプリ内 使い方ガイド（モード対応・印刷は任意）。配布漏れ防止のため説明書を内蔵。 */
+function helpModal(){ return isDealer()?helpDealer():helpOffice(); }
+function helpDealer(){
+  return `<button class="close" onclick="closeModal()">×</button>
+  <h3>📖 使い方（お店の方へ）</h3>
+  <div id="helpBody">
+  <p style="font-size:13px;margin:0 0 10px">このタブレットは<b>「入力して事務所へ送る」専用</b>です。むずかしい設定は要りません。下の3ステップだけ。</p>
+  <ol style="font-size:14px;line-height:1.85;padding-left:20px;margin:0">
+    <li><b>画面の案内どおりに入力</b><br><span style="font-size:12.5px;color:#5a6b7b">上の番号（①区分→②申請者→③自動車…）に沿って「次へ」で進み、お客様の氏名・住所・電話、お車、車を停める場所を入力します。</span></li>
+    <li style="margin-top:6px"><b>配置図をつくる（⑦）</b><br><span style="font-size:12.5px;color:#5a6b7b">「⚡ひな形から作る」で近い形を選ぶか、部品を置いて作図。むずかしければ住所だけ入れて、事務所に仕上げてもらってもOK。</span></li>
+    <li style="margin-top:6px"><b>最後に「📤 事務所へ送信」を押す</b><br><span style="font-size:12.5px;color:#5a6b7b">メールアプリが開くので、そのまま送信してください（宛先は設定済み）。<b>送信すると入力は自動で消えます</b>＝次のお客様へ。</span></li>
+  </ol>
+  <div class="note ok" style="margin-top:10px">困ったときは無理に進めず、<b>行政書士事務所へご連絡</b>ください。</div>
+  <p style="font-size:11px;color:#5a6b7b;margin-top:8px">お客様の個人情報は車庫証明の手続きのため、事務所へのみ送られます（→画面下部「個人情報の取り扱い」）。</p>
+  </div>
+  <div class="row" style="gap:8px;margin-top:12px"><button class="inline-btn" style="flex:1" onclick="printHelp()">🖨 印刷</button><button class="inline-btn" style="flex:1" onclick="closeModal()">閉じる</button></div>`;
+}
+function helpOffice(){
+  const ds='style="margin:8px 0;border:1px solid var(--line);border-radius:10px;padding:0 12px"';
+  const sm='style="font-weight:800;color:var(--navy);padding:10px 2px;cursor:pointer;list-style:none"';
+  const ol='style="font-size:12.8px;line-height:1.8;padding-left:18px;margin:0 0 10px"';
+  return `<button class="close" onclick="closeModal()">×</button>
+  <h3>📖 使い方</h3>
+  <div id="helpBody">
+  <p style="font-size:12.5px;color:#5a6b7b;margin:0 0 10px">このアプリは車庫証明書類の<b>下書き</b>を作る道具です（提出は公式様式へ転記）。下の項目をタップで開けます。</p>
+  <details open ${ds}><summary ${sm}>A. 自分で書類を作る</summary>
+    <ol ${ol}>
+      <li><b>①区分</b>：種別（普通／軽）・提出先の警察署・権原を選ぶ。</li>
+      <li><b>②③④</b>：申請者・自動車・本拠を入力（上部「顧客」から呼び出しも可）。</li>
+      <li><b>⑤⑥</b>：保管場所と権原書面（自認書／承諾書）。直線2kmを自動判定。</li>
+      <li><b>⑦配置図</b>：「⚡ひな形」かスタンプ作図、または地図から取込。</li>
+      <li><b>⑧所在図</b>：住所から地図を自動作成。</li>
+      <li><b>⑨</b>：「📄書類プレビュー」→「🖨印刷」でPDF化 →「公式様式（原本）」に転記して提出。</li>
+    </ol></details>
+  <details ${ds}><summary ${sm}>B. 車屋のタブレットを設定して渡す</summary>
+    <ol ${ol}>
+      <li>渡す端末で右上 <b>⚙</b> を開く。</li>
+      <li>利用モードを <b>「車屋（送信のみ）」</b> に切替。</li>
+      <li><b>送信先メール（事務所）</b>を入力して保存。</li>
+      <li>下へスクロール →「🔒事務所ロック」で<b>暗証番号</b>を設定し「ロックをかける」。</li>
+      <li>そのまま渡す（または「車屋に配るURL」を渡す）。以降、暗証番号なしでは事務所化・顧客閲覧・送信先変更ができません。</li>
+    </ol></details>
+  <details ${ds}><summary ${sm}>C. 車屋から届いた案件を印刷する</summary>
+    <ol ${ol}>
+      <li>届いたメールの<b>リンクを開く</b>と、入力済みでアプリが開きます。</li>
+      <li><b>受信案件は自動で「案件」履歴に保存</b>（取りこぼし防止）。</li>
+      <li>確認 →「📄書類プレビュー」→ 印刷。受信案件の確認・印刷は<b>暗証番号なし</b>でできます。</li>
+    </ol></details>
+  <details ${ds}><summary ${sm}>便利機能・安全</summary>
+    <ul ${ol}>
+      <li><b>顧客</b>：申請者＋本拠を登録 → ワンタップ呼出。</li>
+      <li><b>事務所ロック</b>：⚙で暗証番号を設定すると、顧客/案件・設定・モード切替を保護（のぞき見防止）。</li>
+      <li><b>個人情報</b>：画面下部「個人情報の取り扱い」を参照。</li>
+    </ul></details>
+  </div>
+  <div class="row" style="gap:8px;margin-top:12px"><button class="inline-btn" style="flex:1" onclick="printHelp()">🖨 説明書を印刷</button><button class="inline-btn" style="flex:1" onclick="closeModal()">閉じる</button></div>`;
+}
+function printHelp(){
+  const src=document.getElementById("helpBody"); if(!src){ window.print(); return; }
+  const tmp=document.createElement("div"); tmp.innerHTML=src.innerHTML;
+  tmp.querySelectorAll("details").forEach(d=>d.setAttribute("open",""));
+  const pa=document.getElementById("print-area");
+  pa.innerHTML='<div class="sheet" style="font-size:12.5px;line-height:1.75"><h2 style="color:#1a3c61;margin:0 0 10px">車庫証明かんたん作成 ― 使い方</h2>'+tmp.innerHTML+'</div>';
+  closeModal();
+  setTimeout(function(){ window.print(); setTimeout(function(){ pa.innerHTML=""; },800); },150);
 }
 function infoModal(){
   const st=stn(), kei=isKei();
