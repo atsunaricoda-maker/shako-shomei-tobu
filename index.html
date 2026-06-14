@@ -309,10 +309,10 @@ textarea{resize:vertical;min-height:64px;}
         <h1>車庫証明かんたん作成</h1>
         <div class="sub">静岡県（西部・中部・東部）対応 ・ 普通自動車</div>
       </div>
-      <button class="hbtn" onclick="openModal('cust')">顧客</button>
-      <button class="hbtn" onclick="openModal('draft')">案件</button>
+      <button class="hbtn" id="btnCust" onclick="withPin(()=>openModal('cust'))">顧客</button>
+      <button class="hbtn" id="btnDraft" onclick="withPin(()=>openModal('draft'))">案件</button>
       <button class="hbtn" onclick="openModal('info')">提出先</button>
-      <button class="hbtn" onclick="openModal('gmap')" title="地図連携設定">⚙</button>
+      <button class="hbtn" onclick="withPin(()=>openModal('gmap'))" title="設定">⚙</button>
     </div>
   </header>
 
@@ -648,7 +648,7 @@ textarea{resize:vertical;min-height:64px;}
         <p class="lead">入力した案件データを、設定した事務所のメールへ送ります（<b>リンク方式・サーバー不要</b>）。受け取った側は<b>リンクを開くだけ</b>でこのアプリに入力済みで開けます（PCの印刷でPDF化）。</p>
         <div id="sendStatus"></div>
         <button class="fig-btn" style="border-color:var(--accent);background:#fff4e8;color:#a85a14" onclick="sendByMail()">📤 メールで送信</button>
-        <button class="inline-btn" style="width:100%;margin-top:10px" onclick="copyCaseLink()">🔗 リンクをコピー（LINE等で送る）</button>
+        <button class="inline-btn" id="copyLinkBtn" style="width:100%;margin-top:10px" onclick="copyCaseLink()">🔗 リンクをコピー（LINE等で送る）</button>
         <div class="hint" style="margin-top:8px">送信元（お店名）・送信先（事務所メール）は右上の<b>⚙</b>で設定。リンクには個人情報が含まれます（身内の連絡手段で送ってください）。スタンプで作った配置図は送られます（航空写真の“写真”は容量のため非同梱）。</div>
       </div>
 
@@ -1518,7 +1518,19 @@ function gmapModal(){
   <hr class="hr">
   <h3 style="font-size:14.5px">🗺 地図連携</h3>
   <div class="note ok" style="margin-top:4px">✓ <b>自動（設定不要）</b>。住所からの<b>直線距離</b>・<b>航空写真の取り込み</b>・<b>所在図の自動作成</b>はサーバー側（Cloudflare）で動きます。利用者がAPIキーを入力する必要はありません。</div>
-  <p style="font-size:11px;color:#5a6b7b;margin-top:8px">※住所の特定（ジオコーディング）と地図画像の取得はオンライン時のみ。地図のキーはサーバーにのみ保管され、この端末やリポジトリには出ません。</p>`;
+  <p style="font-size:11px;color:#5a6b7b;margin-top:8px">※住所の特定（ジオコーディング）と地図画像の取得はオンライン時のみ。地図のキーはサーバーにのみ保管され、この端末やリポジトリには出ません。</p>
+  <hr class="hr">
+  <h3 style="font-size:14.5px">🔒 事務所ロック（行政書士用）</h3>
+  ${isLocked()
+    ? `<div class="note ok" style="margin-top:4px">🔒 <b>ロック中</b>。モード切替・顧客／案件・送信先メール・データ消去はPINで保護されています。</div>
+       <button class="inline-btn" style="width:100%;margin-top:8px;border-color:var(--warn);color:var(--warn)" onclick="removeLock()">ロックを解除する</button>`
+    : `<p style="font-size:12.5px;color:#5a6b7b;line-height:1.6">暗証番号でこの端末をロックすると、<b>モード切替・顧客／案件・送信先メール・全消去</b>にPINが必要になります。車屋に渡す端末の保護用です。</p>
+       <div class="row" style="gap:6px"><input id="lockPin1" type="password" inputmode="numeric" maxlength="12" placeholder="暗証番号(4桁以上)" style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box"><input id="lockPin2" type="password" inputmode="numeric" maxlength="12" placeholder="確認" style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box"></div>
+       <button class="inline-btn" style="width:100%;margin-top:8px" onclick="setLockFromInputs()">この端末にロックをかける</button>
+       <div class="hint" style="margin-top:6px">※PINを忘れたら、ブラウザの「サイトのデータを削除」でリセットできます（端末内のデータも消えます）。</div>`}
+  <hr class="hr">
+  <h3 style="font-size:14.5px">🗑 データ管理</h3>
+  <button class="inline-btn" style="width:100%;border-color:var(--warn);color:var(--warn)" onclick="wipeAllData()">この端末の全データを消去（デモ・譲渡用）</button>`;
 }
 /* 地図キーはサーバー側（Worker シークレット MAPS_KEY）で保持するため、端末側のキー保存/削除UIは廃止。 */
 
@@ -2111,12 +2123,14 @@ function readIncoming(){
   }catch(e){ return null; }
 }
 function sendByMail(){
-  if(!SEND.to){ toast("先に⚙で送信先メールを設定してください"); openModal("gmap"); return; }
+  if(!SEND.to){ toast("先に⚙で送信先メールを設定してください"); withPin(()=>openModal("gmap")); return; }
   const link=buildCaseLink();
   const user=state.shinseisha.isCorp?(state.shinseisha.corpName||""):(state.shinseisha.name||"");
   const subject=`【車庫証明データ】${SEND.from?SEND.from+"／":""}${user}`;
   const body=`お世話になります。${SEND.from?SEND.from+"です。":""}\n車庫証明の案件データをお送りします。\n下記リンクを開くと、アプリに入力済みの状態で開きます（PCの「印刷→PDFに保存」で書類化できます）。\n\n${link}\n\n― 案件概要 ―\n使用者：${user}\n車名/型式：${(state.vehicle.maker||"")} ${(state.vehicle.katashiki||"")}\n保管場所：${(state.hokan.addr||"")}\n提出先：${stn().name}\n`;
   location.href="mailto:"+SEND.to+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+  /* 車屋（共用端末）は送信後に入力を自動クリア＝次のお客様に前の情報を残さない */
+  if(isDealer()){ setTimeout(function(){ const pb=document.getElementById("previewBar"); if(pb && pb.style.display!=="none"){ try{ hidePreview(); }catch(e){} } clearCurrentCase(); gotoStep(0); toast("送信メールを開きました。この端末の入力はクリアしました"); }, 1400); }
 }
 function copyCaseLink(){
   const link=buildCaseLink();
@@ -2146,20 +2160,27 @@ const MODE_KEY="shako_tobu_mode";
 let APPMODE="office";
 function isDealer(){ return APPMODE==="dealer"; }
 function detectMode(){
+  const stored0=localStorage.getItem(MODE_KEY)||"office";
+  const lockedDealer=isLocked() && stored0==="dealer";   // ロックされた車屋端末は何があっても車屋固定
   try{
     const p=new URLSearchParams(location.search);
     const role=(p.get("role")||p.get("mode")||"").toLowerCase();
     if(role==="dealer"||role==="car"){ localStorage.setItem(MODE_KEY,"dealer"); }
-    else if(role==="office"){ localStorage.setItem(MODE_KEY,"office"); }
+    else if(role==="office" && !lockedDealer){ localStorage.setItem(MODE_KEY,"office"); }  // 抜け道封じ：?role=office を無効化
   }catch(e){}
   let m=localStorage.getItem(MODE_KEY)||"office";
-  if(readIncoming()) m="office";          // リンクを開いた側は印刷できる事務所モードに
+  if(readIncoming() && !lockedDealer) m="office";   // 抜け道封じ：リンク受信での自動事務所化を無効化
   APPMODE=(m==="dealer")?"dealer":"office";
 }
 function applyMode(){
   const dealer=isDealer();
   document.querySelectorAll(".office-only").forEach(e=>{ e.style.display=dealer?"none":""; });
   document.querySelectorAll(".dealer-only").forEach(e=>{ e.style.display=dealer?"":"none"; });
+  /* 車屋モードでは 顧客・案件 ボタンと「リンクをコピー」を隠す（共用端末で個人情報を溜めない・横流しさせない） */
+  const bc=document.getElementById("btnCust"), bd=document.getElementById("btnDraft"), cl=document.getElementById("copyLinkBtn");
+  if(bc) bc.style.display=dealer?"none":"";
+  if(bd) bd.style.display=dealer?"none":"";
+  if(cl) cl.style.display=dealer?"none":"";
 }
 function setMode(m){
   APPMODE=(m==="dealer")?"dealer":"office";
@@ -2174,9 +2195,81 @@ function copyDealerUrl(){
   else fallbackCopy(u);
 }
 
+/* =====================================================================
+   事務所ロック（行政書士用PIN）＋ デモ/譲渡用データ消去
+   ・ロックON中：モード切替／顧客・案件／送信先メール・データ消去・ロック解除にPIN必須
+   ・覗き見・横流し防止レベル（端末内データは平文。本気の抽出は別途サーバー認証が必要）
+   ・PINを忘れたら「サイトのデータを削除」でリセット（中身ごと消える）
+   ===================================================================== */
+const LOCK_KEY="shako_tobu_lock";
+let LOCK={on:false,h:""};
+let _unlockAt=0;
+function loadLock(){ try{ const j=localStorage.getItem(LOCK_KEY); if(j) LOCK=Object.assign(LOCK,JSON.parse(j)); }catch(e){} }
+function pinHash(s){ let h=5381; s="shako!"+String(s); for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; } return "p"+h.toString(36); }
+function isLocked(){ return !!LOCK.on; }
+function verifyPin(p){ return !!LOCK.on && pinHash(p)===LOCK.h; }
+function sessionUnlocked(){ return _unlockAt>0 && (Date.now()-_unlockAt<180000); } /* PIN1回で3分間は再入力不要 */
+function withPin(fn){ if(!isLocked()||sessionUnlocked()){ fn(); return; } showPinPrompt(()=>{ _unlockAt=Date.now(); fn(); }); }
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) _unlockAt=0; }); /* 端末を離れたら再ロック */
+
+let _pinCb=null;
+function showPinPrompt(onok){
+  _pinCb=onok||null;
+  let bg=document.getElementById("pinBg");
+  if(!bg){ bg=document.createElement("div"); bg.id="pinBg"; bg.className="modal-bg"; bg.style.zIndex="80"; bg.style.alignItems="center";
+    bg.innerHTML='<div class="modal" style="max-width:320px;border-radius:18px"><h3>🔒 ロック解除</h3><p style="font-size:12.5px;color:#5a6b7b;margin:0 0 10px">行政書士用の暗証番号を入力してください。</p><input id="pinInput" type="password" inputmode="numeric" maxlength="12" autocomplete="off" style="width:100%;text-align:center;font-size:22px;letter-spacing:6px;padding:10px;border:1px solid var(--line);border-radius:10px;box-sizing:border-box" placeholder="••••"><div id="pinErr" style="color:var(--warn);font-size:12px;margin:8px 0;min-height:16px"></div><div class="row" style="gap:8px"><button class="inline-btn" style="flex:1" onclick="closePin()">キャンセル</button><button class="inline-btn" style="flex:1" onclick="submitPin()">解除</button></div></div>';
+    document.body.appendChild(bg);
+  }
+  bg.classList.add("open");
+  setTimeout(()=>{ const i=document.getElementById("pinInput"); if(i){ i.value=""; i.focus(); i.onkeydown=e=>{ if(e.key==="Enter") submitPin(); }; } const er=document.getElementById("pinErr"); if(er) er.textContent=""; },60);
+}
+function closePin(){ const bg=document.getElementById("pinBg"); if(bg) bg.classList.remove("open"); _pinCb=null; }
+function submitPin(){
+  const el=document.getElementById("pinInput"); const v=(el?el.value:"").trim();
+  if(verifyPin(v)){ const cb=_pinCb; _pinCb=null; const bg=document.getElementById("pinBg"); if(bg) bg.classList.remove("open"); if(cb) cb(); }
+  else { const er=document.getElementById("pinErr"); if(er) er.textContent="暗証番号が違います"; if(el){ el.value=""; el.focus(); } }
+}
+function setLockFromInputs(){
+  const a=(document.getElementById("lockPin1").value||"").trim(), b=(document.getElementById("lockPin2").value||"").trim();
+  if(a.length<4){ toast("暗証番号は4桁以上で設定してください"); return; }
+  if(a!==b){ toast("確認用の番号が一致しません"); return; }
+  LOCK={on:true,h:pinHash(a)}; localStorage.setItem(LOCK_KEY,JSON.stringify(LOCK)); _unlockAt=Date.now();
+  toast("この端末にロックをかけました"); openModal("gmap");
+}
+function removeLock(){
+  showPinPrompt(()=>{ LOCK={on:false,h:""}; localStorage.setItem(LOCK_KEY,JSON.stringify(LOCK)); _unlockAt=0; toast("ロックを解除しました"); openModal("gmap"); });
+}
+let _confCb=null;
+function showConfirm(title,msg,onok){
+  _confCb=onok||null;
+  let bg=document.getElementById("confBg");
+  if(!bg){ bg=document.createElement("div"); bg.id="confBg"; bg.className="modal-bg"; bg.style.zIndex="82"; bg.style.alignItems="center";
+    bg.innerHTML='<div class="modal" style="max-width:340px;border-radius:18px"><h3 id="confTitle"></h3><p id="confMsg" style="font-size:13px;line-height:1.65"></p><div class="row" style="gap:8px;margin-top:12px"><button class="inline-btn" style="flex:1" onclick="closeConf()">キャンセル</button><button class="inline-btn" id="confOk" style="flex:1;border-color:var(--warn);color:var(--warn)">実行</button></div></div>';
+    document.body.appendChild(bg);
+  }
+  document.getElementById("confTitle").textContent=title;
+  document.getElementById("confMsg").textContent=msg;
+  document.getElementById("confOk").onclick=function(){ closeConf(); if(_confCb) _confCb(); };
+  bg.classList.add("open");
+}
+function closeConf(){ const bg=document.getElementById("confBg"); if(bg) bg.classList.remove("open"); _confCb=null; }
+function wipeAllData(){
+  showConfirm("全データを消去","この端末のすべてのデータ（顧客・案件・下書き・各設定・ロック）を削除します。元に戻せません。よろしいですか？",function(){
+    ["shako_tobu_auto","shako_tobu_drafts","shako_tobu_customers","shako_tobu_history","shako_tobu_send","shako_tobu_mode","shako_tobu_lock","shako_tobu_gmapkey"].forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} });
+    toast("全データを消去しました"); setTimeout(()=>location.reload(),600);
+  });
+}
+function clearCurrentCase(){
+  state=DEFAULT(); state.appDate=new Date().toISOString().slice(0,10);
+  mapImage=null; haichiComposite=null; shozaiComposite=null; _haichiSrc=null; _shozaiSrc=null; haichiKind="";
+  try{ localStorage.removeItem(AUTOSAVE); }catch(e){}
+  hydrate(); applyAll(); refreshFigStatus("haichi"); refreshFigStatus("shozai");
+}
+
 function boot(){
   loadAuto();
   loadSend();
+  loadLock();
   detectMode();
   const incoming=readIncoming();
   if(incoming){ state=Object.assign(DEFAULT(), incoming); }
@@ -2197,7 +2290,14 @@ function boot(){
     }; r.readAsDataURL(f);
   });
   /* 地図はサーバー側のため、起動時のJS APIプリロードは不要 */
-  if(incoming){ try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} scheduleSave(); gotoStep(TOTAL-1); toast("受信した案件データを読み込みました"); }
+  if(incoming){
+    try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+    scheduleSave();
+    /* 受信案件は自動で案件履歴に保存＝取りこぼし防止（ロック車屋端末では溜めない） */
+    if(!isDealer()){ try{ Store.saveHistory(historyFromState(), ()=>{}); }catch(e){} }
+    gotoStep(TOTAL-1);
+    toast(isDealer()?"受信した案件データを読み込みました":"受信案件を読み込み、案件履歴に保存しました");
+  }
   else gotoStep(0);
 }
 /* このスクリプトはbody末尾にあるためDOMは解析済み。GASのHtmlServiceではDOMContentLoadedが
