@@ -1,6 +1,6 @@
 /* 車庫証明かんたん作成（静岡県東部）— Service Worker
    オフライン動作のためアプリ一式をキャッシュ。更新時は CACHE のバージョンを上げる。 */
-const CACHE = "shako-tobu-v18";
+const CACHE = "shako-tobu-v19";
 const ASSETS = [
   "./",
   "./index.html",
@@ -32,6 +32,8 @@ self.addEventListener("activate", (e) => {
 /* キャッシュ優先・ネットワークフォールバック。オフライン時の最終手段は index.html。 */
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+  // 地図の中継API（/api/*）は常にネットワーク直行・キャッシュしない
+  if (new URL(e.request.url).pathname.startsWith("/api/")) return;
   e.respondWith(
     caches.match(e.request).then((hit) =>
       hit ||

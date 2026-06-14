@@ -1,0 +1,14 @@
+{
+  // Cloudflare Workers + 静的アセット構成。
+  // name は既存プロジェクトと一致させること（同じ Worker を更新するため）。
+  "name": "shako-shomei-tobu",
+  "main": "worker.js",
+  "compatibility_date": "2024-11-01",
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS"
+  }
+  // 注意：Google Maps のキーは設定ファイルに書かない。
+  //       ダッシュボードの Settings → Variables and Secrets に
+  //       Secret として MAPS_KEY を登録する（wrangler secret put MAPS_KEY でも可）。
+}

@@ -834,7 +834,7 @@ function refreshShoudakuMode(){ const el=document.querySelector(".owner-fields")
 function refreshShozai(){ const cb=document.getElementById("shozaiBeppu"); if(cb) cb.checked=(state.shozai.mode==="beppu"); }
 function setBeppu(on){ state.shozai.mode = on?"beppu":"image"; scheduleSave(); }
 function maybeAutoShozai(){
-  if(GMAPS.key && !shozaiComposite && !GMAPS.shozaiAutoTried && state.shozai.mode!=="beppu" && honkyoAddr() && state.hokan.addr){
+  if(navigator.onLine && !shozaiComposite && !GMAPS.shozaiAutoTried && state.shozai.mode!=="beppu" && honkyoAddr() && state.hokan.addr){
     GMAPS.shozaiAutoTried=true; autoShozai();
   }
 }
@@ -1424,56 +1424,47 @@ function rebuildStampComposite(){
 /* =====================================================================
    Google Maps 連携（APIキーは端末内のみ保存。未設定/オフライン時は手動方式）
    ===================================================================== */
-const GKEY="shako_tobu_gmapkey";
-let GMAPS={ key:(localStorage.getItem(GKEY)||""), ready:false, failed:false, geocoder:null, _p:null, honkyoLL:null, hokanLL:null, aerialZoom:20 };
-
-function gmapsLoad(){
-  if(GMAPS.ready) return Promise.resolve(true);
-  if(!GMAPS.key) return Promise.reject("nokey");
-  if(!navigator.onLine) return Promise.reject("offline");
-  if(GMAPS._p) return GMAPS._p;
-  GMAPS._p=new Promise((resolve,reject)=>{
-    window.__gmapsReady=function(){ GMAPS.ready=true; try{GMAPS.geocoder=new google.maps.Geocoder();}catch(e){} resolve(true); };
-    window.gm_authFailure=function(){ GMAPS.failed=true; GMAPS.ready=false; GMAPS._p=null; toast("Google Maps APIキーが無効か制限超過です"); reject("authfail"); };
-    const s=document.createElement("script");
-    s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(GMAPS.key)+"&libraries=geometry&loading=async&callback=__gmapsReady";
-    s.async=true; s.onerror=function(){ GMAPS._p=null; reject("scripterror"); };
-    document.head.appendChild(s);
-  });
-  return GMAPS._p;
+/* 地図はサーバー側（Cloudflare Worker /api/*）でキーを保持。アプリにキーは持たない＝利用者は設定不要。
+   座標は {lat,lng}（数値）で扱う。距離は自前計算（ハバーサイン）。 */
+let GMAPS={ honkyoLL:null, hokanLL:null, aerialZoom:20, shozaiAutoTried:false };
+function distM(a,b){ const R=6378137, q=Math.PI/180;
+  const dLa=(b.lat-a.lat)*q, dLo=(b.lng-a.lng)*q, la1=a.lat*q, la2=b.lat*q;
+  const h=Math.sin(dLa/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLo/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(h))); }
+async function geocodeAddr(addr){
+  if(!navigator.onLine) throw "offline";
+  let r; try{ r=await fetch("/api/geocode?address="+encodeURIComponent(addr)); }catch(e){ throw "neterr"; }
+  if(!r.ok){ throw (r.status===500?"nokey":"neterr"); }
+  const d=await r.json();
+  if(d.status==="OK" && typeof d.lat==="number") return {lat:d.lat, lng:d.lng};
+  throw (d.status||"ZERO_RESULTS");
 }
-function geocodeAddr(addr){ return new Promise((res,rej)=>{ if(!GMAPS.geocoder){rej("nogeo");return;}
-  GMAPS.geocoder.geocode({address:addr, region:"jp", language:"ja"}, (r,st)=>{ if(st==="OK"&&r&&r[0]) res(r[0].geometry.location); else rej(st); }); }); }
-function gmapsErrMsg(e){ return e==="offline"?"オフラインです（地図機能はオンライン時のみ）": (e==="nokey"?"先に⚙からAPIキーを設定してください":"地図に接続できません（キー/通信を確認）"); }
+function gmapsErrMsg(e){ return e==="offline"?"オフラインです（地図機能はオンライン時のみ）":(e==="nokey"?"サーバーに地図キーが未設定です（管理者へ連絡）":"地図に接続できません（住所/通信を確認）"); }
 
 async function autoDistance(){
   const o=honkyoAddr(), d=state.hokan.addr;
   if(!o||!d){ toast("本拠と保管場所の住所を入力してください"); return; }
-  if(!GMAPS.key){ toast("先に⚙からAPIキーを設定してください"); openModal("gmap"); return; }
-  try{ await gmapsLoad(); }catch(e){ toast(gmapsErrMsg(e)); return; }
   toast("住所から計算中…");
   try{
     const a=await geocodeAddr(o), b=await geocodeAddr(d); GMAPS.honkyoLL=a; GMAPS.hokanLL=b;
-    const m=Math.round(google.maps.geometry.spherical.computeDistanceBetween(a,b));
+    const m=Math.round(distM(a,b));
     state.hokan.distance=String(m); hydrate(); refreshDist(); scheduleSave();
     toast("直線距離 "+m+"m を入力しました"+(m>2000?"（2km超）":""));
-  }catch(e){ toast("住所が特定できませんでした（"+e+"）"); }
+  }catch(e){ toast(e==="offline"||e==="nokey"?gmapsErrMsg(e):"住所が特定できませんでした（"+e+"）"); }
 }
-function staticAerialURL(ll,zoom){ return "https://maps.googleapis.com/maps/api/staticmap?center="+ll.lat()+","+ll.lng()+"&zoom="+zoom+"&size=640x440&scale=2&maptype=hybrid&key="+encodeURIComponent(GMAPS.key); }
+function staticAerialURL(ll,zoom){ return "/api/staticmap?center="+ll.lat+","+ll.lng+"&zoom="+zoom+"&size=640x440&scale=2&maptype=hybrid"; }
 function staticShozaiURL(a,b){
-  const mA="markers="+encodeURIComponent("color:red|label:H|"+a.lat()+","+a.lng());
-  const mB="markers="+encodeURIComponent("color:blue|label:P|"+b.lat()+","+b.lng());
-  const pa="path="+encodeURIComponent("color:0xc0392bdd|weight:4|"+a.lat()+","+a.lng()+"|"+b.lat()+","+b.lng());
-  return "https://maps.googleapis.com/maps/api/staticmap?size=640x480&scale=2&maptype=roadmap&language=ja&"+mA+"&"+mB+"&"+pa+"&key="+encodeURIComponent(GMAPS.key);
+  const mA="markers="+encodeURIComponent("color:red|label:H|"+a.lat+","+a.lng);
+  const mB="markers="+encodeURIComponent("color:blue|label:P|"+b.lat+","+b.lng);
+  const pa="path="+encodeURIComponent("color:0xc0392bdd|weight:4|"+a.lat+","+a.lng+"|"+b.lat+","+b.lng);
+  return "/api/staticmap?size=640x480&scale=2&maptype=roadmap&language=ja&"+mA+"&"+mB+"&"+pa;
 }
 async function aerialFromMap(dz){
-  if(!GMAPS.key){ toast("先に⚙からAPIキーを設定してください"); openModal("gmap"); return; }
-  try{ await gmapsLoad(); }catch(e){ toast(gmapsErrMsg(e)); return; }
   let ll=GMAPS.hokanLL;
   if(dz===0 || !ll){
     const addr=state.hokan.addr||honkyoAddr();
     if(!addr){ toast("保管場所の住所を入力してください"); return; }
-    try{ ll=await geocodeAddr(addr); GMAPS.hokanLL=ll; }catch(e){ toast("住所が特定できませんでした"); return; }
+    try{ ll=await geocodeAddr(addr); GMAPS.hokanLL=ll; }catch(e){ toast(e==="offline"||e==="nokey"?gmapsErrMsg(e):"住所が特定できませんでした"); return; }
   }
   GMAPS.aerialZoom=Math.max(16,Math.min(21,(GMAPS.aerialZoom||19)+(dz||0)));
   toast("航空写真を取得中…");
@@ -1486,14 +1477,12 @@ async function aerialFromMap(dz){
   im.src=staticAerialURL(ll,GMAPS.aerialZoom);
 }
 async function autoShozai(){
-  if(!GMAPS.key){ toast("先に⚙からAPIキーを設定してください"); openModal("gmap"); return; }
   const o=honkyoAddr(), d=state.hokan.addr;
   if(!o||!d){ toast("本拠と保管場所の住所を入力してください"); return; }
-  try{ await gmapsLoad(); }catch(e){ toast(gmapsErrMsg(e)); return; }
   toast("地図を作成中…");
   try{
     const a=await geocodeAddr(o), b=await geocodeAddr(d); GMAPS.honkyoLL=a; GMAPS.hokanLL=b;
-    try{ const m=Math.round(google.maps.geometry.spherical.computeDistanceBetween(a,b)); state.hokan.distance=String(m); hydrate(); refreshDist(); }catch(_){}
+    try{ const m=Math.round(distM(a,b)); state.hokan.distance=String(m); hydrate(); refreshDist(); }catch(_){}
     const url=staticShozaiURL(a,b);
     // まずURLを所在図として確定（CORS不可でも<img>として確実に表示・印刷できる）
     shozaiComposite=url; state.shozai.mode="image"; hydrate(); refreshShozai(); refreshFigStatus("shozai");
@@ -1509,10 +1498,6 @@ async function autoShozai(){
   }catch(e){ toast("住所が特定できませんでした"); }
 }
 function gmapModal(){
-  const on=GMAPS.ready, has=!!GMAPS.key;
-  const stat = on?'<div class="note ok" style="margin-top:12px">✓ 地図連携：有効</div>'
-    : (has?'<div class="note warn" style="margin-top:12px">キーは保存済みですが未接続（オフライン/無効の可能性）。</div>'
-         :'<div class="note info" style="margin-top:12px">未設定：現在は手動（スクショ）方式で動作中。</div>');
   return `<button class="close" onclick="closeModal()">×</button>
   <h3>設定</h3>
   <h3 style="font-size:14.5px;margin:6px 0 4px">🧰 利用モード</h3>
@@ -1531,32 +1516,11 @@ function gmapModal(){
     <input type="email" id="sendToInput" placeholder="office@example.com" value="${esc(SEND.to)}" autocomplete="off" inputmode="email"></div>
   <button class="inline-btn" style="width:100%" onclick="saveSend()">送信設定を保存</button>
   <hr class="hr">
-  <h3 style="font-size:14.5px">🗺 地図連携（Google Maps APIキー）</h3>
-  <p style="font-size:12.5px;color:#5a6b7b;line-height:1.65">APIキーを入れると、住所からの<b>直線距離の自動計算</b>・<b>航空写真の取り込み</b>・<b>所在図の自動作成</b>がアプリ内で完結します。キーは<b>この端末内だけに保存</b>され、外部やリポジトリには出ません。</p>
-  <div class="field"><label class="lbl">Google Maps APIキー</label>
-    <input type="text" id="gmapKeyInput" placeholder="AIza..." value="${esc(GMAPS.key)}" autocomplete="off"></div>
-  <div class="row"><button class="inline-btn" style="flex:1" onclick="gmapSaveKey()">保存して有効化</button>
-    <button class="inline-btn" style="flex:0 0 84px;border-color:var(--warn);color:var(--warn)" onclick="gmapClearKey()">削除</button></div>
-  ${stat}
-  <hr class="hr">
-  <h3 style="font-size:14px">キーの作り方（Google Cloud）</h3>
-  <ol style="font-size:12.5px;line-height:1.7;padding-left:18px;color:var(--ink)">
-    <li>Google Cloud でプロジェクト作成・<b>請求先（カード）を登録</b></li>
-    <li>APIを有効化：<b>Maps JavaScript API / Geocoding API / Maps Static API</b></li>
-    <li>「認証情報」→ APIキーを作成</li>
-    <li><b>キーを制限</b>：アプリの制限＝HTTPリファラー <code>atsunaricoda-maker.github.io/*</code>、API制限＝上記3つ</li>
-    <li>予算アラート・割当上限を設定（想定外課金の防止）</li>
-  </ol>
-  <p style="font-size:11px;color:#5a6b7b">※住所はジオコーディングでGoogleへ送信されます。地図機能はオンライン時のみ。料金はGoogleの最新の無料枠・単価をご確認ください。</p>`;
+  <h3 style="font-size:14.5px">🗺 地図連携</h3>
+  <div class="note ok" style="margin-top:4px">✓ <b>自動（設定不要）</b>。住所からの<b>直線距離</b>・<b>航空写真の取り込み</b>・<b>所在図の自動作成</b>はサーバー側（Cloudflare）で動きます。利用者がAPIキーを入力する必要はありません。</div>
+  <p style="font-size:11px;color:#5a6b7b;margin-top:8px">※住所の特定（ジオコーディング）と地図画像の取得はオンライン時のみ。地図のキーはサーバーにのみ保管され、この端末やリポジトリには出ません。</p>`;
 }
-function gmapSaveKey(){ const v=(document.getElementById("gmapKeyInput").value||"").trim(); const had=!!(window.google&&window.google.maps);
-  GMAPS.key=v; localStorage.setItem(GKEY,v);
-  if(!v){ GMAPS.ready=false; GMAPS.geocoder=null; toast("キーを空にしました"); openModal("gmap"); return; }
-  if(had){ toast("再読み込みして有効化します…"); setTimeout(function(){ location.reload(); },800); return; }
-  GMAPS.ready=false; GMAPS.failed=false; GMAPS.geocoder=null; GMAPS._p=null;
-  gmapsLoad().then(function(){ toast("地図連携を有効化しました"); openModal("gmap"); }).catch(function(e){ toast(gmapsErrMsg(e)); openModal("gmap"); });
-}
-function gmapClearKey(){ GMAPS.key=""; localStorage.removeItem(GKEY); GMAPS.ready=false; GMAPS.geocoder=null; GMAPS._p=null; toast("APIキーを削除しました"); openModal("gmap"); }
+/* 地図キーはサーバー側（Worker シークレット MAPS_KEY）で保持するため、端末側のキー保存/削除UIは廃止。 */
 
 function openMapMeasure(){
   const o=encodeURIComponent(honkyoAddr()||""), dst=encodeURIComponent(state.hokan.addr||"");
@@ -2232,7 +2196,7 @@ function boot(){
       document.getElementById("mapImgDrop").innerHTML='<img class="thumb" src="'+mapImage+'">';
     }; r.readAsDataURL(f);
   });
-  if(GMAPS.key && navigator.onLine){ gmapsLoad().catch(function(){}); }
+  /* 地図はサーバー側のため、起動時のJS APIプリロードは不要 */
   if(incoming){ try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} scheduleSave(); gotoStep(TOTAL-1); toast("受信した案件データを読み込みました"); }
   else gotoStep(0);
 }
