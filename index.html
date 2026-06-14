@@ -2182,12 +2182,22 @@ function applyMode(){
   if(bd) bd.style.display=dealer?"none":"";
   if(cl) cl.style.display=dealer?"none":"";
 }
-function setMode(m){
+function syncModeRadio(){ const r=document.querySelector('input[name="appmode"][value="'+APPMODE+'"]'); if(r) r.checked=true; }
+function applyModeChange(m){
   APPMODE=(m==="dealer")?"dealer":"office";
   localStorage.setItem(MODE_KEY,APPMODE);
-  applyMode(); refreshHeader();
+  applyMode(); refreshHeader(); syncModeRadio();
   if(step===TOTAL-1) gotoStep(TOTAL-1);
   toast(isDealer()?"車屋モード（送信のみ）に切替":"事務所モード（印刷あり）に切替");
+}
+function setMode(m){
+  /* ロック中はモード切替にPINを要求（⚙の中の操作でも素通りさせない） */
+  if(isLocked() && !sessionUnlocked()){
+    syncModeRadio();   /* 押した見た目を即・現在のモードへ戻す */
+    showPinPrompt(()=>{ _unlockAt=Date.now(); applyModeChange(m); });
+    return;
+  }
+  applyModeChange(m);
 }
 function copyDealerUrl(){
   const u=location.origin+location.pathname+"?role=dealer";
@@ -2233,7 +2243,7 @@ function setLockFromInputs(){
   const a=(document.getElementById("lockPin1").value||"").trim(), b=(document.getElementById("lockPin2").value||"").trim();
   if(a.length<4){ toast("暗証番号は4桁以上で設定してください"); return; }
   if(a!==b){ toast("確認用の番号が一致しません"); return; }
-  LOCK={on:true,h:pinHash(a)}; localStorage.setItem(LOCK_KEY,JSON.stringify(LOCK)); _unlockAt=Date.now();
+  LOCK={on:true,h:pinHash(a)}; localStorage.setItem(LOCK_KEY,JSON.stringify(LOCK)); _unlockAt=0;
   toast("この端末にロックをかけました"); openModal("gmap");
 }
 function removeLock(){
