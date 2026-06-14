@@ -244,6 +244,15 @@ textarea{resize:vertical;min-height:64px;}
 .off .botsub{width:100%;border-collapse:collapse;table-layout:fixed;}
 .off .inkan{display:inline-block;border:1px solid #000;width:30px;height:30px;line-height:30px;text-align:center;font-size:12px;}
 .off .subnote b{color:#1a3c61;}
+.off .apwrap{display:flex;align-items:center;}
+.off .apwrap .aplabel{font-size:12px;white-space:nowrap;padding-right:8px;}
+.off .apcol{flex:1;}
+.off .aprow{display:flex;align-items:stretch;}
+.off .aprow .apl{flex:0 0 44px;text-align:right;font-size:12px;padding-right:6px;white-space:nowrap;align-self:center;}
+.off .aprow .apb{flex:1;border-left:1px solid #000;border-right:1px solid #000;padding:3px 8px;font-size:12px;line-height:1.5;min-height:16px;}
+.off .aprow .apb.top{border-top:1px solid #000;}
+.off .aprow .apb.mid{text-align:right;}
+.off .aprow .apb.bot{border-bottom:1px solid #000;}
 /* 下書き表示（提出は公式様式へ） */
 .draft-banner{border:2px solid #c0392b;color:#c0392b;font-weight:700;text-align:center;padding:5px;margin-bottom:6px;font-size:12.5px;border-radius:3px;}
 .sheet.draft{position:relative;}
@@ -296,6 +305,7 @@ textarea{resize:vertical;min-height:64px;}
   @page zu{size:A4 landscape;margin:0;}
   .sheet.zu-land,.sheet.land{page:zu;width:297mm;min-height:200mm;}
   #print-area.preview .sheet.zu-land,#print-area.preview .sheet.land{width:297mm;}
+  #print-area.preview .sheet.land{padding:9mm 13mm;}
 }
 /* 画面上のプレビュー表示 */
 #print-area.preview{display:block;background:#5a6b7b;padding:16px 0;margin:0 -14px;}
@@ -1711,14 +1721,16 @@ function docShinseiOfficial(){
       <tr><td class="hd">自動車の保管場所の位置</td><td colspan="5" class="v">${hokan}</td></tr>
       <tr><td colspan="6" class="offbody" style="padding:8px 10px">
         自動車の保管場所の位置欄記載の場所は、申請に係る自動車の保管場所として確保されていることを証明願います。
-        <div style="text-align:right;margin:10px 24px 4px 0">${JST_DATE()}</div>
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
-          <div style="white-space:nowrap;padding-bottom:8px;font-size:13px">${ate()}</div>
-          <div class="applibox" style="flex:1;max-width:60%">
-            〒（　${esc(s.shinseisha.zip)}　）<br>
-            住所　${esc(s.shinseisha.addr)}<br>
-            <div style="display:flex;justify-content:space-between"><span>申請者</span><span>電話　${esc(s.shinseisha.tel)}</span></div>
-            氏名（名称）　${applicant}
+        <div style="text-align:right;margin:6px 22px 2px 0">${JST_DATE()}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:14px">
+          <div style="white-space:nowrap;font-size:13px">${ate()}</div>
+          <div class="apwrap" style="flex:1.5">
+            <span class="aplabel">申請者</span>
+            <div class="apcol">
+              <div class="aprow"><span class="apl">住　所</span><div class="apb top">〒（　${esc(s.shinseisha.zip)}　）<br>${esc(s.shinseisha.addr)}</div></div>
+              <div class="aprow"><span class="apl"></span><div class="apb mid">電話　${esc(s.shinseisha.tel)}</div></div>
+              <div class="aprow"><span class="apl">氏　名</span><div class="apb bot">${applicant}</div></div>
+            </div>
           </div>
         </div>
       </td></tr>
