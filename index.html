@@ -1184,12 +1184,13 @@ function openStampEditor(){
 }
 function stampEditorHTML(){ return `<button class="close" onclick="closeModal()">×</button>
   <h3>スタンプで配置図を作る</h3>
-  <div class="ed-tip">部品を置いて<b>ドラッグで移動・⤡で大きさ・⟳で回転</b>。<b>集合住宅は下の「区画をまとめて配置」</b>で駐車区画を一括作成（塊で移動・回転・サイズ変更）→自分の区画に「🅿保管場所（赤）」を重ねる。文字は下の入力欄から。</div>
+  <div class="ed-tip">部品を置いて<b>ドラッグで移動・⤡で大きさ・⟳で回転</b>。<b>集合住宅は下の「区画を横に／縦に」</b>で駐車区画を一括作成（横並び・縦並びを選べます。塊で移動・回転・サイズ変更）→自分の区画に「🅿保管場所（赤）」を重ねる。文字は下の入力欄から。</div>
   <canvas id="stCanvas"></canvas>
   <div style="display:flex;gap:6px;margin:6px 0 2px;align-items:center">
     <span style="font-size:12px;font-weight:700;color:#0f6b6b;white-space:nowrap">区画数</span>
     <input type="number" id="stCellCount" value="6" min="1" max="40" style="flex:0 0 60px;padding:8px;border:1.5px solid var(--line);border-radius:9px;font-size:14px" inputmode="numeric">
-    <button class="inline-btn" style="flex:1;border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="addParkingRow()">区画をまとめて配置</button>
+    <button class="inline-btn" style="flex:1;border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="addParkingRow()">区画を横に</button>
+    <button class="inline-btn" style="flex:1;border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="addParkingCol()">区画を縦に</button>
   </div>
   <div class="stamp-palette">
     <button onclick="addStamp('park')">🅿 保管場所</button>
@@ -1378,7 +1379,15 @@ function addParkingRow(){
   stampPushHistory();
   const d=STAMP_DEFS.cell, gap=12, startX=50, startY=120, gid="g"+Date.now(); let x=startX, y=startY;
   for(let i=0;i<n;i++){ if(x+d.w>ST.canvas.width-20){ x=startX; y+=d.h+18; } ST.stamps.push({type:"cell",w:d.w,h:d.h,rot:0,x,y,g:gid}); x+=d.w+gap; }
-  ST.sel=-1; drawStamps(); toast(n+"区画をまとめて配置しました（塊で移動・回転します）");
+  ST.sel=-1; drawStamps(); toast(n+"区画を横に並べました（塊で移動・回転します）");
+}
+/* 縦区画：駐車区画を縦に積んで配置（下端まで来たら右の列へ折り返し。同一グループ＝塊で移動・回転・サイズ変更） */
+function addParkingCol(){
+  const inp=document.getElementById("stCellCount"); let n=parseInt(inp&&inp.value,10); if(!n||n<1)n=6; if(n>40)n=40;
+  stampPushHistory();
+  const d=STAMP_DEFS.cell, gap=12, startX=50, startY=70, gid="g"+Date.now(); let x=startX, y=startY;
+  for(let i=0;i<n;i++){ if(y+d.h>ST.canvas.height-20){ y=startY; x+=d.w+18; } ST.stamps.push({type:"cell",w:d.w,h:d.h,rot:0,x,y,g:gid}); y+=d.h+gap; }
+  ST.sel=-1; drawStamps(); toast(n+"区画を縦に並べました（塊で移動・回転します）");
 }
 /* ====== まとめ選択（複数選択して一括移動・削除。区画グループ向け） ====== */
 function stampAt(p){ for(let i=ST.stamps.length-1;i>=0;i--){ if(inStamp(ST.stamps[i],p)) return i; } return -1; }
