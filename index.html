@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <meta name="theme-color" content="#15406b">
-<title>車庫証明かんたん作成｜静岡県東部（沼津・三島・富士ほか）対応</title>
+<title>車庫証明かんたん作成｜静岡県（西部・中部・東部）対応</title>
 <!-- PWA（ホーム画面に追加してアプリのように使う） -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="車庫証明">
 <style>
 /* ============================================================
-   車庫証明書類 作成ツール  ―  静岡県東部（沼津・三島・富士ほか）仕様
+   車庫証明書類 作成ツール  ―  静岡県（西部・中部・東部）仕様
    すべて端末内で動作（個人情報の外部送信なし）
    ============================================================ */
 :root{
@@ -307,7 +307,7 @@ textarea{resize:vertical;min-height:64px;}
     <div class="htop">
       <div class="grow">
         <h1>車庫証明かんたん作成</h1>
-        <div class="sub">静岡県東部（沼津・三島・富士ほか）対応 ・ 普通自動車</div>
+        <div class="sub">静岡県（西部・中部・東部）対応 ・ 普通自動車</div>
       </div>
       <button class="hbtn" onclick="openModal('cust')">顧客</button>
       <button class="hbtn" onclick="openModal('draft')">案件</button>
@@ -357,7 +357,7 @@ textarea{resize:vertical;min-height:64px;}
         </div>
 
         <div class="note info" style="font-size:11.5px">
-          静岡県内は様式が共通のため、上の提出先を選ぶだけで東部の他市にも対応できます（標章2025年廃止は県内共通）。
+          静岡県内は様式が共通のため、上の提出先（西部・中部・東部）を選ぶだけで県内の他市にも対応できます（標章2025年廃止は県内共通）。
         </div>
       </div>
     </section>
@@ -720,20 +720,41 @@ const DRAFTS  = "shako_tobu_drafts";
 
 const STEP_LABELS = ["区分","申請者","自動車","本拠","保管場所","権原","配置図","所在図","作成"];
 
-/* 提出先警察署（静岡県東部・静岡県警公式で確認）。県内は収入証紙・標章廃止が共通。
-   提出先が変わると宛先・所在地だけが変わる。kei: 軽自動車の保管場所届出義務 'none'=不要地域 / 'req'=義務地域。
-   keiArea=義務の対象市 / keiEx=同一管轄内でも届出不要となる町・旧町村部の注記（公式の必要地域一覧で確認） */
+/* 提出先警察署（静岡県 西部・中部・東部／静岡県警公式で確認）。県内は収入証紙・標章廃止が共通。
+   region: west/central/east（提出先プルダウンの地域グループ）。
+   kei: 軽自動車の保管場所届出義務 'none'=不要 / 'req'=義務。keiArea=義務の対象市 / keiEx=同一管轄でも届出不要となる旧町村部の注記。 */
 const STATIONS = [
-  {key:"numazu",     name:"沼津警察署",     zip:"〒410-8508", addr:"沼津市平町19-11",      tel:"055-952-0110", area:"沼津市・清水町",     kei:"req",  keiArea:"沼津市", keiEx:"沼津市の旧戸田村（戸田地区）・駿東郡清水町は届出不要"},
-  {key:"mishima",    name:"三島警察署",     zip:"〒411-0801", addr:"三島市谷田194-1",      tel:"055-981-0110", area:"三島市・函南町",     kei:"req",  keiArea:"三島市", keiEx:"田方郡函南町は届出不要（三島市は全域義務）"},
-  {key:"fuji",       name:"富士警察署",     zip:"〒417-8566", addr:"富士市八代町3-55",     tel:"0545-51-0110", area:"富士市",             kei:"req",  keiArea:"富士市", keiEx:"旧富士川町（富士川地区）は届出不要"},
-  {key:"fujinomiya", name:"富士宮警察署",   zip:"〒418-0062", addr:"富士宮市城北町160",    tel:"0544-23-0110", area:"富士宮市",           kei:"req",  keiArea:"富士宮市", keiEx:"旧芝川町（芝川地区）は届出不要"},
-  {key:"gotemba",    name:"御殿場警察署",   zip:"〒412-0004", addr:"御殿場市北久原439-2",  tel:"0550-84-0110", area:"御殿場市・小山町",   kei:"none"},
-  {key:"susono",     name:"裾野警察署",     zip:"〒410-1197", addr:"裾野市平松620-1",      tel:"055-995-0110", area:"裾野市・長泉町",     kei:"none"},
-  {key:"izuchuo",    name:"伊豆中央警察署", zip:"〒410-2321", addr:"伊豆の国市三福239-4",  tel:"0558-76-0110", area:"伊豆の国市・伊豆市", kei:"none"},
-  {key:"atami",      name:"熱海警察署",     zip:"〒413-0017", addr:"熱海市福道町3-19",     tel:"0557-85-0110", area:"熱海市",             kei:"none"},
-  {key:"ito",        name:"伊東警察署",     zip:"〒414-8543", addr:"伊東市竹の台2-26",     tel:"0557-38-0110", area:"伊東市",             kei:"none"},
-  {key:"shimoda",    name:"下田警察署",     zip:"〒415-0013", addr:"下田市柿崎1106",       tel:"0558-27-0110", area:"下田市・賀茂郡",     kei:"none"},
+  // ── 西部（磐田・袋井・掛川・浜松ほか）──
+  {key:"iwata",      region:"west", name:"磐田警察署",     zip:"〒438-0811", addr:"磐田市一言2533-4",          tel:"0538-37-0110", area:"磐田市",              kei:"none"},
+  {key:"fukuroi",    region:"west", name:"袋井警察署",     zip:"〒437-8585", addr:"袋井市新屋2-4-5",            tel:"0538-41-0110", area:"袋井市・森町",        kei:"none"},
+  {key:"kakegawa",   region:"west", name:"掛川警察署",     zip:"〒436-0086", addr:"掛川市宮脇1-1-1",            tel:"0537-22-0110", area:"掛川市",              kei:"none"},
+  {key:"kikugawa",   region:"west", name:"菊川警察署",     zip:"〒439-0031", addr:"菊川市加茂5889",             tel:"0537-36-0110", area:"菊川市・御前崎市",    kei:"none"},
+  {key:"kosai",      region:"west", name:"湖西警察署",     zip:"〒431-0442", addr:"湖西市古見1035-1",           tel:"053-574-0110", area:"湖西市",              kei:"none"},
+  {key:"hamachu",    region:"west", name:"浜松中央警察署", zip:"〒430-0906", addr:"浜松市中央区住吉5-28-1",     tel:"053-475-0110", area:"浜松市中央区(一部)",  kei:"req", keiArea:"浜松市(旧浜松市域)", keiEx:"合併で編入した旧町村部（旧浜北・天竜・細江・雄踏・舞阪ほか）は届出不要"},
+  {key:"hamahigashi",region:"west", name:"浜松東警察署",   zip:"〒430-0805", addr:"浜松市中央区相生町14-10",    tel:"053-460-0110", area:"浜松市中央区(一部)",  kei:"req", keiArea:"浜松市(旧浜松市域)", keiEx:"合併で編入した旧町村部は届出不要"},
+  {key:"hamanishi",  region:"west", name:"浜松西警察署",   zip:"〒431-1112", addr:"浜松市中央区大人見町3452-1", tel:"053-484-0110", area:"浜松市中央区(一部)",  kei:"req", keiArea:"浜松市(旧浜松市域)", keiEx:"合併で編入した旧町村部は届出不要"},
+  {key:"hamakita",   region:"west", name:"浜北警察署",     zip:"〒434-0042", addr:"浜松市浜名区小松3218",       tel:"053-585-0110", area:"浜松市浜名区(旧浜北)", kei:"none"},
+  {key:"hosoe",      region:"west", name:"細江警察署",     zip:"〒431-1305", addr:"浜松市浜名区細江町気賀4640",  tel:"053-522-0110", area:"浜松市浜名区(旧細江)", kei:"none"},
+  {key:"tenryu",     region:"west", name:"天竜警察署",     zip:"〒431-3311", addr:"浜松市天竜区二俣町阿蔵8-3",   tel:"053-926-0110", area:"浜松市天竜区",        kei:"none"},
+  // ── 中部（静岡市・志太榛原）──
+  {key:"shizuoka_chuo",  region:"central", name:"静岡中央警察署", zip:"〒420-8620", addr:"静岡市葵区追手町6-1",        tel:"054-250-0110", area:"静岡市葵区(一部)",   kei:"req", keiArea:"静岡市葵区"},
+  {key:"shizuoka_minami",region:"central", name:"静岡南警察署",   zip:"〒422-8578", addr:"静岡市駿河区富士見台1-5-10", tel:"054-288-0110", area:"静岡市駿河区",       kei:"req", keiArea:"静岡市駿河区"},
+  {key:"shimizu",        region:"central", name:"清水警察署",     zip:"〒424-0014", addr:"静岡市清水区天王南1-35",     tel:"054-366-0110", area:"静岡市清水区",       kei:"req", keiArea:"静岡市清水区", keiEx:"旧由比町・旧蒲原町は届出不要"},
+  {key:"shimada",        region:"central", name:"島田警察署",     zip:"〒427-0035", addr:"島田市向谷元町1212",         tel:"0547-37-0110", area:"島田市・川根本町",   kei:"none"},
+  {key:"fujieda",        region:"central", name:"藤枝警察署",     zip:"〒426-0027", addr:"藤枝市緑町1-3-5",            tel:"054-641-0110", area:"藤枝市",             kei:"req", keiArea:"藤枝市", keiEx:"旧岡部町は届出不要"},
+  {key:"yaizu",          region:"central", name:"焼津警察署",     zip:"〒425-0055", addr:"焼津市道原723",              tel:"054-624-0110", area:"焼津市",             kei:"req", keiArea:"焼津市", keiEx:"旧大井川町は届出不要"},
+  {key:"makinohara",     region:"central", name:"牧之原警察署",   zip:"〒421-0421", addr:"牧之原市細江2737",           tel:"0548-22-0110", area:"牧之原市・吉田町",   kei:"none"},
+  // ── 東部（沼津・三島・富士・伊豆ほか）──
+  {key:"numazu",     region:"east", name:"沼津警察署",     zip:"〒410-8508", addr:"沼津市平町19-11",      tel:"055-952-0110", area:"沼津市・清水町",     kei:"req",  keiArea:"沼津市", keiEx:"沼津市の旧戸田村（戸田地区）・駿東郡清水町は届出不要"},
+  {key:"mishima",    region:"east", name:"三島警察署",     zip:"〒411-0801", addr:"三島市谷田194-1",      tel:"055-981-0110", area:"三島市・函南町",     kei:"req",  keiArea:"三島市", keiEx:"田方郡函南町は届出不要（三島市は全域義務）"},
+  {key:"fuji",       region:"east", name:"富士警察署",     zip:"〒417-8566", addr:"富士市八代町3-55",     tel:"0545-51-0110", area:"富士市",             kei:"req",  keiArea:"富士市", keiEx:"旧富士川町（富士川地区）は届出不要"},
+  {key:"fujinomiya", region:"east", name:"富士宮警察署",   zip:"〒418-0062", addr:"富士宮市城北町160",    tel:"0544-23-0110", area:"富士宮市",           kei:"req",  keiArea:"富士宮市", keiEx:"旧芝川町（芝川地区）は届出不要"},
+  {key:"gotemba",    region:"east", name:"御殿場警察署",   zip:"〒412-0004", addr:"御殿場市北久原439-2",  tel:"0550-84-0110", area:"御殿場市・小山町",   kei:"none"},
+  {key:"susono",     region:"east", name:"裾野警察署",     zip:"〒410-1197", addr:"裾野市平松620-1",      tel:"055-995-0110", area:"裾野市・長泉町",     kei:"none"},
+  {key:"izuchuo",    region:"east", name:"伊豆中央警察署", zip:"〒410-2321", addr:"伊豆の国市三福239-4",  tel:"0558-76-0110", area:"伊豆の国市・伊豆市", kei:"none"},
+  {key:"atami",      region:"east", name:"熱海警察署",     zip:"〒413-0017", addr:"熱海市福道町3-19",     tel:"0557-85-0110", area:"熱海市",             kei:"none"},
+  {key:"ito",        region:"east", name:"伊東警察署",     zip:"〒414-8543", addr:"伊東市竹の台2-26",     tel:"0557-38-0110", area:"伊東市",             kei:"none"},
+  {key:"shimoda",    region:"east", name:"下田警察署",     zip:"〒415-0013", addr:"下田市柿崎1106",       tel:"0558-27-0110", area:"下田市・賀茂郡",     kei:"none"},
 ];
 function stn(){ return STATIONS.find(s=>s.key===state.kubun.station) || STATIONS[0]; }
 function ate(){ return "静岡県"+stn().name+"長 殿"; }
@@ -820,7 +841,11 @@ function maybeAutoShozai(){
 function buildStationOptions(){
   const sel=document.getElementById("stationSel");
   if(!sel) return;
-  sel.innerHTML=STATIONS.map(s=>`<option value="${s.key}">${s.name}（${s.area}）</option>`).join("");
+  const groups=[["west","静岡県西部（磐田・浜松ほか）"],["central","静岡県中部（静岡市・志太榛原）"],["east","静岡県東部（沼津・三島・伊豆ほか）"]];
+  sel.innerHTML=groups.map(([rg,label])=>{
+    const ss=STATIONS.filter(s=>s.region===rg); if(!ss.length) return "";
+    return `<optgroup label="${label}">`+ss.map(s=>`<option value="${s.key}">${s.name}（${s.area}）</option>`).join("")+`</optgroup>`;
+  }).join("");
 }
 function refreshKei(){
   const st=stn();
