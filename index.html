@@ -244,9 +244,9 @@ textarea{resize:vertical;min-height:64px;}
 .off .botsub{width:100%;border-collapse:collapse;table-layout:fixed;}
 .off .inkan{display:inline-block;border:1px solid #000;width:30px;height:30px;line-height:30px;text-align:center;font-size:12px;}
 .off .subnote b{color:#1a3c61;}
-.off .apwrap{display:flex;align-items:center;}
+.off .apwrap{display:flex;align-items:center;justify-content:flex-end;}
 .off .apwrap .aplabel{font-size:12px;white-space:nowrap;padding-right:8px;}
-.off .apcol{flex:1;}
+.off .apcol{flex:0 1 auto;width:150mm;max-width:100%;}
 .off .aprow{display:flex;align-items:stretch;}
 .off .aprow .apl{flex:0 0 44px;text-align:right;font-size:12px;padding-right:6px;white-space:nowrap;align-self:center;}
 .off .aprow .apb{flex:1;border-left:1px solid #000;border-right:1px solid #000;padding:3px 8px;font-size:12px;line-height:1.5;min-height:16px;}
@@ -1724,7 +1724,7 @@ function docShinseiOfficial(){
         <div style="text-align:right;margin:6px 22px 2px 0">${JST_DATE()}</div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:14px">
           <div style="white-space:nowrap;font-size:13px">${ate()}</div>
-          <div class="apwrap" style="flex:1.5">
+          <div class="apwrap" style="flex:1">
             <span class="aplabel">申請者</span>
             <div class="apcol">
               <div class="aprow"><span class="apl">住　所</span><div class="apb top">〒（　${esc(s.shinseisha.zip)}　）<br>${esc(s.shinseisha.addr)}</div></div>
@@ -1743,14 +1743,15 @@ function docShinseiOfficial(){
       </td></tr>
       <tr><td colspan="6" style="padding:0">
         <table class="botsub"><tr>
-          <td class="hd2" style="width:9%">使用権原</td><td style="width:22%;font-size:11px">自己 ・ 他人 ・ 共有</td>
-          <td class="hd2" style="width:8%">連絡先</td><td style="width:17%;text-align:left;padding-left:8px;font-size:10px">氏名<br>電話</td>
-          <td class="hd2" style="width:7%">新規<br>代替</td><td style="width:9%"></td>
-          <td class="hd2" style="width:8%">登録<br>番号等</td><td></td>
+          <td style="width:42%;font-size:8.5px;line-height:1.45;text-align:left;padding:3px 8px;vertical-align:middle">※ 自動車の登録手続に必要となる自動車保管場所証明書は、登録申請の日からさかのぼっておおむね１か月以内に発行されたものとなりますので、注意してください。</td>
+          <td class="hd2" style="width:5%">使用<br>権原</td><td style="width:13%;font-size:10px">自己 ・ 他人 ・ 共有</td>
+          <td class="hd2" style="width:4%">連絡先</td><td style="width:11%;text-align:left;padding-left:5px;font-size:9.5px">氏名<br>電話</td>
+          <td class="hd2" style="width:5%">新規<br>代替</td>
+          <td class="hd2" style="width:5.5%">登録<br>番号等</td>
+          <td class="hd2" style="width:4.5%">前車<br>現車</td><td></td>
         </tr></table>
       </td></tr>
     </table>
-    <div class="offsmall" style="margin-top:5px">※ 自動車の登録手続に必要となる自動車保管場所証明書は、登録申請日からさかのぼっておおむね１か月以内に発行されたものとなりますので、注意してください。</div>
     <div class="offsmall" style="margin-top:4px">備考　1　次に掲げる場合は、所在図の添付を省略することができる。ただし、警察署長は、保管場所の付近の目標となる地物及びその位置を知るため特に必要があると認めるときは、所在図の提出を求めることができる。<br>
       　(1)　自動車の使用の本拠の位置が、旧自動車（申請者が保有者である自動車であって申請に係るもの以外のものをいう。以下同じ。）に係る使用の本拠の位置と同一であり、かつ、申請に係る場所が旧自動車の保管場所と同一であるとき。<br>
       　(2)　自動車の使用の本拠の位置が、保管場所の位置と同一であるとき（(1)に該当する場合を除く。）。<br>
