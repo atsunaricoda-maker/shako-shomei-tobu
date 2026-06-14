@@ -287,8 +287,8 @@ textarea{resize:vertical;min-height:64px;}
   @page{size:A4;margin:0;}
   /* 所在図・配置図シートだけ横長（ランドスケープ）で印刷 */
   @page zu{size:A4 landscape;margin:0;}
-  .sheet.zu-land{page:zu;width:297mm;min-height:200mm;}
-  #print-area.preview .sheet.zu-land{width:297mm;}
+  .sheet.zu-land,.sheet.land{page:zu;width:297mm;min-height:200mm;}
+  #print-area.preview .sheet.zu-land,#print-area.preview .sheet.land{width:297mm;}
 }
 /* 画面上のプレビュー表示 */
 #print-area.preview{display:block;background:#5a6b7b;padding:16px 0;margin:0 -14px;}
@@ -296,7 +296,7 @@ textarea{resize:vertical;min-height:64px;}
   width:100%;max-width:210mm;background:#fff;margin:0 auto 16px;padding:14mm;
   box-shadow:0 4px 16px rgba(0,0,0,.3);border-radius:2px;
 }
-#print-area.preview .sheet.zu-land{max-width:297mm;}
+#print-area.preview .sheet.zu-land,#print-area.preview .sheet.land{max-width:297mm;}
 </style>
 </head>
 <body>
@@ -1680,7 +1680,7 @@ function docShinseiOfficial(){
   const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}　${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
   const hokan = `${esc(s.hokan.addr)}　${esc(s.hokan.name)}　${esc(s.hokan.kukaku)}`;
   const daiko = "";
-  return `<div class="sheet draft">
+  return `<div class="sheet draft land">
     <div class="draft-banner">下書き（転記用）― この用紙は提出できません。公式様式（原本）に転記してください</div>
     <div class="offlbl">別記様式第１号（第１条関係）</div>
     <table class="off">
@@ -1740,7 +1740,7 @@ function docTodoke(){
   const s=state, v=s.vehicle;
   const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}<br>${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
   const daikoNote = "";
-  return `<div class="sheet draft">
+  return `<div class="sheet draft land">
     <div class="draft-banner">下書き（転記用）― この用紙は提出できません。公式様式（原本）に転記してください</div>
     <h2 class="dt">自動車保管場所届出書</h2>
     <div class="dt-sub">（${ate()}）　※届出書＋控え 2通 提出</div>
@@ -1762,7 +1762,7 @@ function docTodoke(){
 }
 function docJinin(){
   const s=state;
-  return `<div class="sheet">
+  return `<div class="sheet land">
     <h2 class="dt" style="letter-spacing:.2em">保管場所使用権原疎明書面（自認書）</h2>
     <div class="dt-sub">${ate()}</div>
     <table class="ftable" style="margin-top:10px">
@@ -1796,7 +1796,7 @@ function docShoudaku(){
       住所　${esc(d.ownerAddr)}<br>
       氏名（名称）　${esc(d.ownerName)}　<br>
       電話　${esc(d.ownerTel)}`;
-  return `<div class="sheet">
+  return `<div class="sheet land">
     <h2 class="dt" style="letter-spacing:.25em">保管場所使用承諾証明書</h2>
     <div class="dt-sub">${ate()}</div>
     ${banner}
