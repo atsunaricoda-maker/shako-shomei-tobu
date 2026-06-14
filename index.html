@@ -306,6 +306,9 @@ textarea{resize:vertical;min-height:64px;}
   .sheet.zu-land,.sheet.land{page:zu;width:297mm;min-height:200mm;}
   #print-area.preview .sheet.zu-land,#print-area.preview .sheet.land{width:297mm;}
   #print-area.preview .sheet.land{padding:9mm 13mm;}
+  /* 車屋モードで書類プレビューを印刷させない（Ctrl+P・ブラウザメニュー・モバイル共有印刷でも顧客書類を出さない）。説明書印刷(printHelp)は対象外 */
+  body.dealer-print-block #print-area{display:none !important;}
+  body.dealer-print-block .wrap::before{content:"🚗 車屋モードでは印刷できません — 入力内容は「📤 事務所へ送信」してください。";display:block;padding:55mm 22mm;text-align:center;font-size:13pt;line-height:1.9;color:#000;}
 }
 /* 画面上のプレビュー表示 */
 #print-area.preview{display:block;background:#5a6b7b;padding:16px 0;margin:0 -14px;}
@@ -1570,7 +1573,7 @@ function gmapModal(){
        <div class="hint" style="margin-top:6px">※PINを忘れたら、ブラウザの「サイトのデータを削除」でリセットできます（端末内のデータも消えます）。</div>`}
   <hr class="hr">
   <h3 style="font-size:14.5px">🗑 データ管理</h3>
-  <button class="inline-btn" style="width:100%;border-color:var(--warn);color:var(--warn)" onclick="wipeAllData()">この端末の全データを消去（デモ・譲渡用）</button>`;
+  <button class="inline-btn" style="width:100%;border-color:var(--warn);color:var(--warn)" onclick="withPin(()=>wipeAllData())">この端末の全データを消去（デモ・譲渡用）</button>`;
 }
 /* 地図キーはサーバー側（Worker シークレット MAPS_KEY）で保持するため、端末側のキー保存/削除UIは廃止。 */
 
@@ -1945,7 +1948,7 @@ function makeDocs(){
   parts.push(docChecklist());
   const area=document.getElementById("print-area");
   area.innerHTML=parts.join("");
-  area.classList.add("preview");
+  area.classList.add("preview"); document.body.classList.toggle("dealer-print-block", isDealer());
   // プレビューへスクロール＋印刷ボタン提示
   showPreviewBar();
   area.scrollIntoView({behavior:"smooth"});
@@ -1963,7 +1966,7 @@ function showPreviewBar(){
   document.querySelector(".footnav:not(#previewBar)").style.display="none";
 }
 function hidePreview(){
-  document.getElementById("print-area").classList.remove("preview");
+  document.getElementById("print-area").classList.remove("preview"); document.body.classList.remove("dealer-print-block");
   document.getElementById("print-area").innerHTML="";
   document.getElementById("previewBar").style.display="none";
   document.querySelector(".footnav:not(#previewBar)").style.display="flex";
@@ -2353,6 +2356,8 @@ function verifyPin(p){ return !!LOCK.on && pinHash(p)===LOCK.h; }
 function sessionUnlocked(){ return _unlockAt>0 && (Date.now()-_unlockAt<180000); } /* PIN1回で3分間は再入力不要 */
 function withPin(fn){ if(!isLocked()||sessionUnlocked()){ fn(); return; } showPinPrompt(()=>{ _unlockAt=Date.now(); fn(); }); }
 document.addEventListener("visibilitychange",()=>{ if(document.hidden) _unlockAt=0; }); /* 端末を離れたら再ロック */
+/* 車屋モードでの印刷を抑止：Ctrl/⌘+P を握りつぶす（ブラウザメニュー/モバイル印刷は @media print 側で顧客書類を出さない） */
+window.addEventListener("keydown",e=>{ if(isDealer() && (e.ctrlKey||e.metaKey) && (e.key==="p"||e.key==="P")){ e.preventDefault(); e.stopPropagation(); toast("車屋モードでは印刷できません。📤 事務所へ送信してください"); } }, true);
 
 let _pinCb=null;
 function showPinPrompt(onok){
