@@ -237,6 +237,13 @@ textarea{resize:vertical;min-height:64px;}
 .offbody{font-size:12px;line-height:1.7;}
 .applibox{border:1px solid #000;padding:6px 10px;font-size:12px;line-height:1.95;}
 .offsmall{font-size:9px;line-height:1.5;}
+.off .szcell{padding:4px 9px;}
+.off .szrow{display:flex;align-items:center;gap:5px;font-size:11.5px;line-height:1.7;}
+.off .dc{display:inline-block;width:15px;height:17px;line-height:17px;border:1px solid #000;text-align:center;font-size:11px;margin:0 .5px;}
+.off .hd2{text-align:center;font-size:9.5px;line-height:1.25;background:#f6f6f6;letter-spacing:.02em;}
+.off .botsub{width:100%;border-collapse:collapse;table-layout:fixed;}
+.off .inkan{display:inline-block;border:1px solid #000;width:30px;height:30px;line-height:30px;text-align:center;font-size:12px;}
+.off .subnote b{color:#1a3c61;}
 /* 下書き表示（提出は公式様式へ） */
 .draft-banner{border:2px solid #c0392b;color:#c0392b;font-weight:700;text-align:center;padding:5px;margin-bottom:6px;font-size:12.5px;border-radius:3px;}
 .sheet.draft{position:relative;}
@@ -637,7 +644,7 @@ textarea{resize:vertical;min-height:64px;}
         <div class="docpick" id="docPick"></div>
 
         <div class="note info office-only" style="margin-top:14px">
-          作成されるのは<b>下書き（見本）</b>です。下の「公式様式（原本）」を印刷し、下書きを見ながら<b>原本へ転記</b>して提出してください。出力はスマホの<b>共有→プリント</b>／「PDFに保存」。
+          申請書・自認書・所在図配置図などは<b>印刷してそのまま提出できます</b>（正・副2通／A4横）。出力はスマホの<b>共有→プリント</b>／PCの<b>印刷→PDFに保存</b>。署が自作様式を受け付けない場合に備え、下に公式様式（原本）の入手先も用意しています。
         </div>
         <div class="note ok dealer-only" style="margin-top:14px;display:none">
           入力できたら、下の<b>📤 メールで送信</b>（または下部の<b>📤 事務所へ送信</b>）で事務所へ送ってください。印刷は事務所側で行います。
@@ -655,7 +662,7 @@ textarea{resize:vertical;min-height:64px;}
 
       <div class="card office-only">
         <h2>公式様式（原本）の入手</h2>
-        <p class="lead">提出は静岡県警の<b>公式様式（原本）</b>に記入します。原本を開いて印刷・保存し、上で作った下書きを見本に転記してください。</p>
+        <p class="lead">アプリの申請書は印刷してそのまま提出できますが、<b>提出先署が自作様式を受け付けない場合の予備</b>として、静岡県警の公式様式（原本）の入手先を用意しています。</p>
         <div class="linklist">
           <a href="https://www.pref.shizuoka.jp/police/_res/projects/project_police/_page_/002/000/577/2-1syoumeisinsei0803.pdf" target="_blank" rel="noopener">▶ 自動車保管場所証明申請書（原本PDF）</a>
           <a href="https://www.pref.shizuoka.jp/police/_res/projects/project_police/_page_/002/000/577/2-3hokanbasyozu0803.pdf" target="_blank" rel="noopener">▶ 保管場所の所在図・配置図（原本PDF）</a>
@@ -1650,7 +1657,7 @@ function renderDocPick(){
   const s=state, kei=isKei();
   let docs=[ kei
     ? ["届","自動車保管場所届出書","届出書＋控えを印刷（軽）"]
-    : ["申","自動車保管場所証明申請書（下書き）","見本。公式様式（原本）に転記して提出"] ];
+    : ["申","自動車保管場所証明申請書","印刷してそのまま提出（正・副2通）"] ];
   if(s.kubun.kengen==="jinin") docs.push(["自","保管場所使用権原疎明書面（自認書）","自己所有のため"]);
   else docs.push(["承","使用承諾証明書 または 賃貸契約書の写し","各自で用意（アプリでは作成しません）"]);
   docs.push(["図","保管場所の所在図・配置図","配置図は自動作図"]);
@@ -1679,9 +1686,8 @@ function docShinseiOfficial(){
   const s=state, v=s.vehicle;
   const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}　${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
   const hokan = `${esc(s.hokan.addr)}　${esc(s.hokan.name)}　${esc(s.hokan.kukaku)}`;
-  const daiko = "";
-  return `<div class="sheet draft land">
-    <div class="draft-banner">下書き（転記用）― この用紙は提出できません。公式様式（原本）に転記してください</div>
+  const dig=(val)=>{ const p=String(val||"").replace(/[^0-9]/g,"").slice(-4).padStart(4," "); let h=""; for(let i=0;i<4;i++){ h+="<span class=\"dc\">"+(p[i]===" "?"":p[i])+"</span>"; } return h; };
+  return `<div class="sheet land">
     <div class="offlbl">別記様式第１号（第１条関係）</div>
     <table class="off">
       <tr><td colspan="6" class="ttl">自動車保管場所証明申請書</td></tr>
@@ -1695,7 +1701,11 @@ function docShinseiOfficial(){
         <td class="v ctr">${esc(v.maker)}</td>
         <td class="v ctr">${esc(v.katashiki)}</td>
         <td class="v ctr">${esc(v.daiban)}</td>
-        <td colspan="3" style="font-size:12px;line-height:1.7">長さ　${esc(v.len)||"　　　"}　センチメートル<br>幅　　${esc(v.wid)||"　　　"}　センチメートル<br>高さ　${esc(v.hei)||"　　　"}　センチメートル</td>
+        <td colspan="3" class="szcell">
+          <div class="szrow">長さ ${dig(v.len)} センチメートル</div>
+          <div class="szrow">幅　 ${dig(v.wid)} センチメートル</div>
+          <div class="szrow">高さ ${dig(v.hei)} センチメートル</div>
+        </td>
       </tr>
       <tr><td class="hd">自動車の使用の本拠の位置</td><td colspan="5" class="v">${esc(honkyoAddr())}</td></tr>
       <tr><td class="hd">自動車の保管場所の位置</td><td colspan="5" class="v">${hokan}</td></tr>
@@ -1717,21 +1727,23 @@ function docShinseiOfficial(){
       <tr><td colspan="6" class="offbody" style="padding:8px 10px">
         自動車の保管場所の位置欄記載の場所は、上記申請に係る自動車の保管場所として確保されていることを証明する。
         <div style="text-align:right;margin:10px 24px 4px 0">令和　　　年　　　月　　　日</div>
-        <div style="text-align:right;padding-right:10px;font-size:13px">静岡県${esc(stn().name)}長　　　　　㊞</div>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;padding-right:8px"><span style="font-size:13px">静岡県${esc(stn().name)}長</span><span class="inkan">印</span></div>
       </td></tr>
-      <tr>
-        <td class="ctr" style="font-size:10px">使用権原</td>
-        <td colspan="2" style="font-size:11px">自己 ・ 他人 ・ 共有</td>
-        <td class="ctr" style="font-size:10px">連絡先</td>
-        <td colspan="2" style="font-size:10px">氏名<br>電話</td>
-      </tr>
+      <tr><td colspan="6" style="padding:0">
+        <table class="botsub"><tr>
+          <td class="hd2" style="width:9%">使用権原</td><td style="width:22%;font-size:11px">自己 ・ 他人 ・ 共有</td>
+          <td class="hd2" style="width:8%">連絡先</td><td style="width:17%;text-align:left;padding-left:8px;font-size:10px">氏名<br>電話</td>
+          <td class="hd2" style="width:7%">新規<br>代替</td><td style="width:9%"></td>
+          <td class="hd2" style="width:8%">登録<br>番号等</td><td></td>
+        </tr></table>
+      </td></tr>
     </table>
     <div class="offsmall" style="margin-top:5px">※ 自動車の登録手続に必要となる自動車保管場所証明書は、登録申請日からさかのぼっておおむね１か月以内に発行されたものとなりますので、注意してください。</div>
     <div class="offsmall" style="margin-top:4px">備考　1　次に掲げる場合は、所在図の添付を省略することができる。ただし、警察署長は、保管場所の付近の目標となる地物及びその位置を知るため特に必要があると認めるときは、所在図の提出を求めることができる。<br>
       　(1)　自動車の使用の本拠の位置が、旧自動車（申請者が保有者である自動車であって申請に係るもの以外のものをいう。以下同じ。）に係る使用の本拠の位置と同一であり、かつ、申請に係る場所が旧自動車の保管場所と同一であるとき。<br>
       　(2)　自動車の使用の本拠の位置が、保管場所の位置と同一であるとき（(1)に該当する場合を除く。）。<br>
       　2　用紙の大きさは、日本産業規格Ａ列４番とする。</div>
-    <p class="offsmall" style="margin-top:6px">※ 静岡県警察の公式様式（別記様式第1号）に準拠。正・副2通を提出。押印は令和3年〜不要。最終的な様式は提出先（${esc(stn().name)}）でご確認ください。${daiko}</p>
+    <p class="offsmall subnote" style="margin-top:6px"><b>提出用</b>：正・副2通で提出。氏名は印字で可（押印は令和3年〜不要。署により認印を求める場合あり）。本様式は別記様式第1号に準拠。最終的な様式は提出先（${esc(stn().name)}）でご確認ください。</p>
   </div>`;
 }
 
@@ -1740,8 +1752,7 @@ function docTodoke(){
   const s=state, v=s.vehicle;
   const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}<br>${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
   const daikoNote = "";
-  return `<div class="sheet draft land">
-    <div class="draft-banner">下書き（転記用）― この用紙は提出できません。公式様式（原本）に転記してください</div>
+  return `<div class="sheet land">
     <h2 class="dt">自動車保管場所届出書</h2>
     <div class="dt-sub">（${ate()}）　※届出書＋控え 2通 提出</div>
     <table class="ftable">
@@ -1757,7 +1768,7 @@ function docTodoke(){
       氏名（名称）　${applicant}　<br>
       電話　${esc(s.shinseisha.tel)}
     </div>
-    <p class="small" style="margin-top:18px">※ 軽自動車は車検・ナンバー取得後の届出です（届出義務地域は15日以内）。証明書の交付はありません。押印不要。車名等は車検証のとおり記入。${daikoNote}</p>
+    <p class="small" style="margin-top:18px"><b style="color:#1a3c61">提出用</b>：届出書＋控えの2通で提出。軽自動車は車検・ナンバー取得後の届出（義務地域は15日以内）。証明書の交付なし・押印不要。車名等は車検証のとおり記入。最終様式は提出先（${esc(stn().name)}）でご確認ください。</p>
   </div>`;
 }
 function docJinin(){
@@ -2080,7 +2091,7 @@ function helpOffice(){
   return `<button class="close" onclick="closeModal()">×</button>
   <h3>📖 使い方</h3>
   <div id="helpBody">
-  <p style="font-size:12.5px;color:#5a6b7b;margin:0 0 10px">このアプリは車庫証明書類の<b>下書き</b>を作る道具です（提出は公式様式へ転記）。下の項目をタップで開けます。</p>
+  <p style="font-size:12.5px;color:#5a6b7b;margin:0 0 10px">このアプリは車庫証明の書類を作る道具です（申請書・自認書・所在図配置図などは<b>印刷してそのまま提出可</b>）。下の項目をタップで開けます。</p>
   <details open ${ds}><summary ${sm}>A. 自分で書類を作る</summary>
     <ol ${ol}>
       <li><b>①区分</b>：種別（普通／軽）・提出先の警察署・権原を選ぶ。</li>
@@ -2088,7 +2099,7 @@ function helpOffice(){
       <li><b>⑤⑥</b>：保管場所と権原書面（自認書／承諾書）。直線2kmを自動判定。</li>
       <li><b>⑦配置図</b>：「⚡ひな形」かスタンプ作図、または地図から取込。</li>
       <li><b>⑧所在図</b>：住所から地図を自動作成。</li>
-      <li><b>⑨</b>：「📄書類プレビュー」→「🖨印刷」でPDF化 →「公式様式（原本）」に転記して提出。</li>
+      <li><b>⑨</b>：「📄書類プレビュー」→「🖨印刷」で印刷／PDF化して<b>そのまま提出</b>（正・副2通）。署が自作様式不可なら公式様式に転記。</li>
     </ol></details>
   <details ${ds}><summary ${sm}>B. 車屋のタブレットを設定して渡す</summary>
     <ol ${ol}>
