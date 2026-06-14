@@ -1177,14 +1177,14 @@ function openStampEditor(){
   const c=document.getElementById("stCanvas"); c.width=820; c.height=600; ST.canvas=c; ST.ctx=c.getContext("2d");
   ST.stamps=[]; ST.sel=-1; ST.drag=null; ST.useBg=false; ST.bgImg=null; ST.history=[]; ST.pen=false; ST.drawing=null; ST.multi=false; ST.selSet=new Set(); ST.marquee=null; ST.gdrag=null;
   if(state.haichiStamps && state.haichiStamps.stamps && state.haichiStamps.stamps.length){
-    ST.stamps=state.haichiStamps.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0,text:s.text,g:s.g}));
+    ST.stamps=state.haichiStamps.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0,text:s.text,g:s.g,park:s.park}));
   } else { addStamp('road',30,510,false); addStamp('park',335,170,false); }
   ST.sel=-1;
   bindStampPointer(); drawStamps();
 }
 function stampEditorHTML(){ return `<button class="close" onclick="closeModal()">×</button>
   <h3>スタンプで配置図を作る</h3>
-  <div class="ed-tip">部品を置いて<b>ドラッグで移動・⤡で大きさ・⟳で回転</b>。<b>集合住宅は下の「区画を横に／縦に」</b>で駐車区画を一括作成（横並び・縦並びを選べます。塊で移動・回転・サイズ変更）→自分の区画に「🅿保管場所（赤）」を重ねる。文字は下の入力欄から。</div>
+  <div class="ed-tip">部品を置いて<b>ドラッグで移動・⤡で大きさ・⟳で回転</b>。<b>集合住宅は下の「区画を横に／縦に」</b>で駐車区画を一括作成（横並び・縦並びを選べます。塊で移動・回転・サイズ変更）→<b>自分の区画をタップで選んで「🅿選んだ区画を保管場所に」</b>を押すと赤くなります（重ねる方式も可）。文字は下の入力欄から。</div>
   <canvas id="stCanvas"></canvas>
   <div style="display:flex;gap:6px;margin:6px 0 2px;align-items:center">
     <span style="font-size:12px;font-weight:700;color:#0f6b6b;white-space:nowrap">区画数</span>
@@ -1207,6 +1207,7 @@ function stampEditorHTML(){ return `<button class="close" onclick="closeModal()"
     <button class="inline-btn" style="flex:0 0 auto" onclick="addTextFromInput()">🅰 文字を置く</button>
   </div>
   <div class="stamp-ctrl">
+    <button onclick="markCellAsPark()" style="border-color:var(--accent);background:#fff4e8;color:#a85a14;font-weight:700">🅿選んだ区画を保管場所に</button>
     <button onclick="stampScale(1.15)">＋大きく</button>
     <button onclick="stampScale(0.87)">－小さく</button>
     <button onclick="stampRotate(-15)">⟲回転</button>
@@ -1276,8 +1277,9 @@ function drawOneStamp(s){
     ctx.fillStyle="#000"; ctx.font="bold "+Math.max(12,s.h*0.55)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
     const lines=(s.text||"文字").split("\n"); lines.forEach((t,k)=>ctx.fillText(t,0,(k-(lines.length-1)/2)*s.h*0.6));
   } else {
-    if(d.fill!=="none"){ ctx.fillStyle=d.fill; rrect(ctx,-s.w/2,-s.h/2,s.w,s.h,8); ctx.fill(); }
-    ctx.lineWidth=2.5; ctx.strokeStyle=d.stroke; rrect(ctx,-s.w/2,-s.h/2,s.w,s.h,8); ctx.stroke();
+    const pk=(s.type==="cell"&&s.park), ff=pk?STAMP_DEFS.park.fill:d.fill, sk=pk?STAMP_DEFS.park.stroke:d.stroke;
+    if(ff!=="none"){ ctx.fillStyle=ff; rrect(ctx,-s.w/2,-s.h/2,s.w,s.h,8); ctx.fill(); }
+    ctx.lineWidth=pk?2.8:2.5; ctx.strokeStyle=sk; rrect(ctx,-s.w/2,-s.h/2,s.w,s.h,8); ctx.stroke();
     if(s.type==="door"){
       ctx.strokeStyle="#c0392b"; ctx.fillStyle="#c0392b"; ctx.lineJoin="round"; ctx.lineWidth=Math.max(3,s.h*0.07);
       ctx.beginPath(); ctx.moveTo(0,-s.h*0.32); ctx.lineTo(0,-s.h*0.06); ctx.stroke();
@@ -1286,7 +1288,8 @@ function drawOneStamp(s){
     } else if(s.type==="bldg"){
       /* 四角枠のみ・文字なし */
     } else if(s.type==="cell"){
-      if(s.text){ ctx.fillStyle="#333"; ctx.font="bold "+Math.min(s.h*0.28,s.w*0.5)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(s.text,0,0); }
+      if(s.park){ ctx.fillStyle="#c0392b"; ctx.textAlign="center"; ctx.textBaseline="middle"; const fs=Math.max(9,Math.min(s.h*0.30,s.w*0.22)); ctx.font="bold "+fs+"px sans-serif"; ctx.fillText("保管場所",0,0); }
+      else if(s.text){ ctx.fillStyle="#333"; ctx.font="bold "+Math.min(s.h*0.28,s.w*0.5)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(s.text,0,0); }
     } else {
       const lbl=stampLabel(s).split("\n"); ctx.fillStyle=d.stroke; ctx.font="bold 15px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
       lbl.forEach((t,k)=>ctx.fillText(t,0,(k-(lbl.length-1)/2)*18));
@@ -1360,7 +1363,17 @@ function finalizeStroke(){
 function stampPushHistory(){ try{ ST.history.push(JSON.stringify(ST.stamps)); if(ST.history.length>40) ST.history.shift(); }catch(e){} }
 function stampUndo(){ if(!ST.history||!ST.history.length){ toast("これ以上戻せません"); return; } ST.stamps=JSON.parse(ST.history.pop()); ST.sel=-1; ST.drag=null; drawStamps(); }
 function stampDelete(){ if(ST.sel>=0){ stampPushHistory(); ST.stamps.splice(ST.sel,1); ST.sel=-1; ST.drag=null; drawStamps(); } else toast("部品を選択してください"); }
-function stampDuplicate(){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); const c=Object.assign({},ST.stamps[ST.sel]); c.x+=20; c.y+=20; c.g=undefined; ST.stamps.push(c); ST.sel=ST.stamps.length-1; drawStamps(); }
+function stampDuplicate(){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); const c=Object.assign({},ST.stamps[ST.sel]); c.x+=20; c.y+=20; c.g=undefined; c.park=false; ST.stamps.push(c); ST.sel=ST.stamps.length-1; drawStamps(); }
+/* 選択した区画を保管場所（赤）にする。保管場所は1つだけ＝他の区画は自動で解除。もう一度押すと解除 */
+function markCellAsPark(){
+  const s=ST.stamps[ST.sel];
+  if(!s || s.type!=="cell"){ toast("区画をタップで選んでから押してください"); return; }
+  stampPushHistory();
+  const turnOn=!s.park;
+  ST.stamps.forEach(o=>{ if(o.type==="cell") o.park=false; });
+  s.park=turnOn; drawStamps();
+  toast(turnOn?"この区画を保管場所（赤）にしました":"保管場所を解除しました");
+}
 function addTextFromInput(){
   const inp=document.getElementById("stTextInput"); if(!inp) return;
   const val=(inp.value||"").trim();
@@ -1427,7 +1440,7 @@ function stampScale(f){ if(ST.sel<0){toast("部品を選択してください");
 function stampRotate(deg){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); const s=ST.stamps[ST.sel]; const nr=(s.rot||0)+deg; if(s.g){ ST.stamps.forEach(o=>{if(o.g===s.g)o.rot=nr;}); } else s.rot=nr; drawStamps(); }
 function stampToggleBg(on){ ST.useBg=on; if(on){ if(!_haichiSrc){ toast("先に航空写真を取得/取り込みしてください"); const cb=document.getElementById("stBg"); if(cb)cb.checked=false; ST.useBg=false; return; } if(!ST.bgImg){ const im=new Image(); im.onload=()=>{ST.bgImg=im; drawStamps();}; im.src=_haichiSrc; return; } } drawStamps(); }
 function useStampEditor(){ if(!ST.stamps.length){ toast("部品を置いてください"); return; } ST.sel=-1; drawStamps(true); haichiComposite=ST.canvas.toDataURL("image/png"); haichiKind="スタンプ";
-  state.haichiStamps={ w:ST.canvas.width, h:ST.canvas.height, stamps:ST.stamps.map(s=>({type:s.type,x:Math.round(s.x),y:Math.round(s.y),w:Math.round(s.w),h:Math.round(s.h),rot:Math.round(s.rot||0),text:s.text,g:s.g,pts:s.pts,ow:s.ow,oh:s.oh,lw:s.lw})) };
+  state.haichiStamps={ w:ST.canvas.width, h:ST.canvas.height, stamps:ST.stamps.map(s=>({type:s.type,x:Math.round(s.x),y:Math.round(s.y),w:Math.round(s.w),h:Math.round(s.h),rot:Math.round(s.rot||0),text:s.text,g:s.g,pts:s.pts,ow:s.ow,oh:s.oh,lw:s.lw,park:s.park})) };
   scheduleSave();
   drawHaichi(); refreshFigStatus("haichi"); toast("配置図に反映しました"); closeModal(); }
 /* スタンプ配置図をデータ(state.haichiStamps)から再描画してPNGを復元する。
@@ -1439,7 +1452,7 @@ function rebuildStampComposite(){
   const cv=document.createElement("canvas"); cv.width=hs.w||820; cv.height=hs.h||600;
   const sv={canvas:ST.canvas,ctx:ST.ctx,stamps:ST.stamps,sel:ST.sel,useBg:ST.useBg,bgImg:ST.bgImg};
   ST.canvas=cv; ST.ctx=cv.getContext("2d");
-  ST.stamps=hs.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0,text:s.text,g:s.g,pts:s.pts,ow:s.ow,oh:s.oh,lw:s.lw}));
+  ST.stamps=hs.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0,text:s.text,g:s.g,pts:s.pts,ow:s.ow,oh:s.oh,lw:s.lw,park:s.park}));
   ST.sel=-1; ST.useBg=false; ST.bgImg=null;
   try{ drawStamps(true); haichiComposite=cv.toDataURL("image/png"); haichiKind="スタンプ"; }catch(e){}
   ST.canvas=sv.canvas; ST.ctx=sv.ctx; ST.stamps=sv.stamps; ST.sel=sv.sel; ST.useBg=sv.useBg; ST.bgImg=sv.bgImg;
