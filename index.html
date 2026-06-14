@@ -1385,8 +1385,8 @@ function addParkingRow(){
 function addParkingCol(){
   const inp=document.getElementById("stCellCount"); let n=parseInt(inp&&inp.value,10); if(!n||n<1)n=6; if(n>40)n=40;
   stampPushHistory();
-  const d=STAMP_DEFS.cell, gap=12, startX=50, startY=70, gid="g"+Date.now(); let x=startX, y=startY;
-  for(let i=0;i<n;i++){ if(y+d.h>ST.canvas.height-20){ y=startY; x+=d.w+18; } ST.stamps.push({type:"cell",w:d.w,h:d.h,rot:0,x,y,g:gid}); y+=d.h+gap; }
+  const d=STAMP_DEFS.cell, cw=d.h, ch=d.w, gap=12, startX=50, startY=70, gid="g"+Date.now(); let x=startX, y=startY;
+  for(let i=0;i<n;i++){ if(y+ch>ST.canvas.height-20){ y=startY; x+=cw+18; } ST.stamps.push({type:"cell",w:cw,h:ch,rot:0,x,y,g:gid}); y+=ch+gap; }
   ST.sel=-1; drawStamps(); toast(n+"区画を縦に並べました（塊で移動・回転します）");
 }
 /* ====== まとめ選択（複数選択して一括移動・削除。区画グループ向け） ====== */
