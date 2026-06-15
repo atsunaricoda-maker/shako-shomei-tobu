@@ -898,7 +898,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"");
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v41";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -2588,7 +2588,7 @@ if("serviceWorker" in navigator && !/googleusercontent\.com$/.test(location.host
   }
   function watchWorker(w){ if(!w) return; w.addEventListener("statechange", ()=>{ if(w.state==="installed" && navigator.serviceWorker.controller) showUpdateBanner(w); }); }
   window.addEventListener("load", ()=>{
-    navigator.serviceWorker.register("sw.js").then(reg=>{
+    navigator.serviceWorker.register("sw.js", {updateViaCache:"none"}).then(reg=>{
       swReg=reg;
       if(reg.waiting && navigator.serviceWorker.controller) showUpdateBanner(reg.waiting); // 既に待機中の新版
       reg.addEventListener("updatefound", ()=>watchWorker(reg.installing));               // インストール中の新版を監視
