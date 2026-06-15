@@ -896,7 +896,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v42";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v43";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -2146,7 +2146,8 @@ function helpDealer(){
     <li style="margin-top:6px"><b>配置図をつくる（⑦）</b><br><span style="font-size:12.5px;color:#5a6b7b">「⚡ひな形から作る」で近い形を選ぶか、部品を置いて作図。むずかしければ住所だけ入れて、事務所に仕上げてもらってもOK。</span></li>
     <li style="margin-top:6px"><b>最後に「📤 事務所へ送信」を押す</b><br><span style="font-size:12.5px;color:#5a6b7b">メールアプリが開くので、そのまま送信してください（宛先は設定済み）。<b>送信すると入力は自動で消えます</b>＝次のお客様へ。</span></li>
   </ol>
-  <div class="note ok" style="margin-top:10px">困ったときは無理に進めず、<b>行政書士事務所へご連絡</b>ください。</div>
+  <div class="note" style="margin-top:10px;background:#fff7ee;border:1px solid #f0c98a;font-size:12.5px"><b>📱 お客様のスマホで入力してもらう方法も：</b>画面いちばん上の<b>「お客様のスマホで入力してもらう（QRを表示）」</b>を押し、出たQRをお客様に見せれば、お客様ご自身の端末で入力 → 送信できます（この端末には残りません）。</div>
+  <div class="note ok" style="margin-top:8px">困ったときは無理に進めず、<b>行政書士事務所へご連絡</b>ください。</div>
   <p style="font-size:11px;color:#5a6b7b;margin-top:8px">お客様の個人情報は車庫証明の手続きのため、事務所へのみ送られます（→画面下部「個人情報の取り扱い」）。</p>
   </div>
   <div class="row" style="gap:8px;margin-top:12px"><button class="inline-btn" style="flex:1" onclick="printHelp()">🖨 印刷</button><button class="inline-btn" style="flex:1" onclick="closeModal()">閉じる</button></div>`;
@@ -2170,13 +2171,17 @@ function helpOffice(){
     </ol></details>
   <details ${ds}><summary ${sm}>B. 車屋のタブレットを設定して渡す</summary>
     <ol ${ol}>
-      <li>渡す端末で右上 <b>⚙</b> を開く。</li>
-      <li>利用モードを <b>「車屋（送信のみ）」</b> に切替。</li>
-      <li><b>送信先メール（事務所）</b>を入力して保存。</li>
-      <li>下へスクロール →「🔒事務所ロック」で<b>暗証番号</b>を設定し「ロックをかける」。</li>
-      <li>そのまま渡す（または「車屋に配るURL」を渡す）。以降、暗証番号なしでは事務所化・顧客閲覧・送信先変更ができません。</li>
+      <li><b>かんたんなのはQR：</b>⚙→「🧰利用モード」内の<b>「📲車屋に導入」</b>で暗証番号(PIN)を決めてQRを作成 → 車屋がスキャンするだけで<b>車屋モード＋送信先メール＋PINロック</b>が設定済みに（お店の名前を入れてもらえば完了）。PINは<b>書士が控える</b>。</li>
+      <li><b>手動で設定する場合：</b>渡す端末で⚙→利用モードを<b>「車屋（送信のみ）」</b>→<b>送信先メール（事務所）</b>を保存→「🔒事務所ロック」で<b>暗証番号</b>を設定。</li>
+      <li>以降、暗証番号なしでは<b>事務所化・顧客閲覧・送信先変更ができません</b>。</li>
     </ol></details>
-  <details ${ds}><summary ${sm}>C. 車屋から届いた案件を印刷する</summary>
+  <details ${ds}><summary ${sm}>C. お客様のスマホで入力してもらう（顧客モード）</summary>
+    <ol ${ol}>
+      <li>先に⚙「📤データ送信設定」で<b>事務所メール</b>を設定しておく。</li>
+      <li>⚙の<b>「📱お客様用のQR／リンクを作る」</b>（車屋端末なら画面上部の同ボタン）でQRを表示。</li>
+      <li>お客様がスキャン →<b>お客様ご自身の端末</b>で入力・送信。個人情報は車屋・お客様の端末に残りません。</li>
+    </ol></details>
+  <details ${ds}><summary ${sm}>D. 届いた案件（車屋・お客様）を印刷する</summary>
     <ol ${ol}>
       <li>届いたメールの<b>リンクを開く</b>と、入力済みでアプリが開きます。</li>
       <li><b>受信案件は自動で「案件」履歴に保存</b>（取りこぼし防止）。</li>
