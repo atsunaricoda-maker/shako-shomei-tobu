@@ -1984,7 +1984,8 @@ function showPreviewBar(){
     <button class="btn prev" style="flex:0 0 auto" onclick="hidePreview()">✏️ 修正</button>
     <button class="btn prev" style="flex:0 0 auto" onclick="saveHistoryNow()">📋</button>
     <button class="btn make" style="background:var(--accent)" onclick="sendByMail()">📤 事務所へ送信</button>
-    ${isDealer()?"":'<button class="btn make" onclick="printDocsThenAsk()">🖨 印刷</button>'}</div>`;
+    ${isDealer()?"":'<button class="btn make" onclick="window.print()">🖨 印刷</button>'}
+    ${isDealer()?"":'<button class="btn prev" style="flex:0 0 auto" onclick="clearCaseConfirm()" title="この案件の入力(個人情報)を端末から消す">🧹 消去</button>'}</div>`;
   bar.style.display="flex";
   document.querySelector(".footnav:not(#previewBar)").style.display="none";
   const fab=document.getElementById("previewFab"); if(fab) fab.style.display="none";
@@ -1997,14 +1998,11 @@ function hidePreview(){
   const fab=document.getElementById("previewFab"); if(fab) fab.style.display="";
   window.scrollTo({top:0,behavior:"smooth"});
 }
-/* 事務所モード：印刷が終わったら、この案件の入力（個人情報）を端末から消すか確認（残し続けない）。
-   ※📄印刷ボタン経由のときだけ＝説明書印刷・Ctrl+Pでは出さない。顧客マスタ/案件履歴/下書きは残る。 */
-let _printAskClear=false;
-function printDocsThenAsk(){ _printAskClear=!isDealer(); window.print(); }
-window.addEventListener("afterprint",function(){
-  if(!_printAskClear) return; _printAskClear=false;
-  showConfirm("入力を消去しますか？","印刷お疲れさまです。この案件の入力（個人情報）をこの端末から消しますか？（顧客マスタ・案件履歴・下書きは残ります）",function(){ clearCurrentCase(); gotoStep(0); toast("この案件の入力を消去しました"); });
-});
+/* 事務所モード：印刷後、プレビューバーの「🧹消去」を押すとこの案件の入力（個人情報）を端末から消せる。
+   ※以前のafterprint自動モーダルは廃止（ブラウザによりプレビュー中に割り込み、プレビューを壊す不具合のため）。顧客マスタ/案件履歴/下書きは残る。 */
+function clearCaseConfirm(){
+  showConfirm("入力を消去しますか？","この案件の入力（個人情報）をこの端末から消しますか？（顧客マスタ・案件履歴・下書きは残ります）",function(){ clearCurrentCase(); gotoStep(0); toast("この案件の入力を消去しました"); });
+}
 
 /* =====================================================================
    保存・下書き
