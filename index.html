@@ -317,6 +317,10 @@ textarea{resize:vertical;min-height:64px;}
   box-shadow:0 4px 16px rgba(0,0,0,.3);border-radius:2px;
 }
 #print-area.preview .sheet.zu-land,#print-area.preview .sheet.land{max-width:297mm;}
+/* どのステップからでも書類プレビューを更新できる浮動ボタン（書士の修正→確認をスムーズに） */
+.preview-fab{position:fixed;right:14px;bottom:76px;z-index:60;background:var(--accent);color:#fff;border:none;border-radius:24px;padding:11px 17px;font-size:14px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.28);cursor:pointer}
+.preview-fab:active{transform:translateY(1px)}
+@media print{ .preview-fab{display:none !important;} }
 </style>
 </head>
 <body>
@@ -640,10 +644,7 @@ textarea{resize:vertical;min-height:64px;}
     <section class="step" data-step="8">
       <div class="card">
         <h2>⑨ 確認して書類を作成</h2>
-        <div class="field">
-          <label class="lbl">申請年月日</label>
-          <input type="date" data-bind="appDate" id="appDate">
-        </div>
+        <div class="note info" style="font-size:12.5px">申請年月日は<b>空欄で出力</b>します（提出日に窓口で記入してください）。</div>
 
         <div id="validBox"></div>
 
@@ -696,6 +697,7 @@ textarea{resize:vertical;min-height:64px;}
       <button class="btn next" id="btnNext" onclick="go(1)">次へ</button>
     </div>
   </div>
+  <button id="previewFab" class="preview-fab" onclick="makeDocs()" title="今の入力で書類プレビューを更新">📄 プレビュー</button>
 
   <div class="foot-meta">
     入力内容は<b>この端末内</b>に保存されます（送信は「事務所へ送信」時のみ）。<a onclick="openModal('privacy')" style="color:var(--navy);text-decoration:underline;cursor:pointer">個人情報の取り扱い</a><br>
@@ -1605,6 +1607,8 @@ function buildStepNav(){
   });
 }
 function gotoStep(i){
+  const _pa=document.getElementById("print-area");
+  if(_pa && _pa.classList.contains("preview")) hidePreview();
   step=Math.max(0,Math.min(TOTAL-1,i));
   document.querySelectorAll("section.step").forEach(s=>s.classList.toggle("active", +s.dataset.step===step));
   document.querySelectorAll(".step-chip").forEach((c,idx)=>{
@@ -1967,18 +1971,20 @@ function showPreviewBar(){
   let bar=document.getElementById("previewBar");
   if(!bar){ bar=document.createElement("div"); bar.id="previewBar"; bar.className="footnav"; document.body.appendChild(bar); }
   bar.innerHTML=`<div class="wrapf">
-    <button class="btn prev" style="flex:0 0 auto" onclick="hidePreview()">戻る</button>
+    <button class="btn prev" style="flex:0 0 auto" onclick="hidePreview()">✏️ 修正</button>
     <button class="btn prev" style="flex:0 0 auto" onclick="saveHistoryNow()">📋</button>
     <button class="btn make" style="background:var(--accent)" onclick="sendByMail()">📤 事務所へ送信</button>
     ${isDealer()?"":'<button class="btn make" onclick="window.print()">🖨 印刷</button>'}</div>`;
   bar.style.display="flex";
   document.querySelector(".footnav:not(#previewBar)").style.display="none";
+  const fab=document.getElementById("previewFab"); if(fab) fab.style.display="none";
 }
 function hidePreview(){
   document.getElementById("print-area").classList.remove("preview"); document.body.classList.remove("dealer-print-block");
   document.getElementById("print-area").innerHTML="";
   document.getElementById("previewBar").style.display="none";
   document.querySelector(".footnav:not(#previewBar)").style.display="flex";
+  const fab=document.getElementById("previewFab"); if(fab) fab.style.display="";
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
