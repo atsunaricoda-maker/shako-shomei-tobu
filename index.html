@@ -321,7 +321,12 @@ textarea{resize:vertical;min-height:64px;}
 .preview-fab{position:fixed;right:14px;bottom:76px;z-index:60;background:var(--accent);color:#fff;border:none;border-radius:24px;padding:11px 17px;font-size:14px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.28);cursor:pointer}
 .preview-fab:active{transform:translateY(1px)}
 @media print{ .preview-fab{display:none !important;} }
+/* 顧客モード（お客様の端末）：案内バナー表示・車屋用の注記は隠す */
+.customer-only{display:none}
+body.is-customer .customer-only{display:block}
+body.is-customer .dealer-only{display:none !important}
 </style>
+<script src="qr.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -337,9 +342,10 @@ textarea{resize:vertical;min-height:64px;}
       <button class="hbtn" id="btnDraft" onclick="withPin(()=>openModal('draft'))">案件</button>
       <button class="hbtn" onclick="openModal('info')">提出先</button>
       <button class="hbtn" onclick="openModal('help')" title="使い方">❓</button>
-      <button class="hbtn" onclick="withPin(()=>openModal('gmap'))" title="設定">⚙</button>
+      <button class="hbtn" id="btnGear" onclick="withPin(()=>openModal('gmap'))" title="設定">⚙</button>
     </div>
   </header>
+  <div id="customerBanner" class="customer-only note ok" style="margin:8px 14px 0;font-size:13px;line-height:1.6"><b>📝 お客様の入力フォームです。</b>ご自身の情報を入力し、最後に <b>📤 事務所へ送信</b> を押してください。入力内容はお客様の端末内のみで、送信時だけ事務所へ届きます。</div>
 
   <!-- ========== ステップナビ ========== -->
   <nav class="steps" id="stepNav"></nav>
@@ -1555,6 +1561,9 @@ function gmapModal(){
   </div>
   <div class="hint" style="margin-top:8px">車屋さんに配るURL（開くと自動で車屋モードになり、端末に記憶されます）：</div>
   <div class="row" style="gap:6px;margin-top:4px"><input type="text" id="dealerUrlInput" readonly value="${esc(location.origin+location.pathname+'?role=dealer')}" style="flex:1;font-size:12px" onclick="this.select()"><button class="inline-btn" style="flex:0 0 auto" onclick="copyDealerUrl()">コピー</button></div>
+  <button class="inline-btn" style="width:100%;margin-top:6px;border-color:var(--teal);background:#eafafa;color:#0f6b6b;font-weight:700" onclick="showDealerSetup()">📲 車屋に導入（QRで メール＋PIN を設定済みに）</button>
+  <div class="hint" style="margin-top:10px"><b>お客様の端末で入力→送信</b>してもらう（個人情報が車屋の端末に一切残りません）。先に下の「データ送信設定」で事務所メールを設定してください：</div>
+  <button class="inline-btn" style="width:100%;margin-top:4px;border-color:var(--accent);color:var(--accent);font-weight:700" onclick="showCustomerShare()">📱 お客様用のQR／リンクを作る</button>
   <hr class="hr">
   <h3 style="font-size:14.5px;margin:6px 0 4px">📤 データ送信設定</h3>
   <p style="font-size:12.5px;color:#5a6b7b;line-height:1.65">「事務所へ送信」で使う情報。<b>この端末内だけ</b>に保存され、外部やリポジトリには出ません。</p>
@@ -2316,14 +2325,28 @@ function renderSendStatus(){
    ===================================================================== */
 const MODE_KEY="shako_tobu_mode";
 let APPMODE="office";
+let CUSTOMER=false;
 function isDealer(){ return APPMODE==="dealer"; }
+function isCustomer(){ return CUSTOMER; }   /* 顧客モード＝お客様の端末。車屋モードの派生（送信専用）だが、自分の端末なので裏に回っても消さない */
 function detectMode(){
   const stored0=localStorage.getItem(MODE_KEY)||"office";
   const lockedDealer=isLocked() && stored0==="dealer";   // ロックされた車屋端末は何があっても車屋固定
   try{
     const p=new URLSearchParams(location.search);
     const role=(p.get("role")||p.get("mode")||"").toLowerCase();
-    if(role==="dealer"||role==="car"){ localStorage.setItem(MODE_KEY,"dealer"); }
+    if(role==="customer"){   // 顧客モード：お客様の端末で入力→送信。送信先(to/from)はURLから読み、端末には保存しない
+      CUSTOMER=true; APPMODE="dealer";
+      const to=p.get("to"), from=p.get("from");
+      if(to) SEND.to=to; if(from) SEND.from=from;
+      return;
+    }
+    if(role==="dealer"||role==="car"){
+      localStorage.setItem(MODE_KEY,"dealer");
+      const sto=p.get("to"), slh=p.get("lh");   // 車屋導入QR：送信先メール＋ロックPIN(ハッシュ)を設定済みにする
+      if(sto){ SEND.to=sto; try{ saveSend(); }catch(e){} }
+      if(slh){ LOCK={on:true,h:slh}; try{ localStorage.setItem(LOCK_KEY,JSON.stringify(LOCK)); }catch(e){} }
+      if(sto||slh){ try{ history.replaceState(null,"",location.origin+location.pathname); }catch(e){} }   // PIN等をURLから消す
+    }
     else if(role==="office" && !lockedDealer){ localStorage.setItem(MODE_KEY,"office"); }  // 抜け道封じ：?role=office を無効化
   }catch(e){}
   let m=localStorage.getItem(MODE_KEY)||"office";
@@ -2332,6 +2355,7 @@ function detectMode(){
 }
 function applyMode(){
   const dealer=isDealer();
+  document.body.classList.toggle("is-customer", isCustomer());
   document.querySelectorAll(".office-only").forEach(e=>{ e.style.display=dealer?"none":""; });
   document.querySelectorAll(".dealer-only").forEach(e=>{ e.style.display=dealer?"":"none"; });
   /* 車屋モードでは 顧客・案件 ボタンと「リンクをコピー」を隠す（共用端末で個人情報を溜めない・横流しさせない） */
@@ -2339,6 +2363,7 @@ function applyMode(){
   if(bc) bc.style.display=dealer?"none":"";
   if(bd) bd.style.display=dealer?"none":"";
   if(cl) cl.style.display=dealer?"none":"";
+  const gear=document.getElementById("btnGear"); if(gear) gear.style.display=isCustomer()?"none":"";   /* 顧客モードは設定(⚙)を隠す */
 }
 function syncModeRadio(){ const r=document.querySelector('input[name="appmode"][value="'+APPMODE+'"]'); if(r) r.checked=true; }
 function applyModeChange(m){
@@ -2364,6 +2389,68 @@ function copyDealerUrl(){
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(()=>toast("車屋用URLをコピーしました")).catch(()=>fallbackCopy(u)); }
   else fallbackCopy(u);
 }
+/* 顧客モード用：お客様の端末で開く入力URL（送信先=事務所メールを埋め込む）をQR＋リンクで提示 */
+let _custUrl="";
+function makeQRImg(text,cell){ for(let t=3;t<=20;t++){ try{ const q=qrcode(t,'M'); q.addData(text); q.make(); return q.createImgTag(cell||5,10); }catch(e){} } return '<div style="color:var(--warn);font-size:12px">QR生成に失敗しました（下のリンクをご利用ください）</div>'; }
+function showCustomerShare(){
+  if(!SEND.to){ toast("先に下の「データ送信設定」で事務所メールを設定してください"); return; }
+  _custUrl=location.origin+location.pathname+"?role=customer&to="+encodeURIComponent(SEND.to)+(SEND.from?("&from="+encodeURIComponent(SEND.from)):"");
+  let bg=document.getElementById("custShareBg");
+  if(!bg){ bg=document.createElement("div"); bg.id="custShareBg"; bg.className="modal-bg"; bg.style.zIndex="84"; bg.style.alignItems="center"; document.body.appendChild(bg); }
+  bg.innerHTML=`<div class="modal" style="max-width:340px;border-radius:18px;text-align:center">
+    <button class="close" onclick="closeCustomerShare()">×</button>
+    <h3>📱 お客様用のQR／リンク</h3>
+    <p style="font-size:12.5px;color:#5a6b7b;line-height:1.6;margin:0 0 10px">お客様にこのQRを見せて、ご自身のスマホでスキャン → 入力 → 送信してもらえます。<br>送信先：<b>${esc(SEND.to)}</b></p>
+    <div style="background:#fff;padding:10px;border-radius:10px;display:inline-block;border:1px solid var(--line)">${makeQRImg(_custUrl,5)}</div>
+    <div class="row" style="gap:6px;margin-top:12px"><input type="text" readonly value="${esc(_custUrl)}" style="flex:1;font-size:11px" onclick="this.select()"><button class="inline-btn" style="flex:0 0 auto" onclick="copyCustomerUrl()">コピー</button></div>
+    <div class="hint" style="margin-top:8px">お客様の入力は<b>お客様の端末内のみ</b>で処理され、送信時だけ事務所へ届きます。車屋の端末には残りません。</div>
+  </div>`;
+  bg.classList.add("open");
+}
+function closeCustomerShare(){ const b=document.getElementById("custShareBg"); if(b) b.classList.remove("open"); }
+function copyCustomerUrl(){ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(_custUrl).then(()=>toast("コピーしました")).catch(()=>fallbackCopy(_custUrl)); } else fallbackCopy(_custUrl); }
+/* 車屋導入QR（事務所用）：送信先メール＋PINハッシュを埋め込んだ「設定済みURL」をQRで提示 */
+function showDealerSetup(){
+  if(!SEND.to){ toast("先に下の「データ送信設定」で事務所メールを設定してください"); return; }
+  let bg=document.getElementById("dealerSetupBg");
+  if(!bg){ bg=document.createElement("div"); bg.id="dealerSetupBg"; bg.className="modal-bg"; bg.style.zIndex="84"; bg.style.alignItems="center"; document.body.appendChild(bg); }
+  bg.innerHTML=`<div class="modal" style="max-width:340px;border-radius:18px">
+    <button class="close" onclick="closeDealerSetup()">×</button>
+    <h3>📲 車屋タブレットの導入QR</h3>
+    <p style="font-size:12.5px;color:#5a6b7b;line-height:1.6;margin:0 0 10px">スキャンすると、車屋のタブレットが<b>「車屋モード＋送信先メール＋PINロック」設定済み</b>になります。送信先：<b>${esc(SEND.to)}</b></p>
+    <label class="lbl">タブレットの暗証番号(PIN)<span class="req">必須</span></label>
+    <input id="setupPin" type="password" inputmode="numeric" maxlength="12" placeholder="6〜8桁を推奨" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:9px;box-sizing:border-box;text-align:center;letter-spacing:4px;font-size:18px">
+    <div class="hint" style="margin-top:6px">この番号は車屋がモード切替・設定・受信案件閲覧を開くのに必要です。<b>書士が控えてください</b>。長め(6〜8桁)推奨。</div>
+    <button class="inline-btn" style="width:100%;margin-top:10px" onclick="genDealerSetupQR()">QRを作る</button>
+    <div id="dealerSetupResult" style="text-align:center"></div>
+  </div>`;
+  bg.classList.add("open");
+}
+function genDealerSetupQR(){
+  const pin=(document.getElementById("setupPin").value||"").trim();
+  if(pin.length<4){ toast("暗証番号は4桁以上で（6〜8桁推奨）"); return; }
+  _custUrl=location.origin+location.pathname+"?role=dealer&to="+encodeURIComponent(SEND.to)+"&lh="+encodeURIComponent(pinHash(pin));
+  document.getElementById("dealerSetupResult").innerHTML=`
+    <div style="background:#fff;padding:10px;border-radius:10px;display:inline-block;border:1px solid var(--line);margin-top:12px">${makeQRImg(_custUrl,5)}</div>
+    <div class="row" style="gap:6px;margin-top:10px"><input type="text" readonly value="${esc(_custUrl)}" style="flex:1;font-size:11px" onclick="this.select()"><button class="inline-btn" style="flex:0 0 auto" onclick="copyCustomerUrl()">コピー</button></div>
+    <div class="note ok" style="margin-top:8px;font-size:12px;text-align:left">暗証番号(PIN)：<b>${esc(pin)}</b> を控えてください。このQRを車屋に渡し、スキャン→お店の名前を入れてもらえば導入完了です。</div>`;
+}
+function closeDealerSetup(){ const b=document.getElementById("dealerSetupBg"); if(b) b.classList.remove("open"); }
+/* 車屋導入後の初回：お店の名前(送信元)が未設定なら入力を促す（PIN不要＝送信元ラベルだけ） */
+function maybeAskShopName(){ if(isDealer() && !isCustomer() && SEND.to && !SEND.from){ showShopNamePrompt(); } }
+function showShopNamePrompt(){
+  let bg=document.getElementById("shopNameBg");
+  if(!bg){ bg=document.createElement("div"); bg.id="shopNameBg"; bg.className="modal-bg"; bg.style.zIndex="83"; bg.style.alignItems="center"; document.body.appendChild(bg); }
+  bg.innerHTML=`<div class="modal" style="max-width:330px;border-radius:18px">
+    <h3>🏪 お店の名前を設定</h3>
+    <p style="font-size:12.5px;color:#5a6b7b;line-height:1.6;margin:0 0 10px">事務所へ送るときの「送信元（お店名）」になります。最初に一度だけ設定してください。</p>
+    <input id="shopNameInput" type="text" maxlength="40" placeholder="例）カーショップ○○" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;box-sizing:border-box;font-size:15px">
+    <button class="inline-btn" style="width:100%;margin-top:10px" onclick="saveShopName()">保存</button>
+  </div>`;
+  bg.classList.add("open");
+  setTimeout(()=>{ const i=document.getElementById("shopNameInput"); if(i) i.focus(); },80);
+}
+function saveShopName(){ const v=(document.getElementById("shopNameInput").value||"").trim(); if(!v){ toast("お店の名前を入力してください"); return; } SEND.from=v; try{ saveSend(); }catch(e){} const b=document.getElementById("shopNameBg"); if(b) b.classList.remove("open"); toast("お店の名前を設定しました"); }
 
 /* =====================================================================
    事務所ロック（行政書士用PIN）＋ デモ/譲渡用データ消去
@@ -2382,7 +2469,7 @@ function sessionUnlocked(){ return _unlockAt>0 && (Date.now()-_unlockAt<180000);
 function withPin(fn){ if(!isLocked()||sessionUnlocked()){ fn(); return; } showPinPrompt(()=>{ _unlockAt=Date.now(); fn(); }); }
 document.addEventListener("visibilitychange",()=>{ if(document.hidden) _unlockAt=0; }); /* 端末を離れたら再ロック */
 /* 車屋モード：裏に回ったら（画面オフ/アプリ切替）フォームを消去＝送信しなくても次のお客様に前の入力を残さない */
-document.addEventListener("visibilitychange",()=>{ if(document.hidden && isDealer()){ try{ clearCurrentCase(); gotoStep(0); }catch(e){} } });
+document.addEventListener("visibilitychange",()=>{ if(document.hidden && isDealer() && !isCustomer()){ try{ clearCurrentCase(); gotoStep(0); }catch(e){} } }); /* 顧客モード(自分の端末)は裏に回っても消さない */
 /* 車屋モードでの印刷を抑止：Ctrl/⌘+P を握りつぶす（ブラウザメニュー/モバイル印刷は @media print 側で顧客書類を出さない） */
 window.addEventListener("keydown",e=>{ if(isDealer() && (e.ctrlKey||e.metaKey) && (e.key==="p"||e.key==="P")){ e.preventDefault(); e.stopPropagation(); toast("車屋モードでは印刷できません。📤 事務所へ送信してください"); } }, true);
 
@@ -2474,6 +2561,7 @@ function boot(){
     toast(isDealer()?"受信した案件データを読み込みました":"受信案件を読み込み、案件履歴に保存しました");
   }
   else gotoStep(0);
+  maybeAskShopName();   /* 車屋導入直後：お店の名前(送信元)が未設定なら初回入力を促す */
 }
 /* このスクリプトはbody末尾にあるためDOMは解析済み。GASのHtmlServiceではDOMContentLoadedが
    発火しないことがあるので、待たずに直接初期化する（localhost/GitHub Pagesでも同様に動作）。 */
