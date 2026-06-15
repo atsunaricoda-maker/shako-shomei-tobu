@@ -292,18 +292,16 @@ textarea{resize:vertical;min-height:64px;}
   #print-area{display:block;}
   .wrap{max-width:none;padding:0;}
   .sheet{
-    width:210mm;min-height:292mm;padding:16mm 15mm;margin:0 auto;
+    width:297mm;min-height:190mm;padding:9mm 13mm;margin:0 auto;
     page-break-after:always;box-sizing:border-box;
   }
   .sheet:last-child{page-break-after:auto;}
   /* プレビュー用の装飾を印刷時にリセット（PDFに灰色背景や影が出ないように） */
   #print-area.preview{background:#fff !important;padding:0 !important;margin:0 !important;}
   #print-area.preview .sheet{box-shadow:none !important;border-radius:0 !important;
-    width:210mm;margin:0 auto;padding:16mm 15mm;}
-  @page{size:A4;margin:0;}
-  /* 所在図・配置図シートだけ横長（ランドスケープ）で印刷 */
-  @page zu{size:A4 landscape;margin:0;}
-  .sheet.zu-land,.sheet.land{page:zu;width:297mm;min-height:200mm;}
+    width:297mm;margin:0 auto;padding:9mm 13mm;}
+  @page{size:A4 landscape;margin:0;}   /* 全ページ横長に統一。向き混在の named @page(page:zu)がChromeの印刷レンダラをクラッシュさせるため廃止 */
+  .sheet.zu-land,.sheet.land{width:297mm;min-height:190mm;}
   #print-area.preview .sheet.zu-land,#print-area.preview .sheet.land{width:297mm;}
   #print-area.preview .sheet.land{padding:9mm 13mm;}
   /* 車屋モードで書類プレビューを印刷させない（Ctrl+P・ブラウザメニュー・モバイル共有印刷でも顧客書類を出さない）。説明書印刷(printHelp)は対象外 */
@@ -898,7 +896,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v41";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v42";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
