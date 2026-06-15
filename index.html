@@ -1974,7 +1974,7 @@ function showPreviewBar(){
     <button class="btn prev" style="flex:0 0 auto" onclick="hidePreview()">✏️ 修正</button>
     <button class="btn prev" style="flex:0 0 auto" onclick="saveHistoryNow()">📋</button>
     <button class="btn make" style="background:var(--accent)" onclick="sendByMail()">📤 事務所へ送信</button>
-    ${isDealer()?"":'<button class="btn make" onclick="window.print()">🖨 印刷</button>'}</div>`;
+    ${isDealer()?"":'<button class="btn make" onclick="printDocsThenAsk()">🖨 印刷</button>'}</div>`;
   bar.style.display="flex";
   document.querySelector(".footnav:not(#previewBar)").style.display="none";
   const fab=document.getElementById("previewFab"); if(fab) fab.style.display="none";
@@ -1987,12 +1987,20 @@ function hidePreview(){
   const fab=document.getElementById("previewFab"); if(fab) fab.style.display="";
   window.scrollTo({top:0,behavior:"smooth"});
 }
+/* 事務所モード：印刷が終わったら、この案件の入力（個人情報）を端末から消すか確認（残し続けない）。
+   ※📄印刷ボタン経由のときだけ＝説明書印刷・Ctrl+Pでは出さない。顧客マスタ/案件履歴/下書きは残る。 */
+let _printAskClear=false;
+function printDocsThenAsk(){ _printAskClear=!isDealer(); window.print(); }
+window.addEventListener("afterprint",function(){
+  if(!_printAskClear) return; _printAskClear=false;
+  showConfirm("入力を消去しますか？","印刷お疲れさまです。この案件の入力（個人情報）をこの端末から消しますか？（顧客マスタ・案件履歴・下書きは残ります）",function(){ clearCurrentCase(); gotoStep(0); toast("この案件の入力を消去しました"); });
+});
 
 /* =====================================================================
    保存・下書き
    ===================================================================== */
 let saveTimer=null;
-function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ localStorage.setItem(AUTOSAVE, JSON.stringify(state)); }catch(e){} },400); }
+function scheduleSave(){ if(isDealer()) return; /* 車屋モードは端末に保存しない（キャッシュに個人情報を残さない） */ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ localStorage.setItem(AUTOSAVE, JSON.stringify(state)); }catch(e){} },400); }
 function loadAuto(){ try{ const j=localStorage.getItem(AUTOSAVE); if(j) state=Object.assign(DEFAULT(),JSON.parse(j)); }catch(e){} }
 function getDrafts(){ try{ return JSON.parse(localStorage.getItem(DRAFTS)||"[]"); }catch(e){ return []; } }
 function saveDraft(){
@@ -2334,8 +2342,10 @@ function applyMode(){
 }
 function syncModeRadio(){ const r=document.querySelector('input[name="appmode"][value="'+APPMODE+'"]'); if(r) r.checked=true; }
 function applyModeChange(m){
+  const _wasDealer=isDealer();
   APPMODE=(m==="dealer")?"dealer":"office";
   localStorage.setItem(MODE_KEY,APPMODE);
+  if(isDealer() && !_wasDealer){ clearCurrentCase(); } /* 事務所→車屋に切替時は入力を消す（端末を渡す前にまっさら） */
   applyMode(); refreshHeader(); syncModeRadio();
   if(step===TOTAL-1) gotoStep(TOTAL-1);
   toast(isDealer()?"車屋モード（送信のみ）に切替":"事務所モード（印刷あり）に切替");
@@ -2371,6 +2381,8 @@ function verifyPin(p){ return !!LOCK.on && pinHash(p)===LOCK.h; }
 function sessionUnlocked(){ return _unlockAt>0 && (Date.now()-_unlockAt<180000); } /* PIN1回で3分間は再入力不要 */
 function withPin(fn){ if(!isLocked()||sessionUnlocked()){ fn(); return; } showPinPrompt(()=>{ _unlockAt=Date.now(); fn(); }); }
 document.addEventListener("visibilitychange",()=>{ if(document.hidden) _unlockAt=0; }); /* 端末を離れたら再ロック */
+/* 車屋モード：裏に回ったら（画面オフ/アプリ切替）フォームを消去＝送信しなくても次のお客様に前の入力を残さない */
+document.addEventListener("visibilitychange",()=>{ if(document.hidden && isDealer()){ try{ clearCurrentCase(); gotoStep(0); }catch(e){} } });
 /* 車屋モードでの印刷を抑止：Ctrl/⌘+P を握りつぶす（ブラウザメニュー/モバイル印刷は @media print 側で顧客書類を出さない） */
 window.addEventListener("keydown",e=>{ if(isDealer() && (e.ctrlKey||e.metaKey) && (e.key==="p"||e.key==="P")){ e.preventDefault(); e.stopPropagation(); toast("車屋モードでは印刷できません。📤 事務所へ送信してください"); } }, true);
 
@@ -2411,7 +2423,7 @@ function showConfirm(title,msg,onok){
   }
   document.getElementById("confTitle").textContent=title;
   document.getElementById("confMsg").textContent=msg;
-  document.getElementById("confOk").onclick=function(){ closeConf(); if(_confCb) _confCb(); };
+  document.getElementById("confOk").onclick=function(){ const cb=_confCb; closeConf(); if(cb) cb(); };
   bg.classList.add("open");
 }
 function closeConf(){ const bg=document.getElementById("confBg"); if(bg) bg.classList.remove("open"); _confCb=null; }
@@ -2434,6 +2446,7 @@ function boot(){
   loadSend();
   loadLock();
   detectMode();
+  if(isDealer()){ state=DEFAULT(); try{ localStorage.removeItem(AUTOSAVE); }catch(e){} } /* 車屋モードは毎回まっさら＝前のお客様の入力を端末に残さない */
   const incoming=readIncoming();
   if(incoming){ state=Object.assign(DEFAULT(), incoming); }
   buildStepNav();
