@@ -1,6 +1,6 @@
 /* 車庫証明かんたん作成（静岡県東部）— Service Worker
    オフライン動作のためアプリ一式をキャッシュ。更新時は CACHE のバージョンを上げる。 */
-const CACHE = "shako-tobu-v33";
+const CACHE = "shako-tobu-v34";
 const ASSETS = [
   "./",
   "./index.html",
