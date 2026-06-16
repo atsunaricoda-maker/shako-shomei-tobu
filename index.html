@@ -569,15 +569,21 @@ body.is-customer .dealer-only{display:none !important}
         <div class="hint" style="margin-top:8px">どちらが使えるかは提出先の警察署で異なる場合があります。迷ったら窓口でご確認ください。</div>
       </div>
 
-      <!-- 共有：案内のみ -->
+      <!-- 共有：自分の持分の自認書を出力＋他の共有者の承諾は各自用意 -->
       <div class="card kengen-kyoyu">
         <h2>⑥ 共有の保管場所について <span class="badge">共有</span></h2>
         <p class="lead">保管場所を<b>他の人と共同で所有（共有）</b>している場合の権原書面です。申請書の使用権原は自動で「<b>共有</b>」に〇が付きます。</p>
+        <div class="field">
+          <label class="lbl">あなたが共有持分を持つもの（自認書に記載）<span class="req">必須</span></label>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="jinin_obj_k" value="土地" data-bind="jinin.obj"><span class="ct">土地</span></label>
+            <label class="choice"><input type="radio" name="jinin_obj_k" value="建物" data-bind="jinin.obj"><span class="ct">建物</span></label>
+            <label class="choice"><input type="radio" name="jinin_obj_k" value="土地・建物" data-bind="jinin.obj"><span class="ct">土地・建物の両方</span></label>
+          </div>
+        </div>
         <div class="note info" style="line-height:1.8">
-          <b>① あなた（申請者）の持分</b><br>
-          自分の持分は<b>保管場所使用権原疎明書面（自認書）</b>で疎明できます。様式は⑨の公式様式リンク、または自認書の体裁で各自ご用意ください（共有である旨を記載）。<br><br>
-          <b>② 他の共有者ぜんいん</b><br>
-          あなた以外の<b>共有者全員</b>の<b>使用承諾証明書</b>が必要です（各共有者に記入・署名してもらう。証明日から<b>3か月以内</b>）。<b>所有者本人の書面のため、このアプリでは作成しません。</b>
+          <b>① あなた（申請者）の持分</b>：上記について<b>保管場所使用権原疎明書面（自認書）をアプリが出力</b>します（書類一式に含まれます）。<br><br>
+          <b>② 他の共有者ぜんいん</b>：あなた以外の<b>共有者全員</b>の<b>使用承諾証明書</b>が必要です（各共有者に記入・署名してもらう。証明日から<b>3か月以内</b>）。<b>所有者本人の書面のため、このアプリでは作成しません。</b>
         </div>
         <div class="hint" style="margin-top:8px">共有での提出書類の組み合わせは提出先の警察署で異なる場合があります。迷ったら窓口でご確認ください。</div>
       </div>
@@ -904,7 +910,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v45";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v46";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1198,7 +1204,8 @@ function openStampEditor(){
   ST.stamps=[]; ST.sel=-1; ST.drag=null; ST.useBg=false; ST.bgImg=null; ST.history=[]; ST.pen=false; ST.drawing=null; ST.multi=false; ST.selSet=new Set(); ST.marquee=null; ST.gdrag=null;
   if(state.haichiStamps && state.haichiStamps.stamps && state.haichiStamps.stamps.length){
     ST.stamps=state.haichiStamps.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0,text:s.text,g:s.g,park:s.park}));
-  } else { addStamp('road',30,510,false); addStamp('park',335,170,false); }
+  }
+  /* 既存の配置図stampsが無ければ「まっさらなキャンバス」から作る（既定の保管場所・道路は置かない） */
   ST.sel=-1;
   bindStampPointer(); drawStamps();
 }
@@ -1822,22 +1829,22 @@ function docTodoke(){
   </div>`;
 }
 function docJinin(){
-  const s=state;
+  const s=state, ky=(s.kubun.kengen==="kyoyu");
   return `<div class="sheet land">
     <h2 class="dt" style="letter-spacing:.2em">保管場所使用権原疎明書面（自認書）</h2>
     <div class="dt-sub">${ate()}</div>
     <table class="ftable" style="margin-top:10px">
       <tr><th>保管場所の位置</th><td class="val" colspan="3">${esc(hokanLoc(s))}</td></tr>
-      <tr><th>自己が所有するもの</th><td class="val" colspan="3">${["土地","建物","土地・建物"].map(o=>`<span style="margin-right:18px">${s.jinin.obj===o?"●":"○"} ${o}</span>`).join("")}</td></tr>
+      <tr><th>${ky?"共有持分を有するもの":"自己が所有するもの"}</th><td class="val" colspan="3">${["土地","建物","土地・建物"].map(o=>`<span style="margin-right:18px">${s.jinin.obj===o?"●":"○"} ${o}</span>`).join("")}</td></tr>
     </table>
-    <p class="bodytext">上記の自動車の保管場所として使用する${esc(s.jinin.obj)}は、私が所有するものであり、当該場所を保管場所として使用する権原を有することに相違ありません。</p>
+    <p class="bodytext">上記の自動車の保管場所として使用する${esc(s.jinin.obj)}は、私が${ky?"共有持分を有する":"所有する"}ものであり、当該場所を保管場所として使用する権原を有することに相違ありません。${ky?"（他の共有者全員の使用承諾証明書を併せて提出します。）":""}</p>
     <div class="addr-block right">
       ${JST_DATE()}<br>
       住所　${esc(s.shinseisha.addr)}<br>
       氏名（名称）　${esc(s.shinseisha.isCorp?(s.shinseisha.corpName+" "+s.shinseisha.daihyo):s.shinseisha.name)}　<br>
       電話　${esc(s.shinseisha.tel)}
     </div>
-    <p class="small" style="margin-top:18px">※ 押印は不要です（令和3年〜）。共有の場合は他の共有者全員の使用承諾証明書が必要です。</p>
+    <p class="small" style="margin-top:18px">${ky?"※ これは共有持分についての自認書です。押印は不要（令和3年〜）。別途、他の共有者全員の使用承諾証明書が必要です。":"※ 押印は不要です（令和3年〜）。共有の場合は他の共有者全員の使用承諾証明書が必要です。"}</p>
   </div>`;
 }
 function docShoudaku(){
@@ -1955,7 +1962,7 @@ function docChecklist(){
 
 function makeDocs(){
   const parts=[docMain()];
-  if(state.kubun.kengen==="jinin") parts.push(docJinin());
+  if(state.kubun.kengen==="jinin"||state.kubun.kengen==="kyoyu") parts.push(docJinin());  /* 共有も自分の持分の自認書を出力 */
   parts.push(docZu());
   parts.push(docChecklist());
   const area=document.getElementById("print-area");
