@@ -383,6 +383,8 @@ body.is-customer .dealer-only{display:none !important}
               <span><span class="ct">自分の土地・建物に駐車</span><span class="cd">自宅敷地・自己所有の車庫など →「自認書」を作成</span></span></label>
             <label class="choice"><input type="radio" name="kengen" value="shoudaku" data-bind="kubun.kengen">
               <span><span class="ct">他人の土地・月極駐車場を借りる</span><span class="cd">賃貸駐車場・親族の土地など →「使用承諾証明書」は各自で用意（案内を表示）</span></span></label>
+            <label class="choice"><input type="radio" name="kengen" value="kyoyu" data-bind="kubun.kengen">
+              <span><span class="ct">共有（他の人と共同で所有）</span><span class="cd">自分にも持分がある共有の保管場所 → 他の共有者全員の「使用承諾証明書」が必要（案内を表示）</span></span></label>
           </div>
         </div>
 
@@ -566,18 +568,23 @@ body.is-customer .dealer-only{display:none !important}
         </div>
         <div class="hint" style="margin-top:8px">どちらが使えるかは提出先の警察署で異なる場合があります。迷ったら窓口でご確認ください。</div>
       </div>
+
+      <!-- 共有：案内のみ -->
+      <div class="card kengen-kyoyu">
+        <h2>⑥ 共有の保管場所について <span class="badge">共有</span></h2>
+        <p class="lead">保管場所を<b>他の人と共同で所有（共有）</b>している場合の権原書面です。申請書の使用権原は自動で「<b>共有</b>」に〇が付きます。</p>
+        <div class="note info" style="line-height:1.8">
+          <b>① あなた（申請者）の持分</b><br>
+          自分の持分は<b>保管場所使用権原疎明書面（自認書）</b>で疎明できます。様式は⑨の公式様式リンク、または自認書の体裁で各自ご用意ください（共有である旨を記載）。<br><br>
+          <b>② 他の共有者ぜんいん</b><br>
+          あなた以外の<b>共有者全員</b>の<b>使用承諾証明書</b>が必要です（各共有者に記入・署名してもらう。証明日から<b>3か月以内</b>）。<b>所有者本人の書面のため、このアプリでは作成しません。</b>
+        </div>
+        <div class="hint" style="margin-top:8px">共有での提出書類の組み合わせは提出先の警察署で異なる場合があります。迷ったら窓口でご確認ください。</div>
+      </div>
     </section>
 
     <!-- STEP 7 配置図 -->
     <section class="step" data-step="6">
-      <div class="card" style="border-color:var(--accent)">
-        <h2 style="color:var(--accent)">⚡ ひな形から配置図を作る</h2>
-        <p class="lead">よくあるケースを選ぶと、<b>駐車場タイプ・寸法・配置図</b>を自動セット。あとは寸法や位置など<b>必要な所だけ直せば完成</b>です。</p>
-        <select id="tmplSelect" onchange="applyTemplateFromSelect()">
-          <option value="">ひな形を選ぶ…</option>
-        </select>
-        <div class="hint" id="tmplDesc" style="margin-top:6px"></div>
-      </div>
       <div class="card">
         <h2>⑦ 配置図（自動作図）</h2>
         <p class="lead">寸法を入力すると、提出できる配置図を自動で描きます。<b>配置図は省略できません。</b>現地でメジャー計測した数値を入れてください。</p>
@@ -847,7 +854,8 @@ function refreshZensha(){
 function refreshKengen(){
   const k=state.kubun.kengen;
   document.querySelectorAll(".kengen-jinin").forEach(e=>e.style.display=(k==="jinin")?"":"none");
-  document.querySelectorAll(".kengen-shoudaku").forEach(e=>e.style.display=(k==="jinin")?"none":"");
+  document.querySelectorAll(".kengen-shoudaku").forEach(e=>e.style.display=(k==="shoudaku")?"":"none");
+  document.querySelectorAll(".kengen-kyoyu").forEach(e=>e.style.display=(k==="kyoyu")?"":"none");
 }
 function refreshParkType(){ const f=document.getElementById("heightField"); if(!f) return; f.style.display=(state.haichi.type&&state.haichi.type!=="平面")?"":"none"; }
 function refreshCorp(){
@@ -896,7 +904,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v43";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v44";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1171,8 +1179,8 @@ const STAMP_DEFS={
   text:{label:"文字",     w:160,h:48,  fill:"none", stroke:"#000"},
   cell:{label:"",         w:64, h:104, fill:"none", stroke:"#888"}
 };
-/* ケースのひな形（選ぶと権原・駐車場タイプ・寸法・配置図stampsを一括セット。あとは必要箇所だけ修正）。
-   配置図は820x600座標。stampsは _S(type,x,y,w,h,text?) で定義。設計はワークフローで現実性・座標を機械検証済み。 */
+/* ［未使用・2026-06廃止：ひな形機能はUI・適用関数・boot呼び出しを削除済み。以下のTEMPLATES配列と_Sは未参照の残置（無害／必要なら後日削除可）］
+   ケースのひな形（選ぶと権原・駐車場タイプ・寸法・配置図stampsを一括セット）。配置図は820x600座標。stampsは _S(type,x,y,w,h,text?) で定義。 */
 const _S=(type,x,y,w,h,text)=>({type,x,y,w,h,rot:0,text:text});
 const TEMPLATES=[
  {name:"自宅敷地に青空1台（自認・平面）",desc:"最頻：自分名義の戸建てに屋根なし1台。両隣の隣家と前面道路で場所が分かる。道路幅員・寸法・出入口の向きだけ直せば完成。",haichiType:"平面",w:"2.5",d:"5.0",gate:"2.5",road:"4.0",height:"",stamps:[_S("north",742,28,66,90),_S("bldg",40,70,180,150),_S("text",60,138,140,28,"隣家（左）"),_S("home",300,60,200,150),_S("text",345,118,120,30,"自宅"),_S("bldg",600,70,180,150),_S("text",620,138,140,28,"隣家（右）"),_S("park",335,250,150,260),_S("text",300,222,220,30,"保管場所 2.5×5.0m"),_S("door",361,452,104,78),_S("road",30,512,760,70),_S("text",290,548,240,30,"前面道路 幅員4.0m")]},
@@ -1427,25 +1435,7 @@ function multiBtnState(){ const b=document.getElementById("multiBtn"); if(!b) re
 function toggleMulti(){ ST.multi=!ST.multi; ST.sel=-1; ST.selSet.clear(); ST.marquee=null; ST.gdrag=null; multiBtnState(); drawStamps(); toast(ST.multi?"まとめ選択ON：囲む/タップで選び、内側ドラッグで移動":"まとめ選択OFF"); }
 function selectAllStamps(){ if(!ST.stamps.length){toast("先に部品を置いてください");return;} ST.multi=true; ST.selSet=new Set(ST.stamps.map((_,i)=>i)); multiBtnState(); drawStamps(); }
 function deleteGroup(){ if(!ST.multi||!ST.selSet.size){ toast("まとめ選択で部品を囲んでください"); return; } stampPushHistory(); [...ST.selSet].sort((a,b)=>b-a).forEach(i=>ST.stamps.splice(i,1)); ST.selSet.clear(); drawStamps(); toast("まとめて削除しました"); }
-/* ====== ケースのひな形 適用 ====== */
-function applyTemplate(i){
-  const t=TEMPLATES[i]; if(!t) return;
-  /* ひな形は「配置図の作成」専用：駐車場タイプ・寸法・配置図のみセット（権原は触らない） */
-  state.haichi.type=t.haichiType; state.haichi.w=t.w; state.haichi.d=t.d; state.haichi.gate=t.gate||""; state.haichi.road=t.road; state.haichi.height=t.height||"";
-  const gid="g"+Date.now();   // 区画(cell)は同一グループ＝塊で移動・同角度回転
-  state.haichiStamps={ w:820, h:600, stamps:t.stamps.map(s=>({type:s.type,x:s.x,y:s.y,w:s.w,h:s.h,rot:s.rot||0,text:s.text,g:(s.type==="cell"?gid:undefined)})) };
-  hydrate(); applyAll(); refreshParkType(); refreshFigStatus("haichi"); scheduleSave();
-  toast("配置図のひな形を読み込みました：必要な所だけ直してください");
-}
-function renderTemplates(){
-  const sel=document.getElementById("tmplSelect"); if(!sel) return;
-  sel.innerHTML='<option value="">ひな形を選ぶ…</option>'+TEMPLATES.map((t,i)=>`<option value="${i}">${esc(t.name)}</option>`).join("");
-}
-function applyTemplateFromSelect(){
-  const sel=document.getElementById("tmplSelect"); const i=parseInt(sel.value,10);
-  const d=document.getElementById("tmplDesc"); if(d) d.textContent=(i>=0&&TEMPLATES[i])?TEMPLATES[i].desc:"";
-  if(i>=0) applyTemplate(i);
-}
+/* ====== ケースのひな形機能は廃止（2026-06。ユーザー要望でUI・適用関数・boot呼び出しを削除） ====== */
 function stampScale(f){ if(ST.sel<0){toast("部品を選択してください");return;} stampPushHistory(); const s=ST.stamps[ST.sel];
   if(s.g){ const ms=ST.stamps.filter(o=>o.g===s.g); let mnx=1e9,mny=1e9,mxx=-1e9,mxy=-1e9; ms.forEach(o=>{mnx=Math.min(mnx,o.x);mny=Math.min(mny,o.y);mxx=Math.max(mxx,o.x+o.w);mxy=Math.max(mxy,o.y+o.h);}); const gcx=(mnx+mxx)/2,gcy=(mny+mxy)/2; ms.forEach(o=>{ const ocx=o.x+o.w/2,ocy=o.y+o.h/2; o.w=Math.max(16,o.w*f); o.h=Math.max(16,o.h*f); o.x=gcx+(ocx-gcx)*f-o.w/2; o.y=gcy+(ocy-gcy)*f-o.h/2; }); }
   else { const cx=s.x+s.w/2,cy=s.y+s.h/2; s.w=Math.max(20,s.w*f); s.h=Math.max(8,s.h*f); s.x=cx-s.w/2; s.y=cy-s.h/2; }
@@ -1685,7 +1675,7 @@ function renderSummary(){
   const s=state;
   const applicant = s.shinseisha.isCorp? (s.shinseisha.corpName+" "+(s.shinseisha.daihyo||"")) : s.shinseisha.name;
   const size = (s.vehicle.len&&s.vehicle.wid&&s.vehicle.hei)? `${s.vehicle.len}×${s.vehicle.wid}×${s.vehicle.hei}cm`:"";
-  const kengenName={jinin:"自己所有（自認書）",shoudaku:"他人所有（承諾書/契約書は各自用意）",kyoyu:"他人所有（承諾書/契約書は各自用意）"}[s.kubun.kengen];
+  const kengenName={jinin:"自己所有（自認書）",shoudaku:"他人所有（承諾書/契約書は各自用意）",kyoyu:"共有（他の共有者全員の承諾書が必要・各自用意）"}[s.kubun.kengen];
   const rows=[
     ["申請種別", isKei()?"軽自動車（保管場所届出）":"普通自動車（証明申請）"],
     ["提出先", stn().name+"（"+stn().area+"）"],
@@ -1739,7 +1729,7 @@ function docShinseiOfficial(){
   const s=state, v=s.vehicle;
   const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}　${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
   const hokan = esc(hokanLoc(s));
-  const kengenSel = s.kubun.kengen==="jinin"?"自己":(s.kubun.kengen==="shoudaku"?"他人":"");
+  const kengenSel = s.kubun.kengen==="jinin"?"自己":(s.kubun.kengen==="shoudaku"?"他人":"共有");
   const kengenMark = ["自己","他人","共有"].map(o=>o===kengenSel?`<span style="border:1.3px solid #000;border-radius:8px;padding:0 3px">${o}</span>`:o).join(" ・ ");
   const dig=(val)=>{ const p=String(val||"").replace(/[^0-9]/g,"").slice(-4).padStart(4," "); let h=""; for(let i=0;i<4;i++){ h+="<span class=\"dc\">"+(p[i]===" "?"":p[i])+"</span>"; } return h; };
   return `<div class="sheet land">
@@ -1928,7 +1918,7 @@ function docZu(){
 }
 function docChecklist(){
   const s=state, kei=isKei(), st=stn();
-  const kengenDoc = s.kubun.kengen==="jinin"?"自認書（アプリ作成）":"使用承諾証明書 または 賃貸契約書の写し（各自で用意）";
+  const kengenDoc = s.kubun.kengen==="jinin"?"自認書（アプリ作成）":(s.kubun.kengen==="kyoyu"?"他の共有者全員の使用承諾証明書（各自で用意）＋自分の持分の自認書":"使用承諾証明書 または 賃貸契約書の写し（各自で用意）");
   const mainDoc = kei? "自動車保管場所届出書（届出書＋控え 2通）" : "自動車保管場所証明申請書（正・副 2通）";
   const items=[
     mainDoc,
@@ -2143,7 +2133,7 @@ function helpDealer(){
   <p style="font-size:13px;margin:0 0 10px">このタブレットは<b>「入力して事務所へ送る」専用</b>です。むずかしい設定は要りません。下の3ステップだけ。</p>
   <ol style="font-size:14px;line-height:1.85;padding-left:20px;margin:0">
     <li><b>画面の案内どおりに入力</b><br><span style="font-size:12.5px;color:#5a6b7b">上の番号（①区分→②申請者→③自動車…）に沿って「次へ」で進み、お客様の氏名・住所・電話、お車、車を停める場所を入力します。</span></li>
-    <li style="margin-top:6px"><b>配置図をつくる（⑦）</b><br><span style="font-size:12.5px;color:#5a6b7b">「⚡ひな形から作る」で近い形を選ぶか、部品を置いて作図。むずかしければ住所だけ入れて、事務所に仕上げてもらってもOK。</span></li>
+    <li style="margin-top:6px"><b>配置図をつくる（⑦）</b><br><span style="font-size:12.5px;color:#5a6b7b">部品（保管場所・自宅・道路など）を置いて作図、または地図から取り込み。むずかしければ住所だけ入れて、事務所に仕上げてもらってもOK。</span></li>
     <li style="margin-top:6px"><b>最後に「📤 事務所へ送信」を押す</b><br><span style="font-size:12.5px;color:#5a6b7b">メールアプリが開くので、そのまま送信してください（宛先は設定済み）。<b>送信すると入力は自動で消えます</b>＝次のお客様へ。</span></li>
   </ol>
   <div class="note" style="margin-top:10px;background:#fff7ee;border:1px solid #f0c98a;font-size:12.5px"><b>📱 お客様のスマホで入力してもらう方法も：</b>画面いちばん上の<b>「お客様のスマホで入力してもらう（QRを表示）」</b>を押し、出たQRをお客様に見せれば、お客様ご自身の端末で入力 → 送信できます（この端末には残りません）。</div>
@@ -2165,7 +2155,7 @@ function helpOffice(){
       <li><b>①区分</b>：種別（普通／軽）・提出先の警察署・権原を選ぶ。</li>
       <li><b>②③④</b>：申請者・自動車・本拠を入力（上部「顧客」から呼び出しも可）。</li>
       <li><b>⑤⑥</b>：保管場所と権原書面（自認書／承諾書）。直線2kmを自動判定。</li>
-      <li><b>⑦配置図</b>：「⚡ひな形」かスタンプ作図、または地図から取込。</li>
+      <li><b>⑦配置図</b>：スタンプで作図、または地図から取込。</li>
       <li><b>⑧所在図</b>：住所から地図を自動作成。</li>
       <li><b>⑨</b>：「📄書類プレビュー」→「🖨印刷」で印刷／PDF化して<b>そのまま提出</b>（正・副2通）。署が自作様式不可なら公式様式に転記。</li>
     </ol></details>
@@ -2540,7 +2530,6 @@ function boot(){
   if(incoming){ state=Object.assign(DEFAULT(), incoming); }
   buildStepNav();
   buildStationOptions();
-  renderTemplates();
   bindAll();
   hydrate();
   applyAll();
