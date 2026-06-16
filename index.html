@@ -586,16 +586,15 @@ body.is-customer .dealer-only{display:none !important}
     <!-- STEP 7 配置図 -->
     <section class="step" data-step="6">
       <div class="card">
-        <h2>⑦ 配置図（自動作図）</h2>
-        <p class="lead">寸法を入力すると、提出できる配置図を自動で描きます。<b>配置図は省略できません。</b>現地でメジャー計測した数値を入れてください。</p>
+        <h2>⑦ 配置図の寸法</h2>
+        <p class="lead">保管場所の寸法を入力してください。<b>この寸法をもとに行政書士が配置図を作図します</b>（自動作図は行いません）。配置図は省略できません。現地でメジャー計測した数値を入れてください。</p>
 
         <div class="field">
           <label class="lbl">駐車場のタイプ</label>
           <select data-bind="haichi.type" id="haichiType">
             <option value="平面">平面（青空）</option>
-            <option value="車庫">車庫</option>
+            <option value="車庫・ガレージ">車庫・ガレージ</option>
             <option value="カーポート">カーポート</option>
-            <option value="ガレージ">ガレージ</option>
             <option value="機械式">機械式・立体駐車場</option>
           </select>
         </div>
@@ -628,7 +627,8 @@ body.is-customer .dealer-only{display:none !important}
         <div class="hint" id="haichiCheck"></div>
 
         <hr class="hr">
-        <button class="fig-btn" onclick="openStampEditor()">✏️ スタンプで配置図を作る（部品を置いて作図）</button>
+        <div class="hint" style="margin-bottom:6px">配置図は行政書士が作図します。<b>アプリ内で図も作りたい場合のみ（任意）</b>、下のスタンプ作図をお使いください。</div>
+        <button class="fig-btn" onclick="openStampEditor()">✏️（任意）スタンプで配置図を作る（部品を置いて作図）</button>
         <div class="ed-tip">「保管場所」「自宅」「道路」などの部品を置いて、ドラッグで移動・大きさ変更。<b>集合住宅は「区画をまとめて配置」</b>で駐車区画を一括で置けます（塊で移動・サイズ変更できます）。</div>
         <div id="haichiFigStatus"></div>
       </div>
@@ -904,7 +904,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v44";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v45";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -932,11 +932,9 @@ function checkPeriod(){
    ===================================================================== */
 function drawHaichi(){
   const prev=document.getElementById("haichiPrev"); if(!prev) return;
-  if(haichiComposite){ prev.innerHTML='<img src="'+haichiComposite+'" style="width:100%;border-radius:8px;display:block">'; return; }
-  const h=state.haichi;
-  const w=parseFloat(h.w)||0, d=parseFloat(h.d)||0, road=parseFloat(h.road)||0, gate=parseFloat(h.gate)||0;
-  const svg=buildHaichiSVG(h,w,d,road,gate);
-  prev.innerHTML = (w&&d)? svg : '<div style="padding:24px;text-align:center;color:#8aa">幅と奥行を入力すると図が表示されます</div>';
+  /* 自動作図は廃止（2026-06）。スタンプ/航空写真で作図した配置図(haichiComposite)があればプレビュー、無ければ空。
+     寸法は入力欄に残り、配置図は行政書士が作図する役割。 */
+  prev.innerHTML = haichiComposite ? '<img src="'+haichiComposite+'" style="width:100%;border-radius:8px;display:block">' : '';
 }
 function buildHaichiSVG(h,w,d,road,gate){
   // キャンバス 320x300 のレイアウト。道路は roadSide に配置。
@@ -1720,22 +1718,24 @@ function wareki(iso){
 }
 function esc(v){ return (v==null?"":(""+v)).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
 
-function docMain(){ return isKei()? docTodoke() : docShinseiOfficial(); }
+function docMain(){ return docShinseiOfficial(isKei()); }  /* 軽も普通車レイアウトで出力（kei=trueでタイトル等を届出書仕様に） */
 /* 保管場所の表記：駐車場名が無くても区画番号は「区画番号◯◯」と明示（住所＋部屋番号に見えないように） */
 function hokanLoc(s){ s=s||state; const h=s.hokan, p=[]; if(h.addr)p.push(h.addr); if(h.name)p.push(h.name); if(h.kukaku)p.push("区画番号"+h.kukaku); return p.join("　"); }
 
-/* 普通車：自動車保管場所証明申請書（静岡県警 公式様式 別記様式第1号 を忠実再現） */
-function docShinseiOfficial(){
+/* 普通車：自動車保管場所証明申請書（別記様式第1号）／軽(kei=true)：同レイアウトで自動車保管場所届出書（証明欄なし・届出者） */
+function docShinseiOfficial(kei){
   const s=state, v=s.vehicle;
   const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}　${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
   const hokan = esc(hokanLoc(s));
   const kengenSel = s.kubun.kengen==="jinin"?"自己":(s.kubun.kengen==="shoudaku"?"他人":"共有");
   const kengenMark = ["自己","他人","共有"].map(o=>o===kengenSel?`<span style="border:1.3px solid #000;border-radius:8px;padding:0 3px">${o}</span>`:o).join(" ・ ");
   const dig=(val)=>{ const p=String(val||"").replace(/[^0-9]/g,"").slice(-4).padStart(4," "); let h=""; for(let i=0;i<4;i++){ h+="<span class=\"dc\">"+(p[i]===" "?"":p[i])+"</span>"; } return h; };
+  const title=kei?"自動車保管場所届出書":"自動車保管場所証明申請書";
+  const aplbl=kei?"届出者":"申請者";
   return `<div class="sheet land">
-    <div class="offlbl">別記様式第１号（第１条関係）</div>
+    ${kei?"":'<div class="offlbl">別記様式第１号（第１条関係）</div>'}
     <table class="off">
-      <tr><td colspan="6" class="ttl">自動車保管場所証明申請書</td></tr>
+      <tr><td colspan="6" class="ttl">${title}</td></tr>
       <tr>
         <td class="hd" style="width:17%">車　名</td>
         <td class="hd" style="width:17%">型　式</td>
@@ -1755,12 +1755,12 @@ function docShinseiOfficial(){
       <tr><td class="hd">自動車の使用の本拠の位置</td><td colspan="5" class="v">${esc(honkyoAddr())}</td></tr>
       <tr><td class="hd">自動車の保管場所の位置</td><td colspan="5" class="v">${hokan}</td></tr>
       <tr><td colspan="6" class="offbody" style="padding:8px 10px">
-        自動車の保管場所の位置欄記載の場所は、申請に係る自動車の保管場所として確保されていることを証明願います。
+        ${kei?"自動車の保管場所の位置欄記載の場所を、上記自動車の保管場所として確保しましたので、自動車の保管場所の確保等に関する法律第５条の規定により届け出ます。":"自動車の保管場所の位置欄記載の場所は、申請に係る自動車の保管場所として確保されていることを証明願います。"}
         <div style="text-align:right;margin:6px 22px 2px 0">${JST_DATE()}</div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:14px">
           <div style="white-space:nowrap;font-size:13px">${ate()}</div>
           <div class="apwrap" style="flex:0 0 55%">
-            <span class="aplabel">申請者</span>
+            <span class="aplabel">${aplbl}</span>
             <div class="apcol">
               <div class="aprow"><span class="apl">住　所</span><div class="apb top">〒（　${esc(s.shinseisha.zip)}　）<br>${esc(s.shinseisha.addr)}</div></div>
               <div class="aprow"><span class="apl"></span><div class="apb mid">電話　${esc(s.shinseisha.tel)}</div></div>
@@ -1769,16 +1769,17 @@ function docShinseiOfficial(){
           </div>
         </div>
       </td></tr>
+      ${kei?"":`
       <tr><td colspan="6" style="font-size:12px">第　　　　　　号</td></tr>
       <tr><td colspan="6" class="ttl" style="font-size:15px;letter-spacing:.3em">自動車保管場所証明書</td></tr>
       <tr><td colspan="6" class="offbody" style="padding:8px 10px">
         自動車の保管場所の位置欄記載の場所は、上記申請に係る自動車の保管場所として確保されていることを証明する。
         <div style="text-align:right;margin:10px 24px 4px 0">令和　　　年　　　月　　　日</div>
         <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;padding-right:8px"><span style="font-size:13px">静岡県${esc(stn().name)}長</span><span class="inkan">印</span></div>
-      </td></tr>
+      </td></tr>`}
       <tr><td colspan="6" style="padding:0">
         <table class="botsub"><tr>
-          <td style="width:42%;font-size:8.5px;line-height:1.45;text-align:left;padding:3px 8px;vertical-align:middle">※ 自動車の登録手続に必要となる自動車保管場所証明書は、登録申請の日からさかのぼっておおむね１か月以内に発行されたものとなりますので、注意してください。</td>
+          <td style="width:42%;font-size:8.5px;line-height:1.45;text-align:left;padding:3px 8px;vertical-align:middle">${kei?"※ これは軽自動車の保管場所届出書です（証明書の交付はありません）。車名・型式・車台番号・大きさは車検証のとおり記入してください。":"※ 自動車の登録手続に必要となる自動車保管場所証明書は、登録申請の日からさかのぼっておおむね１か月以内に発行されたものとなりますので、注意してください。"}</td>
           <td class="hd2" style="width:5%">使用<br>権原</td><td style="width:13%;font-size:10px">${kengenMark}</td>
           <td class="hd2" style="width:4%">連絡先</td><td style="width:11%;text-align:left;padding-left:5px;font-size:9.5px">氏名<br>電話</td>
           <td class="hd2" style="width:5%">新規<br>代替</td>
@@ -1792,7 +1793,7 @@ function docShinseiOfficial(){
       　(1)　自動車の使用の本拠の位置が、旧自動車（申請者が保有者である自動車であって申請に係るもの以外のものをいう。以下同じ。）に係る使用の本拠の位置と同一であり、かつ、申請に係る場所が旧自動車の保管場所と同一であるとき。<br>
       　(2)　自動車の使用の本拠の位置が、保管場所の位置と同一であるとき（(1)に該当する場合を除く。）。<br>
       　2　用紙の大きさは、日本産業規格Ａ列４番とする。</div>
-    <p class="offsmall subnote" style="margin-top:6px"><b>提出用</b>：正・副2通で提出。氏名は印字で可（押印は令和3年〜不要。署により認印を求める場合あり）。本様式は別記様式第1号に準拠。最終的な様式は提出先（${esc(stn().name)}）でご確認ください。</p>
+    <p class="offsmall subnote" style="margin-top:6px">${kei?`<b>提出用</b>：届出書＋控えの2通で提出。軽自動車は車検・ナンバー取得後の届出（義務地域は15日以内）。証明書の交付なし・押印不要。最終的な様式は提出先（${esc(stn().name)}）でご確認ください。`:`<b>提出用</b>：正・副2通で提出。氏名は印字で可（押印は令和3年〜不要。署により認印を求める場合あり）。本様式は別記様式第1号に準拠。最終的な様式は提出先（${esc(stn().name)}）でご確認ください。`}</p>
   </div>`;
 }
 
@@ -1880,7 +1881,7 @@ function docZu(){
   const w=parseFloat(h.w)||0,d=parseFloat(h.d)||0,road=parseFloat(h.road)||0,gate=parseFloat(h.gate)||0;
   const haichiSvg = haichiComposite
     ? `<img src="${haichiComposite}" style="width:100%;border:1px solid #999;border-radius:4px;display:block">`
-    : ((w&&d)? buildHaichiSVG(h,w,d,road,gate) : '<div style="padding:30px;text-align:center;color:#999">（寸法未入力）</div>');
+    : `<div style="min-height:240px;border:1px dashed #999;border-radius:4px;padding:12px;font-size:12px;color:#555;line-height:1.7">配置図はこの欄に手書き、または別紙を添付してください。<br>（右の寸法を基準に作図）</div>`;
   let shozai;
   const shozaiImg = (s.shozai.mode==="image") ? (shozaiComposite || mapImage || null) : null;
   if(shozaiImg){
