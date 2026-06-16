@@ -910,7 +910,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v46";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v47";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1704,9 +1704,10 @@ function renderDocPick(){
   let docs=[ kei
     ? ["届","自動車保管場所届出書","届出書＋控えを印刷（軽）"]
     : ["申","自動車保管場所証明申請書","印刷してそのまま提出（正・副2通）"] ];
-  if(s.kubun.kengen==="jinin") docs.push(["自","保管場所使用権原疎明書面（自認書）","自己所有のため"]);
+  if(s.kubun.kengen==="jinin") docs.push(["自","保管場所使用権原疎明書面（自認書）","自己所有のため（アプリ作成）"]);
+  else if(s.kubun.kengen==="kyoyu"){ docs.push(["自","保管場所使用権原疎明書面（自認書）","共有持分について（アプリ作成）"]); docs.push(["承","他の共有者全員の使用承諾証明書","各自で用意（アプリでは作成しません）"]); }
   else docs.push(["承","使用承諾証明書 または 賃貸契約書の写し","各自で用意（アプリでは作成しません）"]);
-  docs.push(["図","保管場所の所在図・配置図","配置図は自動作図"]);
+  docs.push(["図","保管場所の所在図・配置図","寸法を入力（配置図は行政書士が作図）"]);
   docs.push(["✓","提出チェックリスト（控え）","行政書士用の確認シート"]);
   document.getElementById("docPick").innerHTML=docs.map(([i,t,n])=>
     `<div class="doc-card"><div class="di">${i}</div><div><div class="dt">${t}</div><div class="dn">${n}</div></div></div>`).join("");
