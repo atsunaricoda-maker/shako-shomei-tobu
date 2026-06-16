@@ -687,7 +687,7 @@ body.is-customer .dealer-only{display:none !important}
         <div id="sendStatus"></div>
         <button class="fig-btn" style="border-color:var(--accent);background:#fff4e8;color:#a85a14" onclick="sendByMail()">📤 メールで送信</button>
         <button class="inline-btn" id="copyLinkBtn" style="width:100%;margin-top:10px" onclick="copyCaseLink()">🔗 リンクをコピー（LINE等で送る）</button>
-        <div class="hint" style="margin-top:8px">送信元（お店名）・送信先（事務所メール）は右上の<b>⚙</b>で設定。リンクには個人情報が含まれます（身内の連絡手段で送ってください）。スタンプで作った配置図は送られます（航空写真の“写真”は容量のため非同梱）。</div>
+        <div class="hint" style="margin-top:8px">送信先（事務所メール）は右上の<b>⚙</b>で設定（お店名は車屋導入時に登録）。リンクには個人情報が含まれます（身内の連絡手段で送ってください）。スタンプで作った配置図は送られます（航空写真の“写真”は容量のため非同梱）。</div>
       </div>
 
       <div class="card office-only">
@@ -909,7 +909,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v48";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v49";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1560,8 +1560,7 @@ function gmapModal(){
   <hr class="hr">
   <h3 style="font-size:14.5px;margin:6px 0 4px">📤 データ送信設定</h3>
   <p style="font-size:12.5px;color:#5a6b7b;line-height:1.65">「事務所へ送信」で使う情報。<b>この端末内だけ</b>に保存され、外部やリポジトリには出ません。</p>
-  <div class="field"><label class="lbl">送信元（お店・事業者名）<span class="opt">任意</span></label>
-    <input type="text" id="sendFromInput" placeholder="例）〇〇モータース" value="${esc(SEND.from)}" autocomplete="off"></div>
+  <div class="hint" style="margin:0 0 8px">お店の名前（送信元）は、<b>車屋の導入時に車屋側で登録</b>されます（ここでは設定不要）。</div>
   <div class="field"><label class="lbl">送信先メール（事務所）</label>
     <input type="email" id="sendToInput" placeholder="office@example.com" value="${esc(SEND.to)}" autocomplete="off" inputmode="email"></div>
   <button class="inline-btn" style="width:100%" onclick="saveSend()">送信設定を保存</button>
@@ -2264,9 +2263,8 @@ const SEND_KEY="shako_tobu_send";
 let SEND={from:"",to:""};
 function loadSend(){ try{ const j=localStorage.getItem(SEND_KEY); if(j) SEND=Object.assign(SEND,JSON.parse(j)); }catch(e){} }
 function saveSend(){
-  const f=document.getElementById("sendFromInput"), t=document.getElementById("sendToInput");
-  if(f) SEND.from=(f.value||"").trim();
-  if(t) SEND.to=(t.value||"").trim();
+  const t=document.getElementById("sendToInput");
+  if(t) SEND.to=(t.value||"").trim();   /* 送信元(お店名)は車屋導入時にmaybeAskShopNameで設定＝ここでは触らない */
   localStorage.setItem(SEND_KEY, JSON.stringify(SEND));
   toast("送信設定を保存しました"); renderSendStatus();
 }
