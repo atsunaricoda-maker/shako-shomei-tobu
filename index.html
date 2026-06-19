@@ -909,7 +909,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v50";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v51";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1563,6 +1563,9 @@ function gmapModal(){
   <div class="hint" style="margin:0 0 8px">お店の名前（送信元）は、<b>車屋の導入時に車屋側で登録</b>されます（ここでは設定不要）。</div>
   <div class="field"><label class="lbl">送信先メール（事務所）</label>
     <input type="email" id="sendToInput" placeholder="office@example.com" value="${esc(SEND.to)}" autocomplete="off" inputmode="email"></div>
+  <div class="field"><label class="lbl">事務所名（行政書士／法人名）<span class="opt">任意</span></label>
+    <input type="text" id="sendOfficeInput" placeholder="例）○○行政書士事務所／行政書士法人△△" value="${esc(SEND.office)}" autocomplete="off"></div>
+  <div class="hint" style="margin:0 0 6px">お客様モードの<b>送信前の同意画面に「送信先」として表示</b>されます（車屋導入QRにも引き継がれます）。</div>
   <button class="inline-btn" style="width:100%" onclick="saveSend()">送信設定を保存</button>
   <hr class="hr">
   <h3 style="font-size:14.5px">🗺 地図連携</h3>
@@ -2260,11 +2263,12 @@ function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.
    受け取り側はそのリンクを開くと「入力済み」で開く。サーバー・保存先は持たない。
    ===================================================================== */
 const SEND_KEY="shako_tobu_send";
-let SEND={from:"",to:""};
+let SEND={from:"",to:"",office:""};
 function loadSend(){ try{ const j=localStorage.getItem(SEND_KEY); if(j) SEND=Object.assign(SEND,JSON.parse(j)); }catch(e){} }
 function saveSend(){
-  const t=document.getElementById("sendToInput");
+  const t=document.getElementById("sendToInput"), of=document.getElementById("sendOfficeInput");
   if(t) SEND.to=(t.value||"").trim();   /* 送信元(お店名)は車屋導入時にmaybeAskShopNameで設定＝ここでは触らない */
+  if(of) SEND.office=(of.value||"").trim();
   localStorage.setItem(SEND_KEY, JSON.stringify(SEND));
   toast("送信設定を保存しました"); renderSendStatus();
 }
@@ -2303,7 +2307,7 @@ function showSendConsent(){
   if(!bg){ bg=document.createElement("div"); bg.id="consentBg"; bg.className="modal-bg"; bg.style.zIndex="86"; bg.style.alignItems="center"; document.body.appendChild(bg); }
   bg.innerHTML=`<div class="modal" style="max-width:340px;border-radius:18px">
     <h3>📤 送信の前にご確認ください</h3>
-    <p style="font-size:13px;line-height:1.75;margin:0 0 10px">入力された氏名・住所・お車などの情報は、<b>車庫証明の手続きのため</b>に、ご依頼先の<b>行政書士事務所</b>へ送信されます${SEND.from?`（${esc(SEND.from)}経由）`:""}。<br><b>他の目的には使用しません。</b></p>
+    <p style="font-size:13px;line-height:1.75;margin:0 0 10px">入力された氏名・住所・お車などの情報は、<b>車庫証明の手続きのため</b>に、ご依頼先の<b>${SEND.office?esc(SEND.office):"行政書士事務所"}</b>へ送信されます${SEND.from?`（${esc(SEND.from)}経由）`:""}。<br><b>他の目的には使用しません。</b></p>
     <label class="chk" style="display:flex;gap:8px;align-items:flex-start;font-size:13px;background:#f7f9fb;border:1px solid var(--line);border-radius:10px;padding:10px 12px"><input type="checkbox" id="consentChk" onchange="var b=document.getElementById('consentSendBtn');b.disabled=!this.checked;b.style.opacity=this.checked?'1':'.5'"><span>上記の利用目的に<b>同意します</b></span></label>
     <button id="consentSendBtn" class="inline-btn" style="width:100%;margin-top:12px;border-color:var(--accent);background:var(--accent);color:#fff;font-weight:700;opacity:.5" disabled onclick="agreeAndSend()">📤 同意して送信</button>
     <button class="inline-btn" style="width:100%;margin-top:6px" onclick="closeConsent()">キャンセル</button>
@@ -2327,7 +2331,7 @@ function fallbackCopy(text){
 }
 function renderSendStatus(){
   const el=document.getElementById("sendStatus"); if(!el) return;
-  if(SEND.to) el.innerHTML=`<div class="note ok" style="margin:0 0 10px">送信先：<b>${esc(SEND.to)}</b>${SEND.from?`　／　送信元：<b>${esc(SEND.from)}</b>`:""}</div>`;
+  if(SEND.to) el.innerHTML=`<div class="note ok" style="margin:0 0 10px">送信先：<b>${esc(SEND.to)}</b>${SEND.office?`　／　事務所：<b>${esc(SEND.office)}</b>`:""}${SEND.from?`　／　送信元：<b>${esc(SEND.from)}</b>`:""}</div>`;
   else el.innerHTML=`<div class="note warn" style="margin:0 0 10px">送信先メールが未設定です。右上の<b>⚙</b>→「データ送信設定」で入力してください。</div>`;
 }
 
@@ -2350,14 +2354,16 @@ function detectMode(){
     const role=(p.get("role")||p.get("mode")||"").toLowerCase();
     if(role==="customer"){   // 顧客モード：お客様の端末で入力→送信。送信先(to/from)はURLから読み、端末には保存しない
       CUSTOMER=true; APPMODE="dealer";
-      const to=p.get("to"), from=p.get("from");
-      if(to) SEND.to=to; if(from) SEND.from=from;
+      const to=p.get("to"), from=p.get("from"), of=p.get("of");
+      if(to) SEND.to=to; if(from) SEND.from=from; if(of) SEND.office=of;
       return;
     }
     if(role==="dealer"||role==="car"){
       localStorage.setItem(MODE_KEY,"dealer");
-      const sto=p.get("to"), slh=p.get("lh");   // 車屋導入QR：送信先メール＋ロックPIN(ハッシュ)を設定済みにする
-      if(sto){ SEND.to=sto; try{ saveSend(); }catch(e){} }
+      const sto=p.get("to"), slh=p.get("lh"), sof=p.get("of");   // 車屋導入QR：送信先メール＋事務所名＋ロックPIN(ハッシュ)を設定済みにする
+      if(sof) SEND.office=sof;
+      if(sto) SEND.to=sto;
+      if(sto||sof){ try{ saveSend(); }catch(e){} }
       if(slh){ LOCK={on:true,h:slh}; try{ localStorage.setItem(LOCK_KEY,JSON.stringify(LOCK)); }catch(e){} }
       if(sto||slh){ try{ history.replaceState(null,"",location.origin+location.pathname); }catch(e){} }   // PIN等をURLから消す
     }
@@ -2406,7 +2412,7 @@ let _custUrl="";
 function makeQRImg(text,cell){ for(let t=3;t<=20;t++){ try{ const q=qrcode(t,'M'); q.addData(text); q.make(); return q.createImgTag(cell||5,10); }catch(e){} } return '<div style="color:var(--warn);font-size:12px">QR生成に失敗しました（下のリンクをご利用ください）</div>'; }
 function showCustomerShare(){
   if(!SEND.to){ toast("先に下の「データ送信設定」で事務所メールを設定してください"); return; }
-  _custUrl=location.origin+location.pathname+"?role=customer&to="+encodeURIComponent(SEND.to)+(SEND.from?("&from="+encodeURIComponent(SEND.from)):"");
+  _custUrl=location.origin+location.pathname+"?role=customer&to="+encodeURIComponent(SEND.to)+(SEND.from?("&from="+encodeURIComponent(SEND.from)):"")+(SEND.office?("&of="+encodeURIComponent(SEND.office)):"");
   let bg=document.getElementById("custShareBg");
   if(!bg){ bg=document.createElement("div"); bg.id="custShareBg"; bg.className="modal-bg"; bg.style.zIndex="84"; bg.style.alignItems="center"; document.body.appendChild(bg); }
   bg.innerHTML=`<div class="modal" style="max-width:340px;border-radius:18px;text-align:center">
@@ -2441,7 +2447,7 @@ function showDealerSetup(){
 function genDealerSetupQR(){
   const pin=(document.getElementById("setupPin").value||"").trim();
   if(pin.length<4){ toast("暗証番号は4桁以上で（6〜8桁推奨）"); return; }
-  _custUrl=location.origin+location.pathname+"?role=dealer&to="+encodeURIComponent(SEND.to)+"&lh="+encodeURIComponent(pinHash(pin));
+  _custUrl=location.origin+location.pathname+"?role=dealer&to="+encodeURIComponent(SEND.to)+"&lh="+encodeURIComponent(pinHash(pin))+(SEND.office?("&of="+encodeURIComponent(SEND.office)):"");
   document.getElementById("dealerSetupResult").innerHTML=`
     <div style="background:#fff;padding:10px;border-radius:10px;display:inline-block;border:1px solid var(--line);margin-top:12px">${makeQRImg(_custUrl,5)}</div>
     <div class="row" style="gap:6px;margin-top:10px"><input type="text" readonly value="${esc(_custUrl)}" style="flex:1;font-size:11px" onclick="this.select()"><button class="inline-btn" style="flex:0 0 auto" onclick="copyCustomerUrl()">コピー</button></div>
