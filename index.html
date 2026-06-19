@@ -2,6 +2,8 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<script>/* 地図中継サーバーの無い場所(GitHub Pages等)で開かれたら、地図APIのある正式URL(Cloudflare)へ自動転送。workers.dev/localhostでは何もしない＝/api/geocodeが404になり「住所が特定できませんでした(neterr)」となる誤URLを救済 */
+(function(){try{if(location.hostname.indexOf("github.io")>-1){location.replace("https://shako-shomei-tobu.atsunari-coda.workers.dev/"+location.search+location.hash);}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <meta name="theme-color" content="#15406b">
 <title>車庫証明かんたん作成｜静岡県（西部・中部・東部）対応</title>
@@ -909,7 +911,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v51";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v52";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
