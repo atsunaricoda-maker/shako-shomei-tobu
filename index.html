@@ -909,7 +909,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v49";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v50";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -2283,6 +2283,10 @@ function readIncoming(){
   }catch(e){ return null; }
 }
 function sendByMail(){
+  if(isCustomer()){ showSendConsent(); return; }   /* 顧客モード：お客様が自分の個人情報を送る前に利用目的の同意を取る */
+  doSendByMail();
+}
+function doSendByMail(){
   if(!SEND.to){ toast("先に⚙で送信先メールを設定してください"); withPin(()=>openModal("gmap")); return; }
   const link=buildCaseLink();
   const user=state.shinseisha.isCorp?(state.shinseisha.corpName||""):(state.shinseisha.name||"");
@@ -2292,6 +2296,23 @@ function sendByMail(){
   /* 車屋（共用端末）は送信後に入力を自動クリア＝次のお客様に前の情報を残さない */
   if(isDealer()){ setTimeout(function(){ const pb=document.getElementById("previewBar"); if(pb && pb.style.display!=="none"){ try{ hidePreview(); }catch(e){} } clearCurrentCase(); gotoStep(0); toast("送信メールを開きました。この端末の入力はクリアしました"); }, 1400); }
 }
+/* 顧客モード：お客様が自分の個人情報を送る前に、利用目的＋送信先への同意を取る（informed consent。事務所/車屋モードでは出さない） */
+function showSendConsent(){
+  if(!SEND.to){ toast("送信先が設定されていません。お店にご確認ください"); return; }
+  let bg=document.getElementById("consentBg");
+  if(!bg){ bg=document.createElement("div"); bg.id="consentBg"; bg.className="modal-bg"; bg.style.zIndex="86"; bg.style.alignItems="center"; document.body.appendChild(bg); }
+  bg.innerHTML=`<div class="modal" style="max-width:340px;border-radius:18px">
+    <h3>📤 送信の前にご確認ください</h3>
+    <p style="font-size:13px;line-height:1.75;margin:0 0 10px">入力された氏名・住所・お車などの情報は、<b>車庫証明の手続きのため</b>に、ご依頼先の<b>行政書士事務所</b>へ送信されます${SEND.from?`（${esc(SEND.from)}経由）`:""}。<br><b>他の目的には使用しません。</b></p>
+    <label class="chk" style="display:flex;gap:8px;align-items:flex-start;font-size:13px;background:#f7f9fb;border:1px solid var(--line);border-radius:10px;padding:10px 12px"><input type="checkbox" id="consentChk" onchange="var b=document.getElementById('consentSendBtn');b.disabled=!this.checked;b.style.opacity=this.checked?'1':'.5'"><span>上記の利用目的に<b>同意します</b></span></label>
+    <button id="consentSendBtn" class="inline-btn" style="width:100%;margin-top:12px;border-color:var(--accent);background:var(--accent);color:#fff;font-weight:700;opacity:.5" disabled onclick="agreeAndSend()">📤 同意して送信</button>
+    <button class="inline-btn" style="width:100%;margin-top:6px" onclick="closeConsent()">キャンセル</button>
+    <p style="font-size:11px;color:#5a6b7b;margin-top:8px">個人情報の取り扱いは画面下部「個人情報の取り扱い」もご覧ください。</p>
+  </div>`;
+  bg.classList.add("open");
+}
+function closeConsent(){ const b=document.getElementById("consentBg"); if(b) b.classList.remove("open"); }
+function agreeAndSend(){ closeConsent(); doSendByMail(); }
 function copyCaseLink(){
   const link=buildCaseLink();
   if(navigator.clipboard&&navigator.clipboard.writeText){
