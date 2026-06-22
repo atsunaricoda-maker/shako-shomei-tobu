@@ -763,7 +763,6 @@ let mapImage = null;        // 地図画像（メモリのみ）
 let step = 0;
 const TOTAL = 9;
 const AUTOSAVE = "shako_tobu_auto";
-const DRAFTS  = "shako_tobu_drafts";
 
 const STEP_LABELS = ["区分","申請者","自動車","本拠","保管場所","権原","配置図","所在図","作成"];
 
@@ -919,7 +918,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v56";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v57";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -951,40 +950,7 @@ function drawHaichi(){
      寸法は入力欄に残り、配置図は行政書士が作図する役割。 */
   prev.innerHTML = haichiComposite ? '<img src="'+haichiComposite+'" style="width:100%;border-radius:8px;display:block">' : '';
 }
-function buildHaichiSVG(h,w,d,road,gate){
-  // キャンバス 320x300 のレイアウト。道路は roadSide に配置。
-  const W=320,H=300, m=40;
-  const ix=m, iy=m, iw=W-m*2, ih=H-m*2-30; // 駐車スペース描画領域
-  const carName = (w&&d)? (w.toFixed(1)+"m × "+d.toFixed(1)+"m") : "";
-  const shutter = h.shutter;
-  const side = h.roadSide||"south";
-  // 道路バー
-  let roadBar="", roadLabel="", arrow="";
-  const rt=26;
-  if(side==="south"){ roadBar=`<rect x="0" y="${H-rt}" width="${W}" height="${rt}" fill="#d9d9d9" stroke="#000"/>`;
-    roadLabel=`<text x="${W/2}" y="${H-8}" text-anchor="middle" font-size="11">前面道路</text>`;
-    arrow=`<line x1="${W/2}" y1="${iy+ih}" x2="${W/2}" y2="${H-rt}" stroke="#000" stroke-width="1.5" marker-end="url(#a)"/>`;}
-  else if(side==="north"){ roadBar=`<rect x="0" y="0" width="${W}" height="${rt}" fill="#d9d9d9" stroke="#000"/>`;
-    roadLabel=`<text x="${W/2}" y="${17}" text-anchor="middle" font-size="11">前面道路</text>`;}
-  else if(side==="west"){ roadBar=`<rect x="0" y="0" width="${rt}" height="${H}" fill="#d9d9d9" stroke="#000"/>`;
-    roadLabel=`<text x="13" y="${H/2}" text-anchor="middle" font-size="11" transform="rotate(-90 13 ${H/2})">前面道路</text>`;}
-  else { roadBar=`<rect x="${W-rt}" y="0" width="${rt}" height="${H}" fill="#d9d9d9" stroke="#000"/>`;
-    roadLabel=`<text x="${W-13}" y="${H/2}" text-anchor="middle" font-size="11" transform="rotate(90 ${W-13} ${H/2})">前面道路</text>`;}
-
-  const space=`<rect x="${ix}" y="${iy}" width="${iw}" height="${ih}" fill="#eef6ff" stroke="#000" stroke-width="2"/>`;
-  const wLabel=`<text x="${ix+iw/2}" y="${iy-10}" text-anchor="middle" font-size="12" font-weight="bold">幅 ${w?w.toFixed(1)+"m":"__m"}</text>`;
-  const dLabel=`<text x="${ix-12}" y="${iy+ih/2}" text-anchor="middle" font-size="12" font-weight="bold" transform="rotate(-90 ${ix-12} ${iy+ih/2})">奥行 ${d?d.toFixed(1)+"m":"__m"}</text>`;
-  const carLabel=`<text x="${ix+iw/2}" y="${iy+ih/2}" text-anchor="middle" font-size="12">駐車スペース</text>`;
-  const gateLabel = gate? `<text x="${ix+iw/2}" y="${iy+ih+16}" text-anchor="middle" font-size="10.5">出入口 ${gate.toFixed(1)}m</text>`:"";
-  const shut = shutter? `<line x1="${ix}" y1="${iy+ih}" x2="${ix+iw}" y2="${iy+ih}" stroke="#c0392b" stroke-width="3" stroke-dasharray="5 3"/><text x="${ix+iw-4}" y="${iy+ih-5}" text-anchor="end" font-size="9.5" fill="#c0392b">シャッター</text>`:"";
-  const north=`<g transform="translate(${W-26},${36})"><line x1="0" y1="12" x2="0" y2="-6" stroke="#000" marker-end="url(#a)"/><text x="0" y="-9" text-anchor="middle" font-size="11" font-weight="bold">北</text></g>`;
-
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-    <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#000"/></marker></defs>
-    <rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>
-    ${roadBar}${roadLabel}${space}${carLabel}${shut}${arrow}${north}
-  </svg>`;
-}
+/* 自動作図SVG(buildHaichiSVG)はv45で撤去・v57で死蔵除去。配置図はスタンプ作図/手書き。 */
 function checkHaichi(){
   const el=document.getElementById("haichiCheck");
   const h=state.haichi, v=state.vehicle;
@@ -1192,19 +1158,7 @@ const STAMP_DEFS={
   text:{label:"文字",     w:160,h:48,  fill:"none", stroke:"#000"},
   cell:{label:"",         w:64, h:104, fill:"none", stroke:"#888"}
 };
-/* ［未使用・2026-06廃止：ひな形機能はUI・適用関数・boot呼び出しを削除済み。以下のTEMPLATES配列と_Sは未参照の残置（無害／必要なら後日削除可）］
-   ケースのひな形（選ぶと権原・駐車場タイプ・寸法・配置図stampsを一括セット）。配置図は820x600座標。stampsは _S(type,x,y,w,h,text?) で定義。 */
-const _S=(type,x,y,w,h,text)=>({type,x,y,w,h,rot:0,text:text});
-const TEMPLATES=[
- {name:"自宅敷地に青空1台（自認・平面）",desc:"最頻：自分名義の戸建てに屋根なし1台。両隣の隣家と前面道路で場所が分かる。道路幅員・寸法・出入口の向きだけ直せば完成。",haichiType:"平面",w:"2.5",d:"5.0",gate:"2.5",road:"4.0",height:"",stamps:[_S("north",742,28,66,90),_S("bldg",40,70,180,150),_S("text",60,138,140,28,"隣家（左）"),_S("home",300,60,200,150),_S("text",345,118,120,30,"自宅"),_S("bldg",600,70,180,150),_S("text",620,138,140,28,"隣家（右）"),_S("park",335,250,150,260),_S("text",300,222,220,30,"保管場所 2.5×5.0m"),_S("door",361,452,104,78),_S("road",30,512,760,70),_S("text",290,548,240,30,"前面道路 幅員4.0m")]},
- {name:"自宅のカーポート（自認・高さ必須）",desc:"自宅敷地の屋根付きカーポートに1台。床〜天井の高さ(既定2.3m)必須＝車検証の全高がこれより低いか確認。両隣・裏の隣家と前面道路で場所が分かる。",haichiType:"カーポート",w:"2.5",d:"5.0",gate:"2.5",road:"4.0",height:"2.3",stamps:[_S("north",742,28,66,90),_S("home",90,70,200,150),_S("text",135,128,120,30,"自宅"),_S("bldg",90,250,150,150),_S("text",105,318,130,28,"隣家（裏）"),_S("bldg",560,70,200,150),_S("text",585,138,150,28,"隣家（右）"),_S("park",340,225,150,285),_S("text",300,196,230,30,"カーポート 2.5×5.0m"),_S("text",330,348,170,30,"天井高 2.3m"),_S("door",366,452,104,78),_S("road",30,512,760,70),_S("text",290,548,240,30,"前面道路 幅員4.0m")]},
- {name:"独立した車庫・ガレージ（自認・高さ必須）",desc:"自宅とは別棟の車庫/ガレージに1台（建物も自分名義）。床〜天井の高さ(既定2.4m)必須。シャッター開口＝出入口。自宅・隣家・前面道路で場所が分かる。",haichiType:"ガレージ",w:"2.6",d:"5.2",gate:"2.6",road:"4.0",height:"2.4",stamps:[_S("north",742,28,66,90),_S("bldg",120,70,210,120),_S("text",140,122,180,28,"隣家（北）"),_S("home",500,70,200,150),_S("text",545,128,120,30,"自宅"),_S("bldg",540,260,200,150),_S("text",560,325,170,28,"隣家（東）"),_S("park",130,225,170,285),_S("text",120,196,200,30,"車庫（ガレージ）"),_S("text",135,348,160,30,"天井高 2.4m"),_S("text",150,452,150,26,"シャッター"),_S("door",163,452,104,78),_S("road",30,512,760,70),_S("text",290,548,240,30,"前面道路 幅員4.0m")]},
- {name:"月極駐車場の1区画（他人所有・平面）",desc:"他人所有の月極平面で1区画契約。隣家・店舗・前面道路の位置関係で契約区画(赤)を特定。区画番号と道路幅員だけ直す。承諾書/賃貸契約書の写しは各自用意。",haichiType:"平面",w:"2.5",d:"5.0",gate:"2.5",road:"4.0",height:"",stamps:[_S("north",742,28,66,90),_S("text",240,28,340,24,"○○月極駐車場（10台）"),_S("bldg",40,70,160,130),_S("text",55,128,140,24,"隣家（A様邸）"),_S("bldg",600,70,180,130),_S("text",615,128,160,24,"○○商店（店舗）"),_S("line",40,230,740,2),_S("text",610,236,170,18,"敷地境界線"),_S("cell",214,250,64,104,"1"),_S("cell",280,250,64,104,"2"),_S("park",345,246,68,112,"契約区画 3番"),_S("cell",417,250,64,104,"4"),_S("cell",483,250,64,104,"5"),_S("cell",549,250,64,104,"6"),_S("text",330,372,110,20,"2.5m×5.0m"),_S("door",327,430,104,78),_S("road",30,512,760,70),_S("text",250,548,320,22,"前面道路 幅員4.0m")]},
- {name:"区画駐車場で契約1台（管理棟・周囲で特定）",desc:"やや大きい区画駐車場(4×2)で1台契約。管理棟・隣接マンション・コンビニ・前面道路の中で契約区画(赤)の位置を示す。番号・道路幅員のみ修正。",haichiType:"平面",w:"2.5",d:"5.0",gate:"2.5",road:"5.0",height:"",stamps:[_S("north",742,28,66,90),_S("text",230,26,360,24,"△△パーキング（区画駐車場）"),_S("bldg",40,64,150,150),_S("text",55,132,130,24,"隣接マンション"),_S("bldg",630,64,150,150),_S("text",648,132,130,24,"コンビニ"),_S("bldg",340,60,140,70),_S("text",352,98,116,22,"管理棟"),_S("line",40,170,740,2),_S("cell",230,200,64,104,"1"),_S("cell",300,200,64,104,"2"),_S("cell",370,200,64,104,"3"),_S("cell",440,200,64,104,"4"),_S("cell",230,320,64,104,"5"),_S("cell",300,320,64,104,"6"),_S("park",368,318,68,112,"契約 No.7"),_S("cell",440,320,64,104,"8"),_S("door",350,432,104,78),_S("road",30,512,760,70),_S("text",250,548,320,22,"前面道路 幅員5.0m")]},
- {name:"親族の敷地を借用（親族宅・自宅で場所がわかる・平面）",desc:"親族(実家など)の敷地の一部を借りて駐車。親族宅・申請者宅・隣家を描き、敷地境界の中のどこに保管場所(赤)があるかを示す。氏名・寸法のみ修正。承諾書/賃貸契約書の写しで可。",haichiType:"平面",w:"2.5",d:"5.0",gate:"2.5",road:"4.0",height:"",stamps:[_S("north",742,28,66,90),_S("text",230,26,360,24,"（親族 B様 所有地を借用）"),_S("line",90,70,620,2),_S("line",90,70,2,420),_S("line",708,70,2,420),_S("text",110,90,150,18,"敷地境界線"),_S("bldg",110,110,250,180),_S("text",150,196,180,22,"親族宅（B様邸）"),_S("bldg",400,110,260,150),_S("text",440,180,180,22,"申請者 自宅"),_S("bldg",690,110,90,170),_S("text",694,200,84,18,"隣家(C様)"),_S("park",300,320,150,190,"借用区画"),_S("text",300,298,150,18,"2.5m×5.0m"),_S("door",323,432,104,78),_S("road",30,512,760,70),_S("text",250,548,320,22,"前面道路 幅員4.0m")]},
- {name:"アパート共用駐車場・1区画（他人所有・平面）",desc:"アパート棟の前にある共用区画駐車場で1台。大家宅・アパート棟・空地・前面道路を目印に自分の区画(赤)と出入口を配置。承諾書か賃貸契約書の写しで可。",haichiType:"平面",w:"2.5",d:"5.0",gate:"2.5",road:"5.0",height:"",stamps:[_S("north",742,28,66,90),_S("bldg",90,60,360,130),_S("text",150,108,250,32,"○○アパート（2階建）"),_S("home",560,70,190,130),_S("text",583,118,150,26,"大家宅（所有者）"),_S("cell",120,270,64,104,"101"),_S("cell",190,270,64,104,"102"),_S("cell",260,270,64,104,"103"),_S("cell",402,270,64,104,"202"),_S("park",330,266,68,112,"201号室分"),_S("text",322,238,130,26,"契約区画"),_S("text",540,300,180,28,"空地"),_S("door",312,432,104,78),_S("road",30,512,760,70),_S("text",300,548,230,30,"前面道路 幅員5.0m")]},
- {name:"機械式・立体駐車場／マンション併設（他人所有・高さ必須）",desc:"マンション/ビル併設の機械式立体。架台内のパレットから自分の段・列に赤を置く。床〜天井の高さ＝制限値(既定1.55m)を車検証の全高と照合。前面道路と隣接建物で場所が分かる。",haichiType:"機械式",w:"2.5",d:"5.3",gate:"2.5",road:"6.0",height:"1.55",stamps:[_S("north",742,28,66,90),_S("bldg",60,60,210,150),_S("text",85,112,170,30,"○○マンション"),_S("bldg",560,70,190,130),_S("text",583,118,150,26,"隣家（A氏宅）"),_S("text",300,52,300,24,"機械式立体駐車場（架台）"),_S("bldg",300,84,230,360),_S("cell",316,104,64,104,"A1"),_S("cell",450,104,64,104,"B1"),_S("cell",450,216,64,104,"B2"),_S("cell",316,324,64,104,"A3"),_S("cell",450,324,64,104,"B3"),_S("park",314,214,68,112,"A2"),_S("text",60,250,210,28,"契約パレット A2（赤）"),_S("text",588,250,200,28,"天井高（制限）1.55m"),_S("door",362,444,104,78),_S("road",30,512,760,70),_S("text",300,548,230,30,"前面道路 幅員6.0m")]}
-];
+/* ひな形(TEMPLATES/_S)機能はv44で撤去・v57で死蔵除去。 */
 function rrect(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function openStampEditor(){
   document.getElementById("modalBody").innerHTML=stampEditorHTML();
@@ -1818,29 +1772,7 @@ function docShinseiOfficial(kei){
 }
 
 /* 軽：自動車保管場所届出書 */
-function docTodoke(){
-  const s=state, v=s.vehicle;
-  const applicant = s.shinseisha.isCorp ? `${esc(s.shinseisha.corpName)}<br>${esc(s.shinseisha.daihyo)}` : esc(s.shinseisha.name);
-  const daikoNote = "";
-  return `<div class="sheet land">
-    <h2 class="dt">自動車保管場所届出書</h2>
-    <div class="dt-sub">（${ate()}）　※届出書＋控え 2通 提出</div>
-    <table class="ftable">
-      <tr><th>車名（メーカー）</th><td class="val big">${esc(v.maker)}</td><th>型式</th><td class="val big">${esc(v.katashiki)}</td></tr>
-      <tr><th>車台番号</th><td class="val big" colspan="3">${esc(v.daiban)}</td></tr>
-      <tr><th>自動車の大きさ</th><td class="val" colspan="3">長さ ${esc(v.len)} cm　幅 ${esc(v.wid)} cm　高さ ${esc(v.hei)} cm</td></tr>
-      <tr><th>自動車の使用の<br>本拠の位置</th><td class="val" colspan="3">${esc(honkyoAddr())}</td></tr>
-      <tr><th>自動車の保管<br>場所の位置</th><td class="val" colspan="3">${esc(hokanLoc(s))}</td></tr>
-    </table>
-    <div class="addr-block right">
-      ${JST_DATE()}<br>
-      届出者　住所　${esc(s.shinseisha.addr)}<br>
-      氏名（名称）　${applicant}　<br>
-      電話　${esc(s.shinseisha.tel)}
-    </div>
-    <p class="small" style="margin-top:18px"><b style="color:#1a3c61">提出用</b>：届出書＋控えの2通で提出。軽自動車は車検・ナンバー取得後の届出（義務地域は15日以内）。証明書の交付なし・押印不要。車名等は車検証のとおり記入。最終様式は提出先（${esc(stn().name)}）でご確認ください。</p>
-  </div>`;
-}
+/* 旧・軽の簡易様式(docTodoke)はv45で撤去（軽もdocShinseiOfficial(kei)で普通車レイアウト出力）・v57で死蔵除去。 */
 function docJinin(){
   const s=state, ky=(s.kubun.kengen==="kyoyu");
   return `<div class="sheet land">
@@ -2018,101 +1950,10 @@ function clearCaseConfirm(){
 let saveTimer=null;
 function scheduleSave(){ if(isDealer()) return; /* 車屋モードは端末に保存しない（キャッシュに個人情報を残さない） */ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ localStorage.setItem(AUTOSAVE, JSON.stringify(state)); }catch(e){} },400); }
 function loadAuto(){ try{ const j=localStorage.getItem(AUTOSAVE); if(j) state=Object.assign(DEFAULT(),JSON.parse(j)); }catch(e){} }
-function getDrafts(){ try{ return JSON.parse(localStorage.getItem(DRAFTS)||"[]"); }catch(e){ return []; } }
-function saveDraft(){
-  const name=document.getElementById("draftName").value.trim()||("案件 "+new Date().toLocaleDateString("ja-JP"));
-  const ds=getDrafts();
-  ds.unshift({name, ts:new Date().toLocaleString("ja-JP"), data:JSON.parse(JSON.stringify(state))});
-  localStorage.setItem(DRAFTS, JSON.stringify(ds.slice(0,30)));
-  toast("「"+name+"」を保存しました");
-  openModal("draft");
-}
-function loadDraft(i){ const ds=getDrafts(); if(ds[i]){ state=Object.assign(DEFAULT(),ds[i].data); mapImage=null; haichiComposite=null; shozaiComposite=null; _haichiSrc=null; _shozaiSrc=null; haichiKind=""; GMAPS.shozaiAutoTried=false; GMAPS.honkyoLL=null; GMAPS.hokanLL=null; hydrate(); applyAll(); refreshFigStatus("haichi"); refreshFigStatus("shozai"); closeModal(); toast("読み込みました"); gotoStep(0); } }
-function delDraft(i){ const ds=getDrafts(); ds.splice(i,1); localStorage.setItem(DRAFTS,JSON.stringify(ds)); openModal("draft"); }
+/* 案件下書き機能(getDrafts/saveDraft/loadDraft/delDraft)はv48で撤去・v57で死蔵除去。 */
 function newCase(){ showConfirm("新規作成","入力内容をクリアして新規作成しますか？",function(){ state=DEFAULT(); mapImage=null; haichiComposite=null; shozaiComposite=null; _haichiSrc=null; _shozaiSrc=null; GMAPS.shozaiAutoTried=false; GMAPS.honkyoLL=null; GMAPS.hokanLL=null; localStorage.removeItem(AUTOSAVE); hydrate(); applyAll(); refreshFigStatus("haichi"); refreshFigStatus("shozai"); closeModal(); gotoStep(0); toast("新規作成"); }); }
-function exportJson(){
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
-  a.download="車庫証明_"+(state.shinseisha.name||"案件")+".json"; a.click();
-}
-
-/* =====================================================================
-   顧客マスタ・申請履歴
-   保存先は自動判定: GAS配信ならスプレッドシート / それ以外は端末localStorage
-   ===================================================================== */
-const HAS_GAS = (typeof google!=="undefined" && google.script && google.script.run);
-const CUST_KEY="shako_tobu_customers", HIST_KEY="shako_tobu_history";
-let _custCache=[];
-const Store={
-  getCustomers(cb){
-    if(HAS_GAS){ google.script.run.withSuccessHandler(cb).withFailureHandler(()=>{toast("読込に失敗");cb([]);}).getCustomers(); }
-    else cb(JSON.parse(localStorage.getItem(CUST_KEY)||"[]"));
-  },
-  saveCustomer(rec,cb){
-    if(HAS_GAS){ google.script.run.withSuccessHandler(cb).withFailureHandler(()=>toast("保存に失敗")).saveCustomer(rec); }
-    else { let l=JSON.parse(localStorage.getItem(CUST_KEY)||"[]");
-      if(!rec.id){ rec.id="c"+Date.now(); l.unshift(rec); }
-      else { const i=l.findIndex(x=>x.id===rec.id); if(i>=0) l[i]=rec; else l.unshift(rec); }
-      localStorage.setItem(CUST_KEY,JSON.stringify(l)); cb(rec); }
-  },
-  deleteCustomer(id,cb){
-    if(HAS_GAS){ google.script.run.withSuccessHandler(cb).deleteCustomer(id); }
-    else { const l=JSON.parse(localStorage.getItem(CUST_KEY)||"[]").filter(x=>x.id!==id); localStorage.setItem(CUST_KEY,JSON.stringify(l)); cb(); }
-  },
-  saveHistory(rec,cb){
-    if(HAS_GAS){ google.script.run.withSuccessHandler(cb||function(){}).withFailureHandler(()=>toast("履歴保存に失敗")).saveHistory(rec); }
-    else { const h=JSON.parse(localStorage.getItem(HIST_KEY)||"[]"); rec.id="h"+Date.now(); h.unshift(rec); localStorage.setItem(HIST_KEY,JSON.stringify(h.slice(0,300))); if(cb)cb(rec); }
-  }
-};
-function customerFromState(label){
-  const s=state.shinseisha,h=state.honkyo;
-  return { id:"", label:(label||s.corpName||s.name||"無名").trim(), isCorp:!!s.isCorp, corpName:s.corpName||"", daihyo:s.daihyo||"",
-    name:s.name||"", kana:s.kana||"", zip:s.zip||"", tel:s.tel||"", addr:s.addr||"",
-    honkyoSame:h.same!==false, honkyoAddr:h.addr||"" };
-}
-function applyCustomer(c){
-  state.shinseisha={ isCorp:!!c.isCorp, corpName:c.corpName||"", daihyo:c.daihyo||"", name:c.name||"", kana:c.kana||"", zip:c.zip||"", tel:c.tel||"", addr:c.addr||"" };
-  state.honkyo={ same:c.honkyoSame!==false, addr:c.honkyoAddr||"" };
-  hydrate(); applyAll(); scheduleSave();
-}
-function custModal(){
-  return `<button class="close" onclick="closeModal()">×</button>
-  <h3>顧客マスタ</h3>
-  <p style="font-size:12px;color:#5a6b7b">よく依頼を受ける顧客の氏名・住所・連絡先を保存し、次回ワンタップで呼び出せます。${HAS_GAS?"保存先：スプレッドシート（事務所で共有）":"保存先：この端末"}。</p>
-  <div class="field"><label class="lbl">いまの「申請者」を顧客として登録</label>
-    <div class="suffix"><input type="text" id="custLabel" placeholder="表示名（例）山田太郎 / ○○商事">
-    <button class="inline-btn" onclick="saveCurrentCustomer()">登録</button></div>
-    <div class="hint">申請者ステップの氏名・住所・電話・本拠が保存されます。</div></div>
-  <hr class="hr">
-  <div id="custList"><p style="font-size:13px;color:#5a6b7b">読み込み中…</p></div>`;
-}
-function renderCustList(){
-  Store.getCustomers(list=>{
-    _custCache=list||[];
-    const el=document.getElementById("custList"); if(!el) return;
-    if(!_custCache.length){ el.innerHTML=`<p style="font-size:13px;color:#5a6b7b">登録された顧客はありません。</p>`; return; }
-    el.innerHTML=_custCache.map((c,i)=>`<div class="draft-item"><div class="dni"><div class="dnm">${esc(c.label||c.name||"無名")}</div><div class="dts">${esc(c.addr||"")} ${esc(c.tel||"")}</div></div>
-      <button class="ld" onclick="loadCustomer(${i})">呼出</button>
-      <button class="dl" onclick="delCustomer(${i})">削除</button></div>`).join("");
-  });
-}
-function saveCurrentCustomer(){
-  const inp=document.getElementById("custLabel");
-  const rec=customerFromState(inp?inp.value:"");
-  if(!rec.name && !rec.corpName){ toast("先に申請者の氏名を入力してください"); return; }
-  Store.saveCustomer(rec, ()=>{ toast("顧客を登録しました"); if(inp)inp.value=""; renderCustList(); });
-}
-function loadCustomer(i){ const c=_custCache[i]; if(c){ applyCustomer(c); closeModal(); toast("顧客を読み込みました"); gotoStep(1); } }
-function delCustomer(i){ const c=_custCache[i]; if(!c) return; showConfirm("顧客を削除","「"+(c.label||c.name||"無名")+"」を削除しますか？",function(){ Store.deleteCustomer(c.id, ()=>{ toast("削除しました"); renderCustList(); }); }); }
-function historyFromState(){
-  const s=state;
-  return { id:"", custName:(s.shinseisha.isCorp?s.shinseisha.corpName:s.shinseisha.name)||"",
-    type:isKei()?"軽(届出)":"普通(証明)", station:stn().name,
-    kengen:{jinin:"自己所有",shoudaku:"承諾",kyoyu:"共有"}[s.kubun.kengen]||"",
-    maker:s.vehicle.maker||"", katashiki:s.vehicle.katashiki||"", daiban:s.vehicle.daiban||"",
-    hokan:s.hokan.addr||"" };
-}
-function saveHistoryNow(){ Store.saveHistory(historyFromState(), ()=>toast("申請履歴に保存しました")); }
+/* 顧客マスタ・申請履歴・JSON書き出しの機能はv48で撤去（事務所モードでも顧客/案件ボタン廃止）。
+   関連の死蔵コード(exportJson/Store/custModal/renderCustList/saveCurrentCustomer/loadCustomer/delCustomer/customerFromState/applyCustomer/historyFromState/saveHistoryNow)はv57で除去。 */
 
 /* =====================================================================
    モーダル
@@ -2170,7 +2011,7 @@ function helpOffice(){
   <p style="font-size:12.5px;color:#5a6b7b;margin:0 0 10px">このアプリは車庫証明の書類を作る道具です（申請書・自認書・所在図配置図などは<b>印刷してそのまま提出可</b>）。下の項目をタップで開けます。</p>
   <details open ${ds}><summary ${sm}>A. 自分で書類を作る</summary>
     <ol ${ol}>
-      <li><b>①区分</b>：種別（普通／軽）・提出先の警察署・権原を選ぶ。</li>
+      <li><b>①区分</b>：種別（普通／軽）・提出先の警察署・権原（自己／他人／共有）を選ぶ。</li>
       <li><b>②③④</b>：申請者・自動車・本拠を入力。</li>
       <li><b>⑤⑥</b>：保管場所と権原書面（自認書／承諾書）。直線2kmを自動判定。</li>
       <li><b>⑦配置図</b>：スタンプで作図、または地図から取込。</li>
@@ -2237,25 +2078,7 @@ function infoModal(){
   </div>
   <p style="font-size:11px;color:#5a6b7b">出典：静岡県警察 各手続ページ（2026年6月確認）。窓口での最終確認を推奨します。</p>`;
 }
-function draftModal(){
-  const ds=getDrafts();
-  let list=ds.length? ds.map((d,i)=>`<div class="draft-item"><div class="dni"><div class="dnm">${esc(d.name)}</div><div class="dts">${esc(d.ts)}</div></div>
-    <button class="ld" onclick="loadDraft(${i})">開く</button><button class="dl" onclick="delDraft(${i})">削除</button></div>`).join("")
-    : `<p style="color:#5a6b7b;font-size:13px">保存された案件はありません。</p>`;
-  return `<button class="close" onclick="closeModal()">×</button>
-  <h3>案件の保存・読み込み</h3>
-  <div class="field"><label class="lbl">この案件に名前を付けて保存</label>
-    <div class="suffix"><input type="text" id="draftName" placeholder="例）山田様 プリウス">
-    <button class="inline-btn" onclick="saveDraft()">保存</button></div></div>
-  <p style="font-size:11px;color:#5a6b7b">入力は自動保存もされます（同じ端末・ブラウザ）。案件ごとに名前を付けて複数管理できます。</p>
-  <hr class="hr">
-  <div>${list}</div>
-  <hr class="hr">
-  <div class="row">
-    <button class="inline-btn" style="flex:1" onclick="exportJson()">⬇ JSONで書き出し</button>
-    <button class="inline-btn" style="flex:1;border-color:var(--warn);color:var(--warn)" onclick="newCase()">新規作成（クリア）</button>
-  </div>`;
-}
+/* 案件下書きモーダル(draftModal)はv48で撤去・v57で死蔵除去。新規作成は🆕新規ボタン(newCase)で代替。 */
 
 /* =====================================================================
    初期化
@@ -2328,12 +2151,7 @@ function showSendConsent(){
 }
 function closeConsent(){ const b=document.getElementById("consentBg"); if(b) b.classList.remove("open"); }
 function agreeAndSend(){ closeConsent(); doSendByMail(); }
-function copyCaseLink(){
-  const link=buildCaseLink();
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(link).then(()=>toast("リンクをコピーしました")).catch(()=>fallbackCopy(link));
-  } else fallbackCopy(link);
-}
+/* リンクをコピー(LINE等で送る)機能(copyCaseLink)はv53で撤去・v57で死蔵除去。送信は📤メールのみ。 */
 function fallbackCopy(text){
   const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
   document.body.appendChild(ta); ta.focus(); ta.select();
@@ -2389,9 +2207,6 @@ function applyMode(){
   document.body.classList.toggle("is-customer", isCustomer());
   document.querySelectorAll(".office-only").forEach(e=>{ e.style.display=dealer?"none":""; });
   document.querySelectorAll(".dealer-only").forEach(e=>{ e.style.display=dealer?"":"none"; });
-  /* 車屋モードでは「リンクをコピー」を隠す（共用端末で個人情報を溜めない・横流しさせない） */
-  const cl=document.getElementById("copyLinkBtn");
-  if(cl) cl.style.display=dealer?"none":"";
   const gear=document.getElementById("btnGear"); if(gear) gear.style.display=isCustomer()?"none":"";   /* 顧客モードは設定(⚙)を隠す */
 }
 function syncModeRadio(){ const r=document.querySelector('input[name="appmode"][value="'+APPMODE+'"]'); if(r) r.checked=true; }
