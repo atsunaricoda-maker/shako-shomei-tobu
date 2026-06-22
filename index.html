@@ -919,7 +919,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v55";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v56";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1228,6 +1228,7 @@ function stampEditorHTML(){ return `<button class="close" onclick="closeModal()"
     <button class="inline-btn" style="flex:1;border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="addParkingRow()">区画を横に</button>
     <button class="inline-btn" style="flex:1;border-color:var(--teal);background:#eafafa;color:#0f6b6b" onclick="addParkingCol()">区画を縦に</button>
   </div>
+  <button class="inline-btn" style="width:100%;margin:0 0 4px;border-color:var(--accent);background:#fff4e8;color:#a85a14;font-weight:700" onclick="markCellAsPark()">🅿 選んだ区画を保管場所に</button>
   <div class="stamp-palette">
     <button onclick="addStamp('park')">🅿 保管場所</button>
     <button onclick="addStamp('home')">🏠 自宅</button>
@@ -1243,7 +1244,6 @@ function stampEditorHTML(){ return `<button class="close" onclick="closeModal()"
     <button class="inline-btn" style="flex:0 0 auto" onclick="addTextFromInput()">🅰 文字を置く</button>
   </div>
   <div class="stamp-ctrl">
-    <button onclick="markCellAsPark()" style="border-color:var(--accent);background:#fff4e8;color:#a85a14;font-weight:700">🅿選んだ区画を保管場所に</button>
     <button onclick="stampScale(1.15)">＋大きく</button>
     <button onclick="stampScale(0.87)">－小さく</button>
     <button onclick="stampRotate(-15)">⟲回転</button>
