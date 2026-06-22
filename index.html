@@ -602,13 +602,19 @@ body.is-customer .dealer-only{display:none !important}
             <option value="平面">平面（青空）</option>
             <option value="車庫・ガレージ">車庫・ガレージ</option>
             <option value="カーポート">カーポート</option>
-            <option value="機械式">機械式・立体駐車場</option>
+            <option value="機械式・タワー式">機械式・タワー式</option>
+            <option value="立体駐車場">立体駐車場</option>
           </select>
         </div>
         <div class="field" id="heightField" style="display:none">
           <label class="lbl">床から天井までの高さ（m）<span class="req">必須</span></label>
           <div class="suffix"><input type="number" step="0.1" data-bind="haichi.height" placeholder="例）2.1" inputmode="decimal"><span class="u">m</span></div>
           <div class="hint tip">車庫・カーポート・ガレージ・立駐は、<b>車が入る高さ（床〜天井）</b>の記載が必要です。車検証の全高より高いことを確認してください。</div>
+        </div>
+        <div class="field" id="weightField" style="display:none">
+          <label class="lbl">重量制限（kg）<span class="opt">任意</span></label>
+          <div class="suffix"><input type="number" step="10" data-bind="haichi.weight" placeholder="例）2000" inputmode="numeric"><span class="u">kg</span></div>
+          <div class="hint tip">機械式・タワー式は<b>パレットの重量制限</b>があります。車検証の<b>車両重量</b>がこれ以下か確認してください。</div>
         </div>
         <div class="row">
           <div class="field"><label class="lbl">駐車スペース 幅（m）<span class="req">必須</span></label>
@@ -748,7 +754,7 @@ const DEFAULT = ()=>({
   jinin:{ obj:"土地" },
   shoudaku:{ kankei:"", useFrom:"", useTo:"", ownerName:"", ownerAddr:"", ownerTel:"", forOwner:true,
              keiyakuSame:true, keiyakuName:"", keiyakuAddr:"", keiyakuTel:"" },
-  haichi:{ type:"平面", height:"", w:"", d:"", gate:"", road:"", roadSide:"south", shutter:false, rinsetsu:"" },
+  haichi:{ type:"平面", height:"", weight:"", w:"", d:"", gate:"", road:"", roadSide:"south", shutter:false, rinsetsu:"" },
   shozai:{ mode:"image" },
   appDate:""
 });
@@ -863,7 +869,10 @@ function refreshKengen(){
   document.querySelectorAll(".kengen-shoudaku").forEach(e=>e.style.display=(k==="shoudaku")?"":"none");
   document.querySelectorAll(".kengen-kyoyu").forEach(e=>e.style.display=(k==="kyoyu")?"":"none");
 }
-function refreshParkType(){ const f=document.getElementById("heightField"); if(!f) return; f.style.display=(state.haichi.type&&state.haichi.type!=="平面")?"":"none"; }
+function refreshParkType(){
+  const f=document.getElementById("heightField"); if(f) f.style.display=(state.haichi.type&&state.haichi.type!=="平面")?"":"none";
+  const w=document.getElementById("weightField"); if(w) w.style.display=(state.haichi.type==="機械式・タワー式")?"":"none";
+}
 function refreshCorp(){
   document.querySelectorAll(".corp-only").forEach(e=>e.style.display=state.shinseisha.isCorp?"":"none");
   const nr=document.getElementById("nameReq"); if(nr) nr.style.display=state.shinseisha.isCorp?"none":"";
@@ -910,7 +919,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v53";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v54";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1919,7 +1928,7 @@ function docZu(){
           <div style="flex:0 0 auto;font-size:12px;line-height:1.9">
             幅：${esc(h.w)||"__"} m<br>奥行：${esc(h.d)||"__"} m<br>
             出入口：${esc(h.gate)||"__"} m<br>前面道路：${esc(h.road)||"__"} m<br>
-            シャッター：${h.shutter?"有":"無"}<br>種別：${esc(h.type)}${(h.type&&h.type!=="平面"&&h.height)?("<br>床〜天井の高さ："+esc(h.height)+"m"):""}<br>
+            シャッター：${h.shutter?"有":"無"}<br>種別：${esc(h.type)}${(h.type&&h.type!=="平面"&&h.height)?("<br>床〜天井の高さ："+esc(h.height)+"m"):""}${(h.type==="機械式・タワー式"&&h.weight)?("<br>重量制限："+esc(h.weight)+"kg"):""}<br>
             ${h.rinsetsu?("備考："+esc(h.rinsetsu)):""}
           </div>
         </div>
