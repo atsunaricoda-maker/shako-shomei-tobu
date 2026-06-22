@@ -688,8 +688,7 @@ body.is-customer .dealer-only{display:none !important}
         <p class="lead">入力した案件データを、設定した事務所のメールへ送ります（<b>リンク方式・サーバー不要</b>）。受け取った側は<b>リンクを開くだけ</b>でこのアプリに入力済みで開けます（PCの印刷でPDF化）。</p>
         <div id="sendStatus"></div>
         <button class="fig-btn" style="border-color:var(--accent);background:#fff4e8;color:#a85a14" onclick="sendByMail()">📤 メールで送信</button>
-        <button class="inline-btn" id="copyLinkBtn" style="width:100%;margin-top:10px" onclick="copyCaseLink()">🔗 リンクをコピー（LINE等で送る）</button>
-        <div class="hint" style="margin-top:8px">送信先（事務所メール）は右上の<b>⚙</b>で設定（お店名は車屋導入時に登録）。リンクには個人情報が含まれます（身内の連絡手段で送ってください）。スタンプで作った配置図は送られます（航空写真の“写真”は容量のため非同梱）。</div>
+        <div class="hint" style="margin-top:8px">送信先（事務所メール）は右上の<b>⚙</b>で設定（お店名は車屋導入時に登録）。リンクには個人情報が含まれます。スタンプで作った配置図は送られます（航空写真の“写真”は容量のため非同梱）。</div>
       </div>
 
       <div class="card office-only">
@@ -911,7 +910,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v52";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v53";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
