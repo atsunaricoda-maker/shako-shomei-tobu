@@ -612,7 +612,7 @@ body.is-customer .dealer-only{display:none !important}
           <div class="hint tip">車庫・カーポート・ガレージ・立駐は、<b>車が入る高さ（床〜天井）</b>の記載が必要です。車検証の全高より高いことを確認してください。</div>
         </div>
         <div class="field" id="weightField" style="display:none">
-          <label class="lbl">重量制限（kg）<span class="opt">任意</span></label>
+          <label class="lbl">重量制限（kg）<span class="req">必須</span></label>
           <div class="suffix"><input type="number" step="10" data-bind="haichi.weight" placeholder="例）2000" inputmode="numeric"><span class="u">kg</span></div>
           <div class="hint tip">機械式・タワー式は<b>パレットの重量制限</b>があります。車検証の<b>車両重量</b>がこれ以下か確認してください。</div>
         </div>
@@ -919,7 +919,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v54";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v55";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1667,6 +1667,7 @@ function reqList(){
   need(s.haichi.w&&s.haichi.d,"配置図の幅・奥行");
   need(s.haichi.road,"前面道路の幅員");
   if(s.haichi.type&&s.haichi.type!=="平面") need(s.haichi.height,"床〜天井の高さ");
+  if(s.haichi.type==="機械式・タワー式") need(s.haichi.weight,"重量制限");
   return miss;
 }
 function renderValid(){
