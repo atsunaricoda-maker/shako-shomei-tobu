@@ -695,7 +695,8 @@ body.is-customer .dealer-only{display:none !important}
         <p class="lead">入力した案件データを、設定した事務所のメールへ送ります（<b>リンク方式・サーバー不要</b>）。受け取った側は<b>リンクを開くだけ</b>でこのアプリに入力済みで開けます（PCの印刷でPDF化）。</p>
         <div id="sendStatus"></div>
         <button class="fig-btn" style="border-color:var(--accent);background:#fff4e8;color:#a85a14" onclick="sendByMail()">📤 メールで送信</button>
-        <div class="hint" style="margin-top:8px">送信先（事務所メール）は右上の<b>⚙</b>で設定（お店名は車屋導入時に登録）。リンクには個人情報が含まれます。スタンプで作った配置図は送られます（航空写真の“写真”は容量のため非同梱）。</div>
+        <button class="inline-btn" style="width:100%;margin-top:8px;border-color:#1a73e8;color:#1a73e8;font-weight:700" onclick="sendByGmail()">📧 Gmailで作成（PCでメールが開かない時）</button>
+        <div class="hint" style="margin-top:8px">送信先（事務所メール）は右上の<b>⚙</b>で設定（お店名は車屋導入時に登録）。<b>PCで「📤メール」が反応しないとき</b>は「📧Gmailで作成」を（Gmailの作成画面が開きます）。リンクには個人情報が含まれます。スタンプで作った配置図は送られます（航空写真の“写真”は容量のため非同梱）。</div>
       </div>
 
       <div class="card office-only">
@@ -919,7 +920,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v59";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v60";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -2123,19 +2124,32 @@ function readIncoming(){
     return (obj&&obj.s)?obj.s:null;
   }catch(e){ return null; }
 }
-function sendByMail(){
-  if(isCustomer()){ showSendConsent(); return; }   /* 顧客モード：お客様が自分の個人情報を送る前に利用目的の同意を取る */
-  doSendByMail();
-}
-function doSendByMail(){
-  if(!SEND.to){ toast("先に⚙で送信先メールを設定してください"); withPin(()=>openModal("gmap")); return; }
+let _sendVia="mail";
+function sendByMail(){ _sendVia="mail"; if(isCustomer()){ showSendConsent(); return; } doSendByMail(); }   /* 顧客モードは送信前に利用目的の同意 */
+function sendByGmail(){ _sendVia="gmail"; if(isCustomer()){ showSendConsent(); return; } doSendByGmail(); }   /* PC向け：Gmailの作成画面を開く（既定メールアプリ未設定のPCでmailtoが無反応な救済） */
+function _caseMailParts(){
   const link=buildCaseLink();
   const user=state.shinseisha.isCorp?(state.shinseisha.corpName||""):(state.shinseisha.name||"");
   const subject=`【車庫証明データ】${SEND.from?SEND.from+"／":""}${user}`;
   const body=`お世話になります。${SEND.from?SEND.from+"です。":""}\n車庫証明の案件データをお送りします。\n下記リンクを開くと、アプリに入力済みの状態で開きます（PCの「印刷→PDFに保存」で書類化できます）。\n\n${link}\n\n― 案件概要 ―\n使用者：${user}\n車名/型式：${(state.vehicle.maker||"")} ${(state.vehicle.katashiki||"")}\n保管場所：${(state.hokan.addr||"")}\n提出先：${stn().name}\n`;
-  location.href="mailto:"+SEND.to+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+  return {subject, body};
+}
+function _afterSend(msg){
   /* 車屋（共用端末）は送信後に入力を自動クリア＝次のお客様に前の情報を残さない */
-  if(isDealer()){ setTimeout(function(){ const pb=document.getElementById("previewBar"); if(pb && pb.style.display!=="none"){ try{ hidePreview(); }catch(e){} } clearCurrentCase(); gotoStep(0); toast("送信メールを開きました。この端末の入力はクリアしました"); }, 1400); }
+  if(isDealer()){ setTimeout(function(){ const pb=document.getElementById("previewBar"); if(pb && pb.style.display!=="none"){ try{ hidePreview(); }catch(e){} } clearCurrentCase(); gotoStep(0); toast(msg); }, 1400); }
+}
+function doSendByMail(){
+  if(!SEND.to){ toast("先に⚙で送信先メールを設定してください"); withPin(()=>openModal("gmap")); return; }
+  const m=_caseMailParts();
+  location.href="mailto:"+SEND.to+"?subject="+encodeURIComponent(m.subject)+"&body="+encodeURIComponent(m.body);
+  _afterSend("送信メールを開きました。この端末の入力はクリアしました");
+}
+function doSendByGmail(){
+  if(!SEND.to){ toast("先に⚙で送信先メールを設定してください"); withPin(()=>openModal("gmap")); return; }
+  const m=_caseMailParts();
+  const url="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(SEND.to)+"&su="+encodeURIComponent(m.subject)+"&body="+encodeURIComponent(m.body);
+  const w=window.open(url,"_blank"); if(!w){ toast("ポップアップを許可してもう一度お試しください"); return; }
+  _afterSend("Gmailの作成画面を開きました。この端末の入力はクリアしました");
 }
 /* 顧客モード：お客様が自分の個人情報を送る前に、利用目的＋送信先への同意を取る（informed consent。事務所/車屋モードでは出さない） */
 function showSendConsent(){
@@ -2153,7 +2167,7 @@ function showSendConsent(){
   bg.classList.add("open");
 }
 function closeConsent(){ const b=document.getElementById("consentBg"); if(b) b.classList.remove("open"); }
-function agreeAndSend(){ closeConsent(); doSendByMail(); }
+function agreeAndSend(){ closeConsent(); if(_sendVia==="gmail") doSendByGmail(); else doSendByMail(); }
 /* リンクをコピー(LINE等で送る)機能(copyCaseLink)はv53で撤去・v57で死蔵除去。送信は📤メールのみ。 */
 function fallbackCopy(text){
   const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
