@@ -920,7 +920,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v60";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v61";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1925,9 +1925,10 @@ function makeDocs(){
 function showPreviewBar(){
   let bar=document.getElementById("previewBar");
   if(!bar){ bar=document.createElement("div"); bar.id="previewBar"; bar.className="footnav"; document.body.appendChild(bar); }
-  bar.innerHTML=`<div class="wrapf">
+  bar.innerHTML=`<div class="wrapf" style="flex-wrap:wrap;row-gap:8px;white-space:nowrap">
     <button class="btn prev" style="flex:0 0 auto" onclick="hidePreview()">✏️ 修正</button>
     <button class="btn make" style="background:var(--accent)" onclick="sendByMail()">📤 事務所へ送信</button>
+    <button class="btn make" style="background:#1a73e8" onclick="sendByGmail()" title="PCでメールアプリが開かない時に">📧 Gmail</button>
     ${isDealer()?"":'<button class="btn make" onclick="window.print()">🖨 印刷</button>'}
     ${isDealer()?"":'<button class="btn prev" style="flex:0 0 auto" onclick="clearCaseConfirm()" title="この案件の入力(個人情報)を端末から消す">🧹 消去</button>'}</div>`;
   bar.style.display="flex";
