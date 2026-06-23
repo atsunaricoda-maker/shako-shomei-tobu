@@ -263,10 +263,11 @@ textarea{resize:vertical;min-height:64px;}
 /* スタンプ式 配置図エディタ */
 #stCanvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:#fff;touch-action:none;}
 .stamp-palette{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px;}
-.stamp-palette button{flex:1 1 30%;border:1.5px solid var(--teal);background:#eafafa;color:#0f6b6b;border-radius:9px;padding:9px 4px;font-size:12.5px;font-weight:700;cursor:pointer;}
+.stamp-palette button{flex:1 1 30%;min-height:46px;border:1.5px solid var(--teal);background:#eafafa;color:#0f6b6b;border-radius:10px;padding:11px 4px;font-size:13px;font-weight:700;cursor:pointer;}
 .stamp-palette button:active{background:#d6f2f2;}
 .stamp-ctrl{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0;}
-.stamp-ctrl button{flex:1 1 18%;border:1px solid var(--line);background:#f3f6f9;border-radius:9px;padding:9px 4px;font-size:12px;font-weight:700;cursor:pointer;}
+.stamp-ctrl button{flex:1 1 22%;min-height:48px;border:1px solid var(--line);background:#f3f6f9;border-radius:10px;padding:11px 4px;font-size:13.5px;font-weight:700;cursor:pointer;}
+.stamp-ctrl button:active{background:#e3e9f0;}
 .sheet .right{text-align:right;}
 .sheet .center{text-align:center;}
 .sheet .small{font-size:11px;color:#333;}
@@ -918,7 +919,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v57";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v58";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
