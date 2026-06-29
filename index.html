@@ -595,7 +595,7 @@ body.is-customer .dealer-only{display:none !important}
     <section class="step" data-step="6">
       <div class="card">
         <h2>⑦ 配置図の寸法</h2>
-        <p class="lead">保管場所の寸法を入力してください。<b>この寸法をもとに行政書士が配置図を作図します</b>（自動作図は行いません）。配置図は省略できません。現地でメジャー計測した数値を入れてください。</p>
+        <p class="lead">保管場所の寸法を入力してください。<b>この寸法をもとに行政書士が仕上げます</b>。配置図は省略できません。現地でメジャー計測した数値を入れてください。</p>
 
         <div class="field">
           <label class="lbl">駐車場のタイプ</label>
@@ -641,8 +641,8 @@ body.is-customer .dealer-only{display:none !important}
         <div class="hint" id="haichiCheck"></div>
 
         <hr class="hr">
-        <div class="hint" style="margin-bottom:6px">配置図は行政書士が作図します。<b>アプリ内で図も作りたい場合のみ（任意）</b>、下のスタンプ作図をお使いください。</div>
-        <button class="fig-btn" onclick="openStampEditor()">✏️（任意）スタンプで配置図を作る（部品を置いて作図）</button>
+        <div class="hint" style="margin-bottom:6px">配置図は行政書士が仕上げます。<b>アプリ内で図も作りたい場合のみ</b>、下のスタンプ作図をお使いください。</div>
+        <button class="fig-btn" onclick="openStampEditor()">✏️ スタンプで配置図を作る（部品を置いて作図）</button>
         <div class="ed-tip">「保管場所」「自宅」「道路」などの部品を置いて、ドラッグで移動・大きさ変更。<b>集合住宅は「区画をまとめて配置」</b>で駐車区画を一括で置けます（塊で移動・サイズ変更できます）。</div>
         <div id="haichiFigStatus"></div>
       </div>
@@ -920,7 +920,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v61";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v62";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1837,7 +1837,7 @@ function docZu(){
   const w=parseFloat(h.w)||0,d=parseFloat(h.d)||0,road=parseFloat(h.road)||0,gate=parseFloat(h.gate)||0;
   const haichiSvg = haichiComposite
     ? `<img src="${haichiComposite}" style="width:100%;border:1px solid #999;border-radius:4px;display:block">`
-    : `<div style="min-height:240px;border:1px dashed #999;border-radius:4px;padding:12px;font-size:12px;color:#555;line-height:1.7">配置図はこの欄に手書き、または別紙を添付してください。<br>（右の寸法を基準に作図）</div>`;
+    : `<div style="min-height:240px;border:1px dashed #999;border-radius:4px;padding:12px;font-size:12px;color:#555;line-height:1.7">配置図はこの欄に手書き、または別紙を添付してください。<br>（下の寸法を基準に作図）</div>`;
   let shozai;
   const shozaiImg = (s.shozai.mode==="image") ? (shozaiComposite || mapImage || null) : null;
   if(shozaiImg){
@@ -1860,14 +1860,10 @@ function docZu(){
       </div>
       <div class="zu-cell">
         <div class="zt">配置図（保管場所の寸法・出入口・前面道路）</div>
-        <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
-          <div style="flex:1;min-width:240px">${haichiSvg}</div>
-          <div style="flex:0 0 auto;font-size:12px;line-height:1.9">
-            幅：${esc(h.w)||"__"} m<br>奥行：${esc(h.d)||"__"} m<br>
-            出入口：${esc(h.gate)||"__"} m<br>前面道路：${esc(h.road)||"__"} m<br>
-            シャッター：${h.shutter?"有":"無"}<br>種別：${esc(h.type)}${(h.type&&h.type!=="平面"&&h.height)?("<br>床〜天井の高さ："+esc(h.height)+"m"):""}${(h.type==="機械式・タワー式"&&h.weight)?("<br>重量制限："+esc(h.weight)+"kg"):""}<br>
-            ${h.rinsetsu?("備考："+esc(h.rinsetsu)):""}
-          </div>
+        <div>${haichiSvg}</div>
+        <div style="font-size:12.5px;line-height:1.9;margin-top:8px">
+          幅：${esc(h.w)||"__"} m　／　奥行：${esc(h.d)||"__"} m　／　出入口：${esc(h.gate)||"__"} m　／　前面道路：${esc(h.road)||"__"} m　／　シャッター：${h.shutter?"有":"無"}　／　種別：${esc(h.type)}${(h.type&&h.type!=="平面"&&h.height)?("　／　床〜天井の高さ："+esc(h.height)+"m"):""}${(h.type==="機械式・タワー式"&&h.weight)?("　／　重量制限："+esc(h.weight)+"kg"):""}
+          ${h.rinsetsu?('<br>備考：'+esc(h.rinsetsu)):""}
         </div>
       </div>
     </div>
