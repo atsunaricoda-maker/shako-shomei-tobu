@@ -641,7 +641,7 @@ body.is-customer .dealer-only{display:none !important}
         <div class="hint" id="haichiCheck"></div>
 
         <hr class="hr">
-        <div class="hint" style="margin-bottom:6px">配置図は行政書士が仕上げます。<b>アプリ内で図も作りたい場合のみ</b>、下のスタンプ作図をお使いください。</div>
+        <div class="hint" style="margin-bottom:6px">配置図は行政書士が仕上げます。下の<b>スタンプ作図</b>で図を作ることもできます。</div>
         <button class="fig-btn" onclick="openStampEditor()">✏️ スタンプで配置図を作る（部品を置いて作図）</button>
         <div class="ed-tip">「保管場所」「自宅」「道路」などの部品を置いて、ドラッグで移動・大きさ変更。<b>集合住宅は「区画をまとめて配置」</b>で駐車区画を一括で置けます（塊で移動・サイズ変更できます）。</div>
         <div id="haichiFigStatus"></div>
@@ -920,7 +920,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v62";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v63";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
