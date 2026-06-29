@@ -920,7 +920,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v64";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v65";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1543,9 +1543,7 @@ function gmapModal(){
   ${isLocked()
     ? `<div class="note ok" style="margin-top:4px">🔒 <b>ロック中</b>。モード切替・送信先メール・データ消去はPINで保護されています。</div>
        <button class="inline-btn" style="width:100%;margin-top:8px;border-color:var(--warn);color:var(--warn)" onclick="removeLock()">ロックを解除する</button>`
-    : `<p style="font-size:12.5px;color:#5a6b7b;line-height:1.6">暗証番号でこの端末をロックすると、<b>モード切替・送信先メール・全消去</b>にPINが必要になります。車屋に渡す端末の保護用です。</p>
-       <div class="row" style="gap:6px"><input id="lockPin1" type="password" inputmode="numeric" maxlength="12" placeholder="暗証番号(4桁以上)" style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box"><input id="lockPin2" type="password" inputmode="numeric" maxlength="12" placeholder="確認" style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box"></div>
-       <button class="inline-btn" style="width:100%;margin-top:8px" onclick="setLockFromInputs()">この端末にロックをかける</button>
+    : `<div class="note" style="margin-top:4px;background:#eef6ff;border:1px solid #c4dcf5;color:#1d4a78;font-size:12.5px;line-height:1.6">🔒 ロックは<b>「📲 車屋に導入」のQR／URL</b>で<b>自動設定</b>されます（送信先メール＋PIN込み）。車屋へはそちらで配布してください。</div>
        <div class="hint" style="margin-top:6px">※PINを忘れたら、ブラウザの「サイトのデータを削除」でリセットできます（端末内のデータも消えます）。</div>`}
   <hr class="hr">
   <h3 style="font-size:14.5px">🗑 データ管理</h3>
@@ -2343,13 +2341,7 @@ function submitPin(){
   if(verifyPin(v)){ const cb=_pinCb; _pinCb=null; const bg=document.getElementById("pinBg"); if(bg) bg.classList.remove("open"); if(cb) cb(); }
   else { const er=document.getElementById("pinErr"); if(er) er.textContent="暗証番号が違います"; if(el){ el.value=""; el.focus(); } }
 }
-function setLockFromInputs(){
-  const a=(document.getElementById("lockPin1").value||"").trim(), b=(document.getElementById("lockPin2").value||"").trim();
-  if(a.length<4){ toast("暗証番号は4桁以上で設定してください"); return; }
-  if(a!==b){ toast("確認用の番号が一致しません"); return; }
-  LOCK={on:true,h:pinHash(a)}; localStorage.setItem(LOCK_KEY,JSON.stringify(LOCK)); _unlockAt=0;
-  toast("この端末にロックをかけました"); openModal("gmap");
-}
+/* setLockFromInputs（手動ロック）は廃止：ロックは「車屋に導入」QRが自動設定。解除はremoveLockのみ(v65) */
 function removeLock(){
   showPinPrompt(()=>{ LOCK={on:false,h:""}; localStorage.setItem(LOCK_KEY,JSON.stringify(LOCK)); _unlockAt=0; toast("ロックを解除しました"); openModal("gmap"); });
 }
