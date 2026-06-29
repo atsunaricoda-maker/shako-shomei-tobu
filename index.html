@@ -920,7 +920,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v63";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v64";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1520,8 +1520,7 @@ function gmapModal(){
     <label class="choice"><input type="radio" name="appmode" value="office" onchange="setMode('office')" ${APPMODE!=='dealer'?'checked':''}><span><span class="ct">事務所（印刷あり）</span><span class="cd">入力・送信・受信・印刷すべて使える</span></span></label>
     <label class="choice"><input type="radio" name="appmode" value="dealer" onchange="setMode('dealer')" ${APPMODE==='dealer'?'checked':''}><span><span class="ct">車屋（送信のみ）</span><span class="cd">入力して事務所へ送るだけ・印刷なし</span></span></label>
   </div>
-  <div class="hint" style="margin-top:8px">車屋さんに配るURL（開くと自動で車屋モードになり、端末に記憶されます）：</div>
-  <div class="row" style="gap:6px;margin-top:4px"><input type="text" id="dealerUrlInput" readonly value="${esc(location.origin+location.pathname+'?role=dealer')}" style="flex:1;font-size:12px" onclick="this.select()"><button class="inline-btn" style="flex:0 0 auto" onclick="copyDealerUrl()">コピー</button></div>
+  <div class="hint" style="margin-top:8px">車屋へ渡す端末は、下の<b>「車屋に導入」</b>で作るQR／URL（<b>送信先メール＋PINロック込み</b>）で設定してください。</div>
   <button class="inline-btn" style="width:100%;margin-top:6px;border-color:var(--teal);background:#eafafa;color:#0f6b6b;font-weight:700" onclick="showDealerSetup()">📲 車屋に導入（QRで メール＋PIN を設定済みに）</button>
   <div class="hint" style="margin-top:10px"><b>お客様の端末で入力→送信</b>してもらう（個人情報が車屋の端末に一切残りません）。先に下の「データ送信設定」で事務所メールを設定してください：</div>
   <button class="inline-btn" style="width:100%;margin-top:4px;border-color:var(--accent);color:var(--accent);font-weight:700" onclick="showCustomerShare()">📱 お客様用のQR／リンクを作る</button>
@@ -2242,11 +2241,7 @@ function setMode(m){
   }
   applyModeChange(m);
 }
-function copyDealerUrl(){
-  const u=location.origin+location.pathname+"?role=dealer";
-  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(u).then(()=>toast("車屋用URLをコピーしました")).catch(()=>fallbackCopy(u)); }
-  else fallbackCopy(u);
-}
+/* copyDealerUrl は廃止：車屋配布はPINを必ず含む「車屋に導入」QR／URLに一本化（PIN無しの素のrole=dealer URLは配らない）(v64) */
 /* 顧客モード用：お客様の端末で開く入力URL（送信先=事務所メールを埋め込む）をQR＋リンクで提示 */
 let _custUrl="";
 function makeQRImg(text,cell){ for(let t=3;t<=20;t++){ try{ const q=qrcode(t,'M'); q.addData(text); q.make(); return q.createImgTag(cell||5,10); }catch(e){} } return '<div style="color:var(--warn);font-size:12px">QR生成に失敗しました（下のリンクをご利用ください）</div>'; }
