@@ -310,6 +310,9 @@ textarea{resize:vertical;min-height:64px;}
   /* 車屋モードで書類プレビューを印刷させない（Ctrl+P・ブラウザメニュー・モバイル共有印刷でも顧客書類を出さない）。説明書印刷(printHelp)は対象外 */
   body.dealer-print-block #print-area{display:none !important;}
   body.dealer-print-block .wrap::before{content:"🚗 車屋モードでは印刷できません — 入力内容は「📤 事務所へ送信」してください。";display:block;padding:55mm 22mm;text-align:center;font-size:13pt;line-height:1.9;color:#000;}
+  /* デモ版：Ctrl+P・ブラウザメニューでの印刷も同様にブロック（ボタンのdoPrint()以外の経路封じ） */
+  body.demo-print-block #print-area{display:none !important;}
+  body.demo-print-block .wrap::before{content:"🔒 デモ版のため印刷はご利用いただけません — ご契約後にご利用いただけます。";display:block;padding:55mm 22mm;text-align:center;font-size:13pt;line-height:1.9;color:#000;}
 }
 /* 画面上のプレビュー表示 */
 #print-area.preview{display:block;background:#5a6b7b;padding:16px 0;margin:0 -14px;}
@@ -345,6 +348,7 @@ body.is-customer .dealer-only{display:none !important}
       <button class="hbtn" id="btnGear" onclick="withPin(()=>openModal('gmap'))" title="設定">⚙</button>
     </div>
   </header>
+  <div id="demoBanner" class="note info" style="display:none;margin:8px 14px 0;font-size:12.5px;line-height:1.6"><b>🎬 デモ版</b>：入力・書類プレビューは自由にお試しいただけます。「事務所へ送信」「印刷」はご契約後にご利用いただけます。</div>
   <div id="customerBanner" class="customer-only note ok" style="margin:8px 14px 0;font-size:13px;line-height:1.6"><b>📝 お客様の入力フォームです。</b>ご自身の情報を入力し、最後に <b>📤 事務所へ送信</b> を押してください。入力内容はお客様の端末内のみで、送信時だけ事務所へ届きます。</div>
   <div id="dealerShareBar" class="dealer-only" style="margin:8px 14px 0;display:none"><button class="inline-btn" style="width:100%;border-color:var(--accent);color:var(--accent);font-weight:700" onclick="showCustomerShare()">📱 お客様のスマホで入力してもらう（QRを表示）</button></div>
 
@@ -920,7 +924,7 @@ function refreshKei(){
 }
 function refreshHeader(){
   const sub=document.querySelector("header.app .sub");
-  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+"　v65";
+  if(sub) sub.textContent=stn().name+"（"+stn().area+"）・"+(isKei()?"軽自動車 届出":"普通自動車 証明申請")+(isDealer()?"｜車屋モード":"")+(DEMO?"｜デモ版":"")+"　v66";
 }
 function refreshDist(){
   const d=parseInt(state.hokan.distance,10);
@@ -1909,12 +1913,13 @@ function makeDocs(){
   parts.push(docChecklist());
   const area=document.getElementById("print-area");
   area.innerHTML=parts.join("");
-  area.classList.add("preview"); document.body.classList.toggle("dealer-print-block", isDealer());
+  area.classList.add("preview"); document.body.classList.toggle("dealer-print-block", isDealer()); document.body.classList.toggle("demo-print-block", DEMO);
   // プレビューへスクロール＋印刷ボタン提示
   showPreviewBar();
   area.scrollIntoView({behavior:"smooth"});
   toast("書類を作成しました");
 }
+function doPrint(){ if(demoGate("印刷・PDF保存")) return; window.print(); }
 function showPreviewBar(){
   let bar=document.getElementById("previewBar");
   if(!bar){ bar=document.createElement("div"); bar.id="previewBar"; bar.className="footnav"; document.body.appendChild(bar); }
@@ -1922,14 +1927,14 @@ function showPreviewBar(){
     <button class="btn prev" style="flex:0 0 auto" onclick="hidePreview()">✏️ 修正</button>
     <button class="btn make" style="background:var(--accent)" onclick="sendByMail()">📤 事務所へ送信</button>
     <button class="btn make" style="background:#1a73e8" onclick="sendByGmail()" title="PCでメールアプリが開かない時に">📧 Gmail</button>
-    ${isDealer()?"":'<button class="btn make" onclick="window.print()">🖨 印刷</button>'}
+    ${isDealer()?"":'<button class="btn make" onclick="doPrint()">🖨 印刷</button>'}
     ${isDealer()?"":'<button class="btn prev" style="flex:0 0 auto" onclick="clearCaseConfirm()" title="この案件の入力(個人情報)を端末から消す">🧹 消去</button>'}</div>`;
   bar.style.display="flex";
   document.querySelector(".footnav:not(#previewBar)").style.display="none";
   const fab=document.getElementById("previewFab"); if(fab) fab.style.display="none";
 }
 function hidePreview(){
-  document.getElementById("print-area").classList.remove("preview"); document.body.classList.remove("dealer-print-block");
+  document.getElementById("print-area").classList.remove("preview"); document.body.classList.remove("dealer-print-block"); document.body.classList.remove("demo-print-block");
   document.getElementById("print-area").innerHTML="";
   document.getElementById("previewBar").style.display="none";
   document.querySelector(".footnav:not(#previewBar)").style.display="flex";
@@ -2119,8 +2124,8 @@ function readIncoming(){
   }catch(e){ return null; }
 }
 let _sendVia="mail";
-function sendByMail(){ _sendVia="mail"; if(isCustomer()){ showSendConsent(); return; } doSendByMail(); }   /* 顧客モードは送信前に利用目的の同意 */
-function sendByGmail(){ _sendVia="gmail"; if(isCustomer()){ showSendConsent(); return; } doSendByGmail(); }   /* PC向け：Gmailの作成画面を開く（既定メールアプリ未設定のPCでmailtoが無反応な救済） */
+function sendByMail(){ if(demoGate("事務所への送信")) return; _sendVia="mail"; if(isCustomer()){ showSendConsent(); return; } doSendByMail(); }   /* 顧客モードは送信前に利用目的の同意 */
+function sendByGmail(){ if(demoGate("Gmailでの送信")) return; _sendVia="gmail"; if(isCustomer()){ showSendConsent(); return; } doSendByGmail(); }   /* PC向け：Gmailの作成画面を開く（既定メールアプリ未設定のPCでmailtoが無反応な救済） */
 function _caseMailParts(){
   const link=buildCaseLink();
   const user=state.shinseisha.isCorp?(state.shinseisha.corpName||""):(state.shinseisha.name||"");
@@ -2184,8 +2189,25 @@ function renderSendStatus(){
 const MODE_KEY="shako_tobu_mode";
 let APPMODE="office";
 let CUSTOMER=false;
+/* デモモード（LP「無料で試す」用）：?demo=1 で有効。入力・書類プレビューはフル機能、
+   「事務所へ送信」「Gmail」「印刷」だけご契約後に案内するモーダルへ差し替える。 */
+const DEMO = new URLSearchParams(location.search).get("demo")==="1";
 function isDealer(){ return APPMODE==="dealer"; }
 function isCustomer(){ return CUSTOMER; }   /* 顧客モード＝お客様の端末。車屋モードの派生（送信専用）だが、自分の端末なので裏に回っても消さない */
+function demoGate(action){
+  if(!DEMO) return false;
+  let bg=document.getElementById("demoGateBg");
+  if(!bg){ bg=document.createElement("div"); bg.id="demoGateBg"; bg.className="modal-bg"; bg.style.zIndex="90"; bg.style.alignItems="center"; document.body.appendChild(bg); }
+  bg.innerHTML=`<div class="modal" style="max-width:340px;border-radius:18px;text-align:center">
+    <button class="close" onclick="document.getElementById('demoGateBg').classList.remove('open')">×</button>
+    <div style="font-size:34px;margin:4px 0 10px">🔒</div>
+    <h3 style="margin:0 0 8px">デモ版です</h3>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin:0 0 16px">${esc(action)}は、ご契約後にご利用いただけます。入力・書類プレビューは引き続きお試しいただけます。</p>
+    <a class="inline-btn" style="display:block;background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800" href="mailto:atsunari.coda@gmail.com?subject=%E8%BB%8A%E5%BA%AB%E8%A8%BC%E6%98%8E%E3%81%8B%E3%82%93%E3%81%9F%E3%82%93%E4%BD%9C%E6%88%90%20%E5%B0%8E%E5%85%A5%E3%81%AE%E3%81%94%E7%9B%B8%E8%AB%87">✉️ 導入について相談する</a>
+  </div>`;
+  bg.classList.add("open");
+  return true;
+}
 function detectMode(){
   const stored0=localStorage.getItem(MODE_KEY)||"office";
   const lockedDealer=isLocked() && stored0==="dealer";   // ロックされた車屋端末は何があっても車屋固定
@@ -2387,6 +2409,7 @@ function boot(){
   hydrate();
   applyAll();
   applyMode();
+  if(DEMO){ const db=document.getElementById("demoBanner"); if(db) db.style.display=""; }
   // 画像添付
   const mi=document.getElementById("mapImgInput");
   if(mi) mi.addEventListener("change",e=>{
