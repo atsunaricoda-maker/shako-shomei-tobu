@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>車庫証明かんたん作成｜行政書士のための静岡県全28署対応ツール</title>
+<meta name="description" content="1回の入力で申請書・自認書/承諾書・所在図配置図・チェックリストを自動作成。静岡県 全28署（西部・中部・東部）対応。車屋・お客様に入力を任せて事務所は確認・印刷だけ。個人情報は端末内処理でサーバー保存なし。">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --navy:#1a3c61; --navy-d:#10263f; --navy-l:#274b73;
+  --accent:#e8821e; --accent-d:#c76c12;
+  --teal:#155e52; --teal-d:#0c3a33; --teal-l:#eafafa;
+  --ink:#243240; --muted:#5a6b7b; --line:#d8e0e8; --bg:#f3f6f9;
+  --ok:#1f8a54; --warn:#c0392b;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",system-ui,sans-serif;
+  color:var(--ink); background:#fff; margin:0; line-height:1.75; font-size:16px;
+}
+img{max-width:100%;display:block}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+a{color:inherit}
+h1,h2,h3{font-weight:800;letter-spacing:.01em}
+
+/* ---------- ヘッダー ---------- */
+header.site{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+header.site .bar{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+header.site .brand{font-weight:800;color:var(--navy);font-size:16px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+header.site .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block}
+header.site nav{display:flex;gap:22px;font-size:13.5px;font-weight:700;color:var(--muted)}
+header.site nav a:hover{color:var(--navy)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:11px;
+  padding:12px 22px;font-size:14.5px;font-weight:800;cursor:pointer;text-decoration:none;white-space:nowrap;font-family:inherit}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-d)}
+.btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+.btn.ghost:hover{border-color:var(--navy)}
+.btn.on-dark{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.35)}
+.btn.on-dark:hover{background:rgba(255,255,255,.24)}
+.btn.sm{padding:9px 16px;font-size:13px}
+
+/* ---------- 共通セクション ---------- */
+section{padding:76px 0}
+section.tight{padding:56px 0}
+.eyebrow{display:inline-block;font-size:12.5px;font-weight:800;letter-spacing:.08em;color:var(--teal);
+  background:var(--teal-l);border-radius:999px;padding:5px 14px;margin-bottom:14px}
+.eyebrow.on-dark{color:#cfe0f0;background:rgba(255,255,255,.14)}
+h2.sec-title{font-size:30px;color:var(--navy);margin:0 0 10px;line-height:1.4}
+h2.sec-title.on-dark{color:#fff}
+p.sec-lead{font-size:15.5px;color:var(--muted);margin:0 0 40px;max-width:640px;line-height:1.85}
+p.sec-lead.on-dark{color:#cfe0f0}
+.center{text-align:center;margin-left:auto;margin-right:auto}
+
+/* ---------- ヒーロー ---------- */
+.hero{background:linear-gradient(150deg,var(--navy) 0%,var(--navy-d) 72%);color:#fff;padding:64px 0 90px;position:relative;overflow:hidden}
+.hero .grid{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center}
+.hero h1{font-size:38px;line-height:1.45;margin:0 0 18px}
+.hero h1 b{color:var(--accent)}
+.hero p.lead{font-size:15.5px;color:#cfe0f0;line-height:1.9;margin:0 0 28px;max-width:520px}
+.hero .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.hero .microcopy{font-size:12.5px;color:#9fb6cc}
+.hero-visual{position:relative;min-height:420px}
+.hero-visual .card{position:absolute;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.35);overflow:hidden;border:1px solid rgba(255,255,255,.15)}
+.hero-visual .card.doc{width:88%;right:0;top:6px;z-index:1}
+.hero-visual .card.doc img{display:block;width:100%}
+.hero-visual .card.phone{width:180px;left:0;bottom:0;z-index:2;border-radius:20px;border:5px solid #0e2135}
+.hero-visual .card.phone img{display:block;width:100%}
+.hero-stats{display:flex;gap:0;margin-top:44px;border-top:1px solid rgba(255,255,255,.18);padding-top:26px;flex-wrap:wrap}
+.hero-stats .st{flex:1 1 140px;padding-right:20px}
+.hero-stats .st b{display:block;font-size:26px;color:#fff;font-weight:800}
+.hero-stats .st span{font-size:12.5px;color:#9fb6cc}
+
+/* ---------- 課題カード ---------- */
+.pain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pain-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px}
+.pain-card .ico{width:44px;height:44px;border-radius:12px;background:#fdecea;color:var(--warn);
+  display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.pain-card h3{font-size:15.5px;color:var(--ink);margin:0 0 8px}
+.pain-card p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.8}
+
+/* ---------- 機能グリッド ---------- */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.feat-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;transition:box-shadow .15s}
+.feat-card:hover{box-shadow:0 10px 26px rgba(20,40,70,.10)}
+.feat-card .ico{width:46px;height:46px;border-radius:12px;background:var(--teal-l);color:var(--teal);
+  display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px}
+.feat-card h3{font-size:15.5px;color:var(--navy);margin:0 0 8px}
+.feat-card p{font-size:13.3px;color:var(--muted);margin:0;line-height:1.8}
+
+/* ---------- フロー ---------- */
+.flow-wrap{background:var(--bg);border-radius:22px;padding:44px 36px}
+.flow-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.flow-step{position:relative;padding:0 16px;text-align:center}
+.flow-step .num{width:44px;height:44px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;font-size:18px;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.flow-step h4{font-size:14.5px;color:var(--navy);margin:0 0 6px}
+.flow-step p{font-size:12.8px;color:var(--muted);margin:0;line-height:1.7}
+.flow-step:not(:last-child)::after{content:"›";position:absolute;right:-4px;top:12px;font-size:26px;color:var(--line);font-weight:800}
+
+/* ---------- ショーケース ---------- */
+.showcase{display:grid;grid-template-columns:1fr 1.15fr;gap:52px;align-items:center}
+.showcase .shot{border-radius:16px;overflow:hidden;box-shadow:0 16px 40px rgba(20,40,70,.18);border:1px solid var(--line)}
+.showcase .copy .eyebrow{margin-bottom:16px}
+.showcase .copy h2{font-size:26px;color:var(--navy);margin:0 0 14px;line-height:1.5}
+.showcase .copy p{font-size:14.5px;color:var(--muted);line-height:1.9;margin:0 0 18px}
+.showcase .copy ul{margin:0;padding:0;list-style:none}
+.showcase .copy li{display:flex;gap:10px;font-size:13.8px;color:var(--ink);margin-bottom:10px}
+.showcase .copy li b.dot{flex:0 0 auto;color:var(--ok);font-weight:800}
+
+/* ---------- 対応地域 ---------- */
+.region-block{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin-bottom:14px}
+.region-block h4{font-size:14.5px;color:var(--navy);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.region-block h4 .n{background:var(--navy);color:#fff;font-size:11.5px;border-radius:999px;padding:2px 10px;font-weight:800}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:12.3px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--ink)}
+.chip.req{background:#fff4e8;border-color:#f0c98a;color:#a85a14;font-weight:700}
+
+/* ---------- セキュリティ ---------- */
+.sec-dark{background:var(--navy-d);color:#fff}
+.sec2-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.sec2-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:22px}
+.sec2-card .ico{font-size:22px;margin-bottom:10px}
+.sec2-card h3{font-size:14.5px;margin:0 0 8px;color:#fff}
+.sec2-card p{font-size:13px;color:#c3d5e6;margin:0;line-height:1.8}
+
+/* ---------- FAQ ---------- */
+.faq{max-width:760px;margin:0 auto}
+details.faq-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:0 20px;margin-bottom:12px}
+details.faq-item summary{padding:16px 0;font-weight:700;font-size:14.5px;color:var(--navy);cursor:pointer;list-style:none;
+  display:flex;justify-content:space-between;align-items:center;gap:12px}
+details.faq-item summary::-webkit-details-marker{display:none}
+details.faq-item summary::after{content:"+";font-size:20px;color:var(--muted);font-weight:400;flex:0 0 auto}
+details.faq-item[open] summary::after{content:"−"}
+details.faq-item .a{font-size:13.8px;color:var(--muted);padding:0 0 18px;line-height:1.85}
+
+/* ---------- 最終CTA ---------- */
+.cta-final{background:linear-gradient(135deg,var(--accent),#f0a04a);color:#fff;border-radius:26px;padding:56px 44px;text-align:center}
+.cta-final h2{font-size:27px;margin:0 0 12px;color:#fff}
+.cta-final p{font-size:14.5px;color:#fff3e2;margin:0 0 26px}
+.cta-final .ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.cta-final .btn.primary{background:#fff;color:var(--accent-d)}
+.cta-final .btn.on-dark{border-color:rgba(255,255,255,.6)}
+
+/* ---------- フッター ---------- */
+footer{background:var(--navy-d);color:#9fb6cc;padding:40px 0 28px;font-size:12.5px;line-height:1.9}
+footer .cols{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:24px;margin-bottom:20px}
+footer b.brand{color:#fff;font-size:14px}
+footer a.mail{color:var(--accent);font-weight:700;text-decoration:none}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:880px){
+  header.site nav{display:none}
+  .hero .grid{grid-template-columns:1fr;gap:40px}
+  .hero-visual{min-height:340px}
+  .hero h1{font-size:29px}
+  .pain-grid,.feat-grid,.sec2-grid{grid-template-columns:1fr 1fr}
+  .flow-grid{grid-template-columns:1fr 1fr;row-gap:28px}
+  .flow-step:nth-child(2)::after{display:none}
+  .showcase{grid-template-columns:1fr}
+  .showcase .shot{order:2}
+  .cta-final{padding:40px 22px}
+}
+@media (max-width:560px){
+  .wrap{padding:0 18px}
+  section{padding:56px 0}
+  .pain-grid,.feat-grid,.sec2-grid{grid-template-columns:1fr}
+  .flow-grid{grid-template-columns:1fr}
+  .flow-step::after{display:none}
+  .hero h1{font-size:25px}
+  .hero-visual .card.doc{width:100%}
+  .hero-visual .card.phone{width:130px}
+}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="bar">
+    <div class="brand"><span class="dot"></span>車庫証明かんたん作成</div>
+    <nav>
+      <a href="#features">できること</a>
+      <a href="#flow">使い方</a>
+      <a href="#regions">対応地域</a>
+      <a href="#faq">よくある質問</a>
+    </nav>
+    <a class="btn primary sm" href="https://shako-shomei-tobu.atsunari-coda.workers.dev/" target="_blank" rel="noopener">無料で試す</a>
+  </div>
+</header>
+
+<!-- ========== ヒーロー ========== -->
+<section class="hero tight">
+  <div class="wrap">
+    <div class="grid">
+      <div>
+        <span class="eyebrow on-dark">行政書士のための車庫証明ツール</span>
+        <h1>車庫証明の書類作成を、<br><b>1回の入力</b>で終わらせる。</h1>
+        <p class="lead">申請書・自認書／使用承諾証明書・所在図配置図・提出チェックリストを自動生成。静岡県 全28署（西部・中部・東部）に対応し、車屋やお客様に入力を任せることもできます。</p>
+        <div class="ctas">
+          <a class="btn primary" href="https://shako-shomei-tobu.atsunari-coda.workers.dev/" target="_blank" rel="noopener">📄 無料で今すぐ試す</a>
+          <a class="btn on-dark" href="#contact">導入のご相談</a>
+        </div>
+        <div class="microcopy">スマホ・PCのブラウザで動作／インストール不要／ホーム画面に追加してアプリ化も可</div>
+      </div>
+      <div class="hero-visual">
+        <div class="card doc"><img src="img/shot_doc.png" alt="自動生成される所在図・配置図の書類"></div>
+        <div class="card phone"><img src="img/shot_input.png" alt="スマホでの入力画面"></div>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="st"><b>28署</b><span>静岡県 全域対応</span></div>
+      <div class="st"><b>4種類</b><span>書類を自動生成</span></div>
+      <div class="st"><b>0円</b><span>サーバー代・維持費</span></div>
+      <div class="st"><b>端末内</b><span>個人情報を処理</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 課題 ========== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">こんな悩み、ありませんか</span>
+    <h2 class="sec-title">車庫証明の実務は、地味に時間を食う。</h2>
+    <p class="sec-lead">件数をこなすほど、入力・作図・地域ごとの確認作業が積み上がっていきます。</p>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="ico">✍️</div>
+        <h3>同じ内容を何度も転記</h3>
+        <p>申請書・自認書／承諾書・所在図配置図・チェックリスト。件名ごとに同じ住所や車の情報を書類分だけ入力し直している。</p>
+      </div>
+      <div class="pain-card">
+        <div class="ico">🗾</div>
+        <h3>地域ごとの制度確認が煩雑</h3>
+        <p>提出先の警察署、軽自動車の届出義務の有無、合併前の旧町村部の例外まで、案件のたびに確認が必要。</p>
+      </div>
+      <div class="pain-card">
+        <div class="ico">📐</div>
+        <h3>配置図の作図が手間</h3>
+        <p>保管場所・自宅・道路・出入口・方位。手描きや汎用ソフトでの作図は時間がかかり、車屋との連携も電話やFAXが中心。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 機能 ========== -->
+<section id="features" style="background:var(--bg)">
+  <div class="wrap">
+    <span class="eyebrow">機能</span>
+    <h2 class="sec-title">1回の入力から、提出書類一式まで。</h2>
+    <p class="sec-lead">静岡県内の実際の様式・地域差に合わせて自動で切り替わります。</p>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="ico">📋</div>
+        <h3>1回入力→書類を自動生成</h3>
+        <p>申請書（または軽の届出書）・自認書／使用承諾証明書・所在図配置図・提出チェックリストを自動転記。あとは印刷／PDF化するだけ。</p>
+      </div>
+      <div class="feat-card">
+        <div class="ico">🗺️</div>
+        <h3>静岡県 全28署プリセット</h3>
+        <p>西部11署・中部7署・東部10署を収録。提出先を選ぶだけで宛先・所在地・手数料・軽自動車の届出要否が自動で切り替わります。</p>
+      </div>
+      <div class="feat-card">
+        <div class="ico">🚙</div>
+        <h3>軽自動車の届出要否を自動判定</h3>
+        <p>市町村単位の届出義務に加え、合併前の旧町村部の例外（旧戸田村・旧岡部町など）まで反映。判断ミスを防ぎます。</p>
+      </div>
+      <div class="feat-card">
+        <div class="ico">✏️</div>
+        <h3>スタンプでかんたん配置図</h3>
+        <p>保管場所・自宅・道路・出入口・方位などの部品を置くだけで作図。集合住宅は区画を一括生成、区画ごとの寸法表示にも対応。</p>
+      </div>
+      <div class="feat-card">
+        <div class="ico">📤</div>
+        <h3>車屋・お客様に入力を委任</h3>
+        <p>車屋のタブレットやお客様自身のスマホで入力してもらい、事務所へ送信。事務所は届いたリンクを開いて確認・印刷するだけ。</p>
+      </div>
+      <div class="feat-card">
+        <div class="ico">🔒</div>
+        <h3>個人情報は端末内処理</h3>
+        <p>入力内容は端末内のみで保持し、サーバーには保存しません。車屋へ配布する端末はQR一発でPINロック済みにできます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 使い方フロー ========== -->
+<section id="flow">
+  <div class="wrap">
+    <span class="eyebrow">使い方</span>
+    <h2 class="sec-title">入力する人と、書類を作る人を分けられる。</h2>
+    <p class="sec-lead">行政書士がすべて入力することも、車屋・お客様に任せることもできます。</p>
+    <div class="flow-wrap">
+      <div class="flow-grid">
+        <div class="flow-step">
+          <div class="num">1</div>
+          <h4>入力</h4>
+          <p>行政書士・車屋・お客様のいずれかが、スマホ／PCで案件情報を入力。</p>
+        </div>
+        <div class="flow-step">
+          <div class="num">2</div>
+          <h4>送信</h4>
+          <p>「事務所へ送信」でメール・Gmail・リンクとして送るだけ。サーバー不要。</p>
+        </div>
+        <div class="flow-step">
+          <div class="num">3</div>
+          <h4>受信</h4>
+          <p>事務所が届いたリンクを開くと、入力済みの状態でそのまま開きます。</p>
+        </div>
+        <div class="flow-step">
+          <div class="num">4</div>
+          <h4>印刷・提出</h4>
+          <p>内容を確認して印刷／PDF化。正・副2通をそのまま窓口へ提出できます。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ショーケース：スタンプ配置図 ========== -->
+<section style="background:var(--bg)">
+  <div class="wrap showcase">
+    <div class="shot"><img src="img/shot_stamp.png" alt="スタンプで配置図を作る画面"></div>
+    <div class="copy">
+      <span class="eyebrow">配置図</span>
+      <h2>部品を置くだけで、提出できる配置図に。</h2>
+      <p>保管場所・自宅・道路・出入口・方位（北）などのスタンプをドラッグで配置。大きさ・向きも自由に調整でき、集合住宅の区画は一括生成に対応しています。</p>
+      <ul>
+        <li><b class="dot">✓</b>ドラッグで移動・サイズ変更・回転</li>
+        <li><b class="dot">✓</b>区画を横／縦にまとめて一括作成</li>
+        <li><b class="dot">✓</b>作った図はそのまま書類に反映</li>
+        <li><b class="dot">✓</b>作図なしでも寸法だけ入力してOK（行政書士側で仕上げも可能）</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 車屋への展開 ========== -->
+<section>
+  <div class="wrap showcase">
+    <div class="copy">
+      <span class="eyebrow">車屋への展開</span>
+      <h2>QRひとつで、車屋タブレットを安全に配布。</h2>
+      <p>送信先メール・暗証番号(PIN)ロックまで設定済みのQRを作成。車屋はスキャンして店名を入れるだけで導入完了。以降は暗証番号なしでは事務所モードへ戻せず、送信先も変更できません。</p>
+      <ul>
+        <li><b class="dot">✓</b>QRスキャンだけで「車屋モード＋送信先＋PINロック」設定済みに</li>
+        <li><b class="dot">✓</b>お客様自身のスマホで入力してもらう運用も可能</li>
+        <li><b class="dot">✓</b>入力内容は送信後・画面を離れると自動で消去</li>
+        <li><b class="dot">✓</b>受信した案件の確認・印刷はPIN不要</li>
+      </ul>
+    </div>
+    <div class="shot"><img src="img/shot_dealerqr.png" alt="車屋タブレットの導入QR画面"></div>
+  </div>
+</section>
+
+<!-- ========== 対応地域 ========== -->
+<section id="regions" style="background:var(--bg)">
+  <div class="wrap">
+    <span class="eyebrow">対応地域</span>
+    <h2 class="sec-title">静岡県 全28署に対応。</h2>
+    <p class="sec-lead">提出先を選ぶだけで、宛先・所在地・手数料・軽自動車の届出要否が自動切替。<br><span style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12.5px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:50%;background:#fff4e8;border:1.5px solid #f0c98a;display:inline-block"></span>オレンジ＝軽自動車の届出義務あり地域（一部に例外の町村を含む）</span></p>
+
+    <div class="region-block">
+      <h4><span class="n">11署</span>静岡県西部（磐田・浜松ほか）</h4>
+      <div class="chips">
+        <span class="chip">磐田</span><span class="chip">袋井</span><span class="chip">掛川</span><span class="chip">菊川</span><span class="chip">湖西</span>
+        <span class="chip req">浜松中央</span><span class="chip req">浜松東</span><span class="chip req">浜松西</span>
+        <span class="chip">浜北</span><span class="chip">細江</span><span class="chip">天竜</span>
+      </div>
+    </div>
+    <div class="region-block">
+      <h4><span class="n">7署</span>静岡県中部（静岡市・志太榛原）</h4>
+      <div class="chips">
+        <span class="chip req">静岡中央</span><span class="chip req">静岡南</span><span class="chip req">清水</span>
+        <span class="chip">島田</span><span class="chip req">藤枝</span><span class="chip req">焼津</span><span class="chip">牧之原</span>
+      </div>
+    </div>
+    <div class="region-block">
+      <h4><span class="n">10署</span>静岡県東部（沼津・三島・伊豆ほか）</h4>
+      <div class="chips">
+        <span class="chip req">沼津</span><span class="chip req">三島</span><span class="chip req">富士</span><span class="chip req">富士宮</span>
+        <span class="chip">御殿場</span><span class="chip">裾野</span><span class="chip">伊豆中央</span><span class="chip">熱海</span><span class="chip">伊東</span><span class="chip">下田</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== セキュリティ ========== -->
+<section class="sec-dark">
+  <div class="wrap">
+    <span class="eyebrow on-dark">安心・安全</span>
+    <h2 class="sec-title on-dark">個人情報は、端末内で処理。</h2>
+    <p class="sec-lead on-dark">依頼者の情報を預かる仕事だからこそ、扱いは慎重に設計しています。</p>
+    <div class="sec2-grid">
+      <div class="sec2-card">
+        <div class="ico">🗄️</div>
+        <h3>サーバー保存なし</h3>
+        <p>入力内容はブラウザの端末内のみで保持。運営者のサーバーにデータを送信・保存する仕組みは持っていません。</p>
+      </div>
+      <div class="sec2-card">
+        <div class="ico">📨</div>
+        <h3>送信は宛先を指定したときだけ</h3>
+        <p>「事務所へ送信」を押したときにだけ、設定した宛先へメール・リンクとして届きます。</p>
+      </div>
+      <div class="sec2-card">
+        <div class="ico">🔒</div>
+        <h3>共用端末はPINロック</h3>
+        <p>車屋に配布する端末は、暗証番号がないとモード切替・送信先変更・データ消去ができない設定にできます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FAQ ========== -->
+<section id="faq">
+  <div class="wrap">
+    <span class="eyebrow">よくある質問</span>
+    <h2 class="sec-title">導入前によくいただく質問</h2>
+    <div class="faq">
+      <details class="faq-item">
+        <summary>印刷した書類は、そのまま窓口に提出できますか？</summary>
+        <div class="a">申請書・自認書／使用承諾証明書・所在図配置図・提出チェックリストを印刷・PDF化してご利用いただけます。押印は不要（令和3年〜）で、氏名は印字でも構いません。窓口によっては公式様式への転記を求められる場合があり、その際は⑨の画面から公式様式（原本）PDFを開いて転記できます。</div>
+      </details>
+      <details class="faq-item">
+        <summary>他の都道府県には対応していますか？</summary>
+        <div class="a">現在は静岡県内（全28署：西部・中部・東部）に対応しています。手数料や様式は都道府県ごとに異なるため、他県対応についてはお問い合わせください。</div>
+      </details>
+      <details class="faq-item">
+        <summary>車屋やお客様に入力してもらうのは安全ですか？</summary>
+        <div class="a">車屋のタブレットは、QR一発で送信先メール・暗証番号（PIN）ロックまで設定済みにできます。設定後は暗証番号なしでは事務所モードへ戻せず、送信先の変更もできません。入力内容は送信後・画面を離れたときに自動で消去され、端末に残りません。</div>
+      </details>
+      <details class="faq-item">
+        <summary>インターネット環境がないと使えませんか？</summary>
+        <div class="a">基本的な入力・書類作成・印刷はオフラインでも可能です（住所からの地図自動作成のみオンラインが必要）。ホーム画面に追加すればアプリのように起動できます。</div>
+      </details>
+      <details class="faq-item">
+        <summary>費用はどのくらいかかりますか？</summary>
+        <div class="a">まずは無料でお試しいただけます。事務所への本格導入・車屋への展開についてはご相談ください。</div>
+      </details>
+      <details class="faq-item">
+        <summary>制度改正（手数料・標章など）に対応していますか？</summary>
+        <div class="a">保管場所標章の廃止（2025年4月1日）、押印不要化など最新の制度に対応済みです。新しい版が出ると画面下に更新通知が表示され、ワンタップで最新化できます。</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 最終CTA ========== -->
+<section id="contact">
+  <div class="wrap">
+    <div class="cta-final">
+      <h2>まずは無料で、触ってみてください。</h2>
+      <p>入力から書類作成・印刷まで、実際の画面でお試しいただけます。導入のご相談もお気軽にどうぞ。</p>
+      <div class="ctas">
+        <a class="btn primary" href="https://shako-shomei-tobu.atsunari-coda.workers.dev/" target="_blank" rel="noopener">📄 無料で今すぐ試す</a>
+        <a class="btn on-dark" href="mailto:atsunari.coda@gmail.com?subject=%E8%BB%8A%E5%BA%AB%E8%A8%BC%E6%98%8E%E3%81%8B%E3%82%93%E3%81%9F%E3%82%93%E4%BD%9C%E6%88%90%20%E5%B0%8E%E5%85%A5%E3%81%AE%E3%81%94%E7%9B%B8%E8%AB%87">✉️ 導入について相談する</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <b class="brand">車庫証明かんたん作成</b><br>
+        行政書士のための車庫証明（自動車保管場所証明）書類作成ツール。<br>静岡県 全28署対応。
+      </div>
+      <div>
+        お問い合わせ：<a class="mail" href="mailto:atsunari.coda@gmail.com">atsunari.coda@gmail.com</a><br>
+        アプリ本体：<a class="mail" href="https://shako-shomei-tobu.atsunari-coda.workers.dev/" target="_blank" rel="noopener">shako-shomei-tobu.atsunari-coda.workers.dev</a>
+      </div>
+    </div>
+    <div>
+      本ページに記載の制度・手数料等の情報は2026年6月時点のものです。最新情報は管轄警察署・静岡県警察の公式ページでご確認ください。本ツールは情報の正確性を保証するものではなく、最終確認は申請者・行政書士の責任で行ってください。
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
