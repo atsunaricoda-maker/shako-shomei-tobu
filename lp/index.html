@@ -126,6 +126,16 @@ p.sec-lead.on-dark{color:#cfe0f0}
 .sec2-card h3{font-size:14.5px;margin:0 0 8px;color:#fff}
 .sec2-card p{font-size:13px;color:#c3d5e6;margin:0;line-height:1.8}
 
+/* ---------- 料金 ---------- */
+.price-card{max-width:520px;margin:0 auto;background:#fff;border:1.5px solid var(--line);border-radius:20px;
+  padding:40px 36px;text-align:center;box-shadow:0 10px 30px rgba(20,40,70,.08)}
+.price-card .tag{display:inline-block;font-size:12.5px;font-weight:800;color:var(--teal);background:var(--teal-l);
+  border-radius:999px;padding:5px 14px;margin-bottom:18px}
+.price-card .num{font-size:46px;font-weight:800;color:var(--navy);line-height:1}
+.price-card .num small{font-size:16px;font-weight:700;color:var(--muted);margin-left:6px}
+.price-card p.note{font-size:13.3px;color:var(--muted);margin:16px 0 26px;line-height:1.85}
+.price-card .btn{width:100%}
+
 /* ---------- FAQ ---------- */
 .faq{max-width:760px;margin:0 auto}
 details.faq-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:0 20px;margin-bottom:12px}
@@ -172,6 +182,9 @@ footer a.mail{color:var(--accent);font-weight:700;text-decoration:none}
   .hero h1{font-size:25px}
   .hero-visual .card.doc{width:100%}
   .hero-visual .card.phone{width:130px}
+  .price-card{padding:32px 22px}
+  .price-card .num{font-size:36px;white-space:nowrap}
+  .price-card .num small{display:block;margin-left:0;margin-top:6px;font-size:14px}
 }
 </style>
 </head>
@@ -184,6 +197,7 @@ footer a.mail{color:var(--accent);font-weight:700;text-decoration:none}
       <a href="#features">できること</a>
       <a href="#flow">使い方</a>
       <a href="#regions">対応地域</a>
+      <a href="#pricing">料金</a>
       <a href="#faq">よくある質問</a>
     </nav>
     <a class="btn primary sm" href="https://shako-shomei-tobu.atsunari-coda.workers.dev/" target="_blank" rel="noopener">無料で試す</a>
@@ -412,6 +426,21 @@ footer a.mail{color:var(--accent);font-weight:700;text-decoration:none}
   </div>
 </section>
 
+<!-- ========== 料金 ========== -->
+<section id="pricing" style="background:var(--bg)">
+  <div class="wrap">
+    <span class="eyebrow">料金</span>
+    <h2 class="sec-title">シンプルな料金で導入できます。</h2>
+    <p class="sec-lead">まずは無料でお試しいただき、納得してからの導入で構いません。</p>
+    <div class="price-card">
+      <span class="tag">1事務所あたり</span>
+      <div class="num">月額 10,000円<small>（税別）</small></div>
+      <p class="note">お申し込み・ご利用範囲の詳細はお気軽にお問い合わせください。</p>
+      <a class="btn primary" href="mailto:atsunari.coda@gmail.com?subject=%E8%BB%8A%E5%BA%AB%E8%A8%BC%E6%98%8E%E3%81%8B%E3%82%93%E3%81%9F%E3%82%93%E4%BD%9C%E6%88%90%20%E5%B0%8E%E5%85%A5%E3%81%AE%E3%81%94%E7%9B%B8%E8%AB%87">✉️ 導入について相談する</a>
+    </div>
+  </div>
+</section>
+
 <!-- ========== FAQ ========== -->
 <section id="faq">
   <div class="wrap">
@@ -436,7 +465,7 @@ footer a.mail{color:var(--accent);font-weight:700;text-decoration:none}
       </details>
       <details class="faq-item">
         <summary>費用はどのくらいかかりますか？</summary>
-        <div class="a">まずは無料でお試しいただけます。事務所への本格導入・車屋への展開についてはご相談ください。</div>
+        <div class="a">1事務所あたり<b>月額10,000円（税別）</b>です。まずは無料でお試しいただき、納得してからのお申し込みで構いません。詳細は<a href="#pricing" style="color:var(--navy);font-weight:700">料金</a>をご覧いただくか、お問い合わせください。</div>
       </details>
       <details class="faq-item">
         <summary>制度改正（手数料・標章など）に対応していますか？</summary>
