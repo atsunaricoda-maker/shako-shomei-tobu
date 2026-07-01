@@ -52,7 +52,12 @@ export default {
     }
 
     // 上記以外は静的ファイル（index.html / sw.js / アイコン等）
-    return env.ASSETS.fetch(request);
+    // CloudflareのOrigin Cache Controlが無効だと must-revalidate が無視され、
+    // エッジに古いHTMLが残り続ける事故が起きたため、no-storeを強制して常に最新を配信する。
+    const res = await env.ASSETS.fetch(request);
+    const headers = new Headers(res.headers);
+    headers.set("Cache-Control", "no-store");
+    return new Response(res.body, { status: res.status, headers });
   }
 };
 
